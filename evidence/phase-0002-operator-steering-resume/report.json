@@ -1,0 +1,1184 @@
+{
+  "cli_transcript_records": [
+    {
+      "argv": [
+        "vharness-agent",
+        "status",
+        "--journal",
+        "session.sqlite3",
+        "--artifacts",
+        "artifacts",
+        "--session-id",
+        "phase2-operator-steering-resume"
+      ],
+      "label": "status-before-direction",
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "STATUS running\nOBJECTIVE Preserve operator direction while safely completing the fixture\nPLAN Read the fixture, apply the requested change, then evaluate.\nBUDGET remaining actions=3/3 used=0 model_calls=5/6 used=1 evaluations=1/1 used=0\n"
+    },
+    {
+      "argv": [
+        "vharness-agent",
+        "message",
+        "--journal",
+        "session.sqlite3",
+        "--artifacts",
+        "artifacts",
+        "--session-id",
+        "phase2-operator-steering-resume",
+        "--text",
+        "Prioritize a read before any write and keep the plan visible."
+      ],
+      "label": "message-direction",
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "STATUS running\nOBJECTIVE Preserve operator direction while safely completing the fixture\nPLAN Read the fixture, apply the requested change, then evaluate.\nBUDGET remaining actions=3/3 used=0 model_calls=5/6 used=1 evaluations=1/1 used=0\nSTREAM OPERATOR Prioritize a read before any write and keep the plan visible.\n"
+    },
+    {
+      "argv": [
+        "vharness-agent",
+        "status",
+        "--journal",
+        "session.sqlite3",
+        "--artifacts",
+        "artifacts",
+        "--session-id",
+        "phase2-operator-steering-resume"
+      ],
+      "label": "status-question",
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "STATUS waiting\nOBJECTIVE Preserve operator direction while safely completing the fixture\nPLAN Read the fixture, apply the requested change, then evaluate.\nBUDGET remaining actions=2/3 used=1 model_calls=3/6 used=3 evaluations=1/1 used=0\nWAIT operator answer\nQUESTION question-19: May I continue with the planned write and test?\nSTREAM OPERATOR Prioritize a read before any write and keep the plan visible.\nSTREAM ACTION read {path='main.py'}\nSTREAM RUNTIME succeeded proposal-041cf988b48e40c2a83f9528c390ba79\n"
+    },
+    {
+      "argv": [
+        "vharness-agent",
+        "message",
+        "--journal",
+        "session.sqlite3",
+        "--artifacts",
+        "artifacts",
+        "--session-id",
+        "phase2-operator-steering-resume",
+        "--text",
+        "This answer is intentionally rejected.",
+        "--question-id",
+        "question-not-the-open-one"
+      ],
+      "label": "message-wrong-question-id",
+      "returncode": 1,
+      "stderr": "ERROR message rejected: message does not answer the open question\n",
+      "stdout": "STATUS waiting\nOBJECTIVE Preserve operator direction while safely completing the fixture\nPLAN Read the fixture, apply the requested change, then evaluate.\nBUDGET remaining actions=2/3 used=1 model_calls=3/6 used=3 evaluations=1/1 used=0\nWAIT operator answer\nQUESTION question-19: May I continue with the planned write and test?\nSTREAM OPERATOR Prioritize a read before any write and keep the plan visible.\nSTREAM ACTION read {path='main.py'}\nSTREAM RUNTIME succeeded proposal-041cf988b48e40c2a83f9528c390ba79\n"
+    },
+    {
+      "argv": [
+        "vharness-agent",
+        "status",
+        "--journal",
+        "session.sqlite3",
+        "--artifacts",
+        "artifacts",
+        "--session-id",
+        "phase2-operator-steering-resume"
+      ],
+      "label": "status-paused",
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "STATUS paused\nOBJECTIVE Preserve operator direction while safely completing the fixture\nPLAN Read the fixture, apply the requested change, then evaluate.\nBUDGET remaining actions=2/3 used=1 model_calls=3/6 used=3 evaluations=1/1 used=0\nWAIT operator answer\nQUESTION question-19: May I continue with the planned write and test?\nSTREAM OPERATOR Prioritize a read before any write and keep the plan visible.\nSTREAM ACTION read {path='main.py'}\nSTREAM RUNTIME succeeded proposal-041cf988b48e40c2a83f9528c390ba79\n"
+    },
+    {
+      "argv": [
+        "vharness-agent",
+        "message",
+        "--journal",
+        "session.sqlite3",
+        "--artifacts",
+        "artifacts",
+        "--session-id",
+        "phase2-operator-steering-resume",
+        "--text",
+        "Yes. Continue with the planned write and test after resume.",
+        "--question-id",
+        "question-19"
+      ],
+      "label": "message-answer-while-paused",
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "STATUS paused\nOBJECTIVE Preserve operator direction while safely completing the fixture\nPLAN Read the fixture, apply the requested change, then evaluate.\nBUDGET remaining actions=2/3 used=1 model_calls=3/6 used=3 evaluations=1/1 used=0\nSTREAM OPERATOR Prioritize a read before any write and keep the plan visible.\nSTREAM ACTION read {path='main.py'}\nSTREAM RUNTIME succeeded proposal-041cf988b48e40c2a83f9528c390ba79\nSTREAM OPERATOR Yes. Continue with the planned write and test after resume.\n"
+    },
+    {
+      "argv": [
+        "vharness-agent",
+        "status",
+        "--journal",
+        "session.sqlite3",
+        "--artifacts",
+        "artifacts",
+        "--session-id",
+        "phase2-operator-steering-resume"
+      ],
+      "label": "status-answered-still-paused",
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "STATUS paused\nOBJECTIVE Preserve operator direction while safely completing the fixture\nPLAN Read the fixture, apply the requested change, then evaluate.\nBUDGET remaining actions=2/3 used=1 model_calls=3/6 used=3 evaluations=1/1 used=0\nSTREAM OPERATOR Prioritize a read before any write and keep the plan visible.\nSTREAM ACTION read {path='main.py'}\nSTREAM RUNTIME succeeded proposal-041cf988b48e40c2a83f9528c390ba79\nSTREAM OPERATOR Yes. Continue with the planned write and test after resume.\n"
+    },
+    {
+      "argv": [
+        "vharness-agent",
+        "status",
+        "--journal",
+        "session.sqlite3",
+        "--artifacts",
+        "artifacts",
+        "--session-id",
+        "phase2-operator-steering-resume"
+      ],
+      "label": "status-final",
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "STATUS completed\nOBJECTIVE Preserve operator direction while safely completing the fixture\nPLAN Read the fixture, apply the requested change, then evaluate.\nBUDGET remaining actions=0/3 used=3 model_calls=0/6 used=6 evaluations=0/1 used=1\nSTREAM OPERATOR Prioritize a read before any write and keep the plan visible.\nSTREAM ACTION read {path='main.py'}\nSTREAM RUNTIME succeeded proposal-041cf988b48e40c2a83f9528c390ba79\nSTREAM OPERATOR Yes. Continue with the planned write and test after resume.\nSTREAM ACTION write {content='value = 1\\n', path='main.py'}\nSTREAM RUNTIME succeeded proposal-4115491f75994817bed52eae89d8b225\nSTREAM ACTION test {}\nSTREAM RUNTIME succeeded proposal-3057a3b9b6df40468bc6e6037dd43315\nSTREAM EVALUATION requested\nSTREAM EVALUATION accepted comparison=improved\nSTREAM LINEAGE promoted\n"
+    }
+  ],
+  "configuration": {
+    "environment": "software-fixture",
+    "evaluator": "software-fixture-evaluator:v1",
+    "evidence": "phase-0002-operator-steering-resume",
+    "model": {
+      "coordinator_retries": 0,
+      "model_id": "phase2-operator-scripted-v1",
+      "policy_version": 1,
+      "provider": "ScriptedModel",
+      "repair_budget": 0,
+      "token_budget": 4096,
+      "token_counter": "whitespace-v1"
+    },
+    "primary_budgets": {
+      "actions": 3,
+      "evaluations": 1,
+      "model_calls": 6
+    },
+    "runtime": "software-fixture-runtime:v1",
+    "stopped_question_budgets": {
+      "actions": 0,
+      "evaluations": 0,
+      "model_calls": 1
+    },
+    "task_ids": {
+      "primary": "vharness-phase2-operator-steering-resume",
+      "stopped": "vharness-phase2-stopped-question"
+    }
+  },
+  "configuration_digest": "094655c36fce153b692ea10a148874c7e86d1434a329a85b00debb4ca585e39e",
+  "context_manifest_count": 6,
+  "environment_ids": {
+    "primary": "software-fixture",
+    "stopped": "software-fixture"
+  },
+  "evaluator": {
+    "__type__": "ComponentIdentity",
+    "component_id": "software-fixture-evaluator",
+    "configuration_digest": null,
+    "version": "v1"
+  },
+  "event_hashes": {
+    "primary": {
+      "1": "8fe433cdbed1c4039f939b945102a9ff4156d2f7970b7075dd1f9fcd279e24b8",
+      "10": "a04bd02bdfe846de5c76a9047715deef009e6827cb2a56fc21108d9975ee26bc",
+      "11": "935fd2a47aa3c3dfed34a29c1f251e4f7d439c2dea212470c1af254de4a7a928",
+      "12": "18b146f9e7f819c535d13b900d81fe7076a61c571bb1674b91b99d921bb9fed7",
+      "13": "b95781cfef8fc80a9aedcab9f1f8ff246b263ccd9e35c0e6dced036a4eb94df6",
+      "14": "874426079e8e4b31ce6f85046f25bc9663deb9bffc04cee597c8582afc58f70e",
+      "15": "94733e6c7cdc69cba8bae40f78887d4725806e6e39b7e151744b10cdcfd3ff04",
+      "16": "43cb6e27f1f03123dc89c023475c09686ae48df915dedea07a61215cfc88c323",
+      "17": "af92f46473163daa92deca1c9849761fbbc2c74e8743ba563cbfb46136e6df88",
+      "18": "09acb4cb21fc92dcfcd646e58885ff0606929a27aaa3438e97e1c9adc39c9e9b",
+      "19": "8efc0017aba03ad88dbef38c76df8d96fb3080c03cd2159718d6f5fafe61a39d",
+      "2": "666d21209d0896c4dbf33b78d1aa73a66ae046e406f383d693626d1ad278f7ba",
+      "20": "8a732fe931f6716353ebbc0c69614720d40c6718af5b510e4a53b52252019b5a",
+      "21": "918092745bcbca83646e8880096d459376cfd9d731bbf8615be6470cc0a0b138",
+      "22": "f97c9f6d05876d549b633b66dc926766049bc97781369858d1f37b5e3e2baccf",
+      "23": "05fd135fac232ec4488e2bde607e86f3d209c661728b44d0679d89ceeca5fe1f",
+      "24": "65c8d6115865b2ebc3c677a14cf1608d06a6a5fbeaa24b4718ade3d9d1df26a5",
+      "25": "1ad90372f8ad9727b79b53c1fe230e09c3d71e5893dc1e1234a6ec049620cc99",
+      "26": "dc260bb55d1791c8db13cb49d264749226a14dc5c8722d04292c67773614c15c",
+      "27": "2228e06171dc0bfa7577705bf95d931edc63babee65c5f17a3f55e012dcb8c11",
+      "28": "e4fb330c18855b6eadb033016a63fcc2ede74bd5923168ab0fd9bf10d6034c30",
+      "29": "1a15c0deb0bace1848229bce603fe0a49004fde3bbd1de05fdbff6ca888db8cf",
+      "3": "c521b042d9c61f38ec49e9a9b49e9145c4552461688d2f8dab49e278ef9fdfdd",
+      "30": "38a5d45e0105e20f6f6b892e25bd4a210180637fd2c94fc60a6b421db9ce15f3",
+      "31": "105f328d0b2ebcdbb97a74a47ab5784194af9422de89687ab067743036e5cda5",
+      "32": "79c5988d064b0e4cebd134fe4d36b23aa532ea78378fe003cc060b14e16242bc",
+      "33": "23881b4902e41627021bd5ebb7d5b0c7be02d8c933ac1fdff751b074094e5a0c",
+      "34": "13c5411eb2815bdffe3ff4d81e065b481b63f7637b5a1f9c6bba7906d3ebd8aa",
+      "35": "f3c65bc11d86360fc24d39d81cc36ed864dfaed1bb2ce2456b57c8dbdb8e585b",
+      "36": "7db09d6acf9551ae3f3e370c8a44eee007187efe3c29a71fdca6f1b5b93c69ea",
+      "37": "1ee5999c533ded1b350bfc8c4da8f55ed1359d22ebd94f82062ddfd662bd3849",
+      "38": "2f5d0fd5b7eca32a2030a2e4fa298cb03e3f19dcdbf14f5ee83d29df1869886a",
+      "39": "af1747bd89394f1501838397c5421a8746daf3614d5b878a33d272fe838348be",
+      "4": "4cf5a0121b6f25b0dff69c5069aa9398ec34f1a2002e93137145cd9bcfd3a433",
+      "40": "e4137ccd10f4ac8edbabc2a946c135282606e44f0e1f23e3bd67005ee37e97ab",
+      "41": "92a744bf5d59896453fc13a1c3c6935e35921ed69bdc3654e85d58cd5c80e907",
+      "42": "c073d9b3732eb1e2dcdd69c4d9bfe3c2ae4e4e5d5ec50f778d374c8855d1ea28",
+      "43": "969c168874b41e6d30fb9cf9b9ba041c840eae2eaacaa2cd51129cd08a1d165b",
+      "44": "0af5ee6fe57edae0b3807c02213782ff535e5144179fd09e262a423f2139771c",
+      "45": "1e3bedc972cecff9d43b2baee230605d13fcb512c5de6a153edbd85a3126f2d9",
+      "46": "a90b4629ab9702e2f88582a7a2da4cabe6e29b986d59141ac40be5f2a05177e6",
+      "47": "a6d2273f7d55843a9dc2aab5d335d61b8aa7cd3fe1bd8bde3fd7db4566a248ab",
+      "48": "5ba6d59fb26f4c88d44afddfc90381891649583a19729090182b9f8e3ee75f81",
+      "49": "264f088ad775e40718f1df94064159a973a9a1ae278b0e3092597b8b79fcd3e4",
+      "5": "c4dee4a0fbe7d21bccf40b64dd3d95102300bebdaf9492830165bd739ad0d7b7",
+      "6": "4350bbba67d613c39fb6eb28cfc9a5893ee759fbd3b4c21f98a6ad2ffbfb2e21",
+      "7": "f7581be7250d6e9a857ec7d7e3bc4bc3852fd0f7193f788a702453410ae35adc",
+      "8": "00d9a018c301c5f6713652b201f6483f30a17f738175b867fadbc19337e0013d",
+      "9": "d302e9bd2002722fa6a82b2eb9c9b4fa4709527450753c6719017aedf1e566b9"
+    },
+    "stopped": {
+      "1": "272e0b7841ae468e33f0d82be204ac1f113dc91c8fc6898027760522ea31a2b7",
+      "10": "5480a5133ea66fd4beb22623f2adbf063bc69564a4b915bb54451b71927af374",
+      "11": "692bdff61adfadb2f54e5fd37b746f7c4544eae0cfaef5316adffad5a8e98d81",
+      "12": "43df99ab08ea213b22951d05530645aad61dc77b6bda730af5ce9471a981c0ab",
+      "13": "ef09a1a9a2c7f16ea336f8c37c6b78f39d18eb8075bd82eee599a5d2fcb0d7d3",
+      "14": "0a664369fbd2693e35f9f7a198bed82fc0cd12de26d6a84c98db6464de5928ed",
+      "2": "53687d3a1b8c245ab1d3bd5cbad7076244b857940f727866a53f04f6dbce2ca5",
+      "3": "47989568c60cd94fba3fd1eda358d17c6bd0a9a22ca9f05ab25b89bb1f744937",
+      "4": "858223a376d44295e9843ed2a59ae79a3e2d89ab6868718ef8a9efef64d01b70",
+      "5": "279e2ac692f1299eae428ab30a5c39d90fee4cb5ec98bf495a67a5db6c9d62df",
+      "6": "81d163eec02bf46aeeb4b72eeadc3d090499ae68f98054d656ebe2803cee3525",
+      "7": "51a564c8ae89efa82576b0f10a04dec072d32b81a33dfddfc3d19aa9b1d7cd48",
+      "8": "c9001f730568abbb619634404c840cba86e2126219b3722c39c208a881f0de83",
+      "9": "f0095731495dcce7eb5ae532453123acb795371f2c58636f58d5890f7ff942bc"
+    }
+  },
+  "evidence_id": "phase-0002-operator-steering-resume",
+  "fixed_budgets": {
+    "primary": {
+      "actions": 3,
+      "evaluations": 1,
+      "model_calls": 6
+    },
+    "stopped": {
+      "actions": 0,
+      "evaluations": 0,
+      "model_calls": 1
+    }
+  },
+  "fresh_process_verification": {
+    "runs": [
+      {
+        "accepted_lineage": [
+          {
+            "__type__": "CommittedNode",
+            "evaluation_receipt_id": null,
+            "node_id": "root-phase2-operator-steering-resume",
+            "objective_version": 1,
+            "objectives": {},
+            "parent_id": null,
+            "state": {
+              "__type__": "StateRef",
+              "digest": "fbf0a67dc2ab3eb0862d2547f18487c7124ee0a589c79c9df1fe5bb5e0bec285",
+              "owner": "software-fixture",
+              "restorable": true,
+              "revision": "0",
+              "value": "rev-0"
+            }
+          },
+          {
+            "__type__": "CommittedNode",
+            "evaluation_receipt_id": "evaluation-evaluation-b586639a948b439a822fe47af46d7357",
+            "node_id": "node-13099a450f6f4b6e9526a0d32c7e1bda",
+            "objective_version": 1,
+            "objectives": {
+              "check_passed": true
+            },
+            "parent_id": "root-phase2-operator-steering-resume",
+            "state": {
+              "__type__": "StateRef",
+              "digest": "2f142cfe76bfc0a598dd76bb02bca01485aac9376fe5aae6e345718850c6564e",
+              "owner": "software-fixture",
+              "restorable": true,
+              "revision": "2",
+              "value": "rev-2"
+            }
+          }
+        ],
+        "counters_match": true,
+        "manifest_match": true,
+        "name": "primary",
+        "opened_operator_view": {
+          "__type__": "OperatorView",
+          "acknowledged_steering": [
+            "Prioritize a read before any write and keep the plan visible.",
+            "Yes. Continue with the planned write and test after resume."
+          ],
+          "action_receipt_stream": [
+            "OPERATOR Prioritize a read before any write and keep the plan visible.",
+            "ACTION read {path='main.py'}",
+            "RUNTIME succeeded proposal-041cf988b48e40c2a83f9528c390ba79",
+            "OPERATOR Yes. Continue with the planned write and test after resume.",
+            "ACTION write {content='value = 1\\n', path='main.py'}",
+            "RUNTIME succeeded proposal-4115491f75994817bed52eae89d8b225",
+            "ACTION test {}",
+            "RUNTIME succeeded proposal-3057a3b9b6df40468bc6e6037dd43315",
+            "EVALUATION requested",
+            "EVALUATION accepted comparison=improved",
+            "LINEAGE promoted"
+          ],
+          "active_attempt_id": null,
+          "budgets": "actions=0/3 used=3 model_calls=0/6 used=6 evaluations=0/1 used=1",
+          "current_plan": "Read the fixture, apply the requested change, then evaluate.",
+          "evidence_ids": [
+            "attempt-63200fee68634c7d9c8658c3de0f9659",
+            "evaluation-evaluation-b586639a948b439a822fe47af46d7357",
+            "event-0818cc26cca1458ab3ce02276fdb9310",
+            "event-0ee47be4d6e243d8a2ead39053a5bb14",
+            "event-1663062638084f7a99c2242a32e7c6c0",
+            "event-180b6bce9343487580e349362d6fface",
+            "event-18f6fdbd351247aab593920bbf1203cf",
+            "event-1ab65f6b655e44728ddb724988ad26f1",
+            "event-203570e9cedb4c8ca7236504338dd784",
+            "event-245d9e0449af45eba15043d45faf3d06",
+            "event-296c2cf9353b4d998ebefbcaa05a93d5",
+            "event-2cd7861e94274b4b8b28a3450696e772",
+            "event-35c99f642422433fa9ec5ad97591c10f",
+            "event-377ef2d7a0ea4168a6e4a4b62ba5095d",
+            "event-3b5ea1d3df9f4ebd95c7a317da882bba",
+            "event-3f6867a138eb4e2896f196b94a4bd846",
+            "event-40b628a517424f3e9151cdb431d3dce8",
+            "event-40cb8ec44f4e46f48e5d65af34db464a",
+            "event-41b0976d226f441baeae03af64715dcc",
+            "event-48ea750a16144acdad590caacdee7b79",
+            "event-4b639d190b2b441b9fae35c9babef7a4",
+            "event-6670c51e64694ed8938c9da971aca7d8",
+            "event-75aeaec7f80e4612bdd599cdbc5be0c5",
+            "event-79ba757834c44d64878aea3fe6a6f064",
+            "event-7c6e36b2ee8344beb761273889545f7a",
+            "event-847905c97643426fbc3cd41c22375585",
+            "event-84f88713a1d14249afdecca30f39fafd",
+            "event-8c617614e0e54d949fecb14e5ad248a8",
+            "event-90478c80d54a4d6da3c593c56582fc26",
+            "event-98385311823b4a61ab9c03ca26585ef2",
+            "event-9a19c18c05cf431fa039450f2090a311",
+            "event-a0f6a7051edc4f60b032550586de121e",
+            "event-afb740c939fd4cc2aa676f71b1e587e5",
+            "event-b3886512a20c412d93b7bd6060b26a1b",
+            "event-bd9805ff0f2f417b9e45bf364c2dcd8c",
+            "event-c106816d2ad542888eca1ae95d16c1c2",
+            "event-c693913724b94a2fa759ee8d4ed9c7a5",
+            "event-d1fc0d559d444f8fad9ae787567161bd",
+            "event-d497d640b7fb4c2d81d1f5859b420849",
+            "event-d62d7595f0314c188c03d78225ff0b07",
+            "event-dac16545598744ffb58c16f7a95c337c",
+            "event-db27d439bb7145c4adf3e38f4a011021",
+            "event-de670793de094456af24f7477f035dc0",
+            "event-e368190c30104880bb845004f7bb374e",
+            "event-e940dd35959542a082b14adcf42a2420",
+            "event-e9de81a98517498b8e087979b484ea77",
+            "event-f5084598b1504820b6e3b45382d1ca0d",
+            "event-f8b964599f864133ae15dc4e3970483d",
+            "event-f93c75530e6f47cab72a16bc70744f10",
+            "event-fde22c2434224649be7d19291ff2bf42",
+            "event-feb3db28a2b5483781f1fe86aed96560",
+            "node-13099a450f6f4b6e9526a0d32c7e1bda",
+            "receipt-proposal-041cf988b48e40c2a83f9528c390ba79",
+            "receipt-proposal-3057a3b9b6df40468bc6e6037dd43315",
+            "receipt-proposal-4115491f75994817bed52eae89d8b225",
+            "root-phase2-operator-steering-resume"
+          ],
+          "lineage_head": "node-13099a450f6f4b6e9526a0d32c7e1bda",
+          "objective": "Preserve operator direction while safely completing the fixture",
+          "objective_version": 1,
+          "operator_direction": "Yes. Continue with the planned write and test after resume.",
+          "pending_proposal_id": null,
+          "questions": [],
+          "remaining_budgets": "actions=0/3 used=3 model_calls=0/6 used=6 evaluations=0/1 used=1",
+          "session_id": "phase2-operator-steering-resume",
+          "status": "completed",
+          "wait_reason": null
+        },
+        "opened_view": {
+          "__type__": "SessionView",
+          "active_attempt": null,
+          "cursor": 49,
+          "lineage_head": {
+            "__type__": "CommittedNode",
+            "evaluation_receipt_id": "evaluation-evaluation-b586639a948b439a822fe47af46d7357",
+            "node_id": "node-13099a450f6f4b6e9526a0d32c7e1bda",
+            "objective_version": 1,
+            "objectives": {
+              "check_passed": true
+            },
+            "parent_id": "root-phase2-operator-steering-resume",
+            "state": {
+              "__type__": "StateRef",
+              "digest": "2f142cfe76bfc0a598dd76bb02bca01485aac9376fe5aae6e345718850c6564e",
+              "owner": "software-fixture",
+              "restorable": true,
+              "revision": "2",
+              "value": "rev-2"
+            }
+          },
+          "pending_proposal_id": null,
+          "session_id": "phase2-operator-steering-resume",
+          "status": "completed",
+          "task": {
+            "__type__": "TaskSpec",
+            "budgets": {
+              "__type__": "BudgetLimits",
+              "actions": 3,
+              "cost": null,
+              "evaluations": 1,
+              "model_calls": 6
+            },
+            "completion_mode": "finite",
+            "constraints": [],
+            "environment_id": "software-fixture",
+            "evaluation_contract_id": "software-fixture-evaluator-v1",
+            "objective": "Preserve operator direction while safely completing the fixture",
+            "objective_version": 1,
+            "success_evidence": "external evaluator acceptance",
+            "task_id": "vharness-phase2-operator-steering-resume"
+          },
+          "wait_reason": null
+        },
+        "operator_view_matches_replay": true,
+        "replay_cursor": 49,
+        "replay_matches_open_view": true,
+        "replay_operator_view": {
+          "__type__": "OperatorView",
+          "acknowledged_steering": [
+            "Prioritize a read before any write and keep the plan visible.",
+            "Yes. Continue with the planned write and test after resume."
+          ],
+          "action_receipt_stream": [
+            "OPERATOR Prioritize a read before any write and keep the plan visible.",
+            "ACTION read {path='main.py'}",
+            "RUNTIME succeeded proposal-041cf988b48e40c2a83f9528c390ba79",
+            "OPERATOR Yes. Continue with the planned write and test after resume.",
+            "ACTION write {content='value = 1\\n', path='main.py'}",
+            "RUNTIME succeeded proposal-4115491f75994817bed52eae89d8b225",
+            "ACTION test {}",
+            "RUNTIME succeeded proposal-3057a3b9b6df40468bc6e6037dd43315",
+            "EVALUATION requested",
+            "EVALUATION accepted comparison=improved",
+            "LINEAGE promoted"
+          ],
+          "active_attempt_id": null,
+          "budgets": "actions=0/3 used=3 model_calls=0/6 used=6 evaluations=0/1 used=1",
+          "current_plan": "Read the fixture, apply the requested change, then evaluate.",
+          "evidence_ids": [
+            "attempt-63200fee68634c7d9c8658c3de0f9659",
+            "evaluation-evaluation-b586639a948b439a822fe47af46d7357",
+            "event-0818cc26cca1458ab3ce02276fdb9310",
+            "event-0ee47be4d6e243d8a2ead39053a5bb14",
+            "event-1663062638084f7a99c2242a32e7c6c0",
+            "event-180b6bce9343487580e349362d6fface",
+            "event-18f6fdbd351247aab593920bbf1203cf",
+            "event-1ab65f6b655e44728ddb724988ad26f1",
+            "event-203570e9cedb4c8ca7236504338dd784",
+            "event-245d9e0449af45eba15043d45faf3d06",
+            "event-296c2cf9353b4d998ebefbcaa05a93d5",
+            "event-2cd7861e94274b4b8b28a3450696e772",
+            "event-35c99f642422433fa9ec5ad97591c10f",
+            "event-377ef2d7a0ea4168a6e4a4b62ba5095d",
+            "event-3b5ea1d3df9f4ebd95c7a317da882bba",
+            "event-3f6867a138eb4e2896f196b94a4bd846",
+            "event-40b628a517424f3e9151cdb431d3dce8",
+            "event-40cb8ec44f4e46f48e5d65af34db464a",
+            "event-41b0976d226f441baeae03af64715dcc",
+            "event-48ea750a16144acdad590caacdee7b79",
+            "event-4b639d190b2b441b9fae35c9babef7a4",
+            "event-6670c51e64694ed8938c9da971aca7d8",
+            "event-75aeaec7f80e4612bdd599cdbc5be0c5",
+            "event-79ba757834c44d64878aea3fe6a6f064",
+            "event-7c6e36b2ee8344beb761273889545f7a",
+            "event-847905c97643426fbc3cd41c22375585",
+            "event-84f88713a1d14249afdecca30f39fafd",
+            "event-8c617614e0e54d949fecb14e5ad248a8",
+            "event-90478c80d54a4d6da3c593c56582fc26",
+            "event-98385311823b4a61ab9c03ca26585ef2",
+            "event-9a19c18c05cf431fa039450f2090a311",
+            "event-a0f6a7051edc4f60b032550586de121e",
+            "event-afb740c939fd4cc2aa676f71b1e587e5",
+            "event-b3886512a20c412d93b7bd6060b26a1b",
+            "event-bd9805ff0f2f417b9e45bf364c2dcd8c",
+            "event-c106816d2ad542888eca1ae95d16c1c2",
+            "event-c693913724b94a2fa759ee8d4ed9c7a5",
+            "event-d1fc0d559d444f8fad9ae787567161bd",
+            "event-d497d640b7fb4c2d81d1f5859b420849",
+            "event-d62d7595f0314c188c03d78225ff0b07",
+            "event-dac16545598744ffb58c16f7a95c337c",
+            "event-db27d439bb7145c4adf3e38f4a011021",
+            "event-de670793de094456af24f7477f035dc0",
+            "event-e368190c30104880bb845004f7bb374e",
+            "event-e940dd35959542a082b14adcf42a2420",
+            "event-e9de81a98517498b8e087979b484ea77",
+            "event-f5084598b1504820b6e3b45382d1ca0d",
+            "event-f8b964599f864133ae15dc4e3970483d",
+            "event-f93c75530e6f47cab72a16bc70744f10",
+            "event-fde22c2434224649be7d19291ff2bf42",
+            "event-feb3db28a2b5483781f1fe86aed96560",
+            "node-13099a450f6f4b6e9526a0d32c7e1bda",
+            "receipt-proposal-041cf988b48e40c2a83f9528c390ba79",
+            "receipt-proposal-3057a3b9b6df40468bc6e6037dd43315",
+            "receipt-proposal-4115491f75994817bed52eae89d8b225",
+            "root-phase2-operator-steering-resume"
+          ],
+          "lineage_head": "node-13099a450f6f4b6e9526a0d32c7e1bda",
+          "objective": "Preserve operator direction while safely completing the fixture",
+          "objective_version": 1,
+          "operator_direction": "Yes. Continue with the planned write and test after resume.",
+          "pending_proposal_id": null,
+          "questions": [],
+          "remaining_budgets": "actions=0/3 used=3 model_calls=0/6 used=6 evaluations=0/1 used=1",
+          "session_id": "phase2-operator-steering-resume",
+          "status": "completed",
+          "wait_reason": null
+        },
+        "replay_projection_sha256": "31fa5dcb9ab7d34ca270e1f134608dba46b10a3753d083e1915322bb0c8108bc",
+        "replay_status": "completed",
+        "session_id": "phase2-operator-steering-resume"
+      },
+      {
+        "accepted_lineage": [
+          {
+            "__type__": "CommittedNode",
+            "evaluation_receipt_id": null,
+            "node_id": "root-phase2-stopped-question",
+            "objective_version": 1,
+            "objectives": {},
+            "parent_id": null,
+            "state": {
+              "__type__": "StateRef",
+              "digest": "fbf0a67dc2ab3eb0862d2547f18487c7124ee0a589c79c9df1fe5bb5e0bec285",
+              "owner": "software-fixture",
+              "restorable": true,
+              "revision": "0",
+              "value": "rev-0"
+            }
+          }
+        ],
+        "counters_match": true,
+        "manifest_match": true,
+        "name": "stopped",
+        "opened_operator_view": {
+          "__type__": "OperatorView",
+          "acknowledged_steering": [
+            "The stop remains authoritative after this answer."
+          ],
+          "action_receipt_stream": [
+            "OPERATOR The stop remains authoritative after this answer."
+          ],
+          "active_attempt_id": "attempt-c57e6bd53e474b02bdd5f73493d3cd9e",
+          "budgets": "actions=0/0 used=0 model_calls=0/1 used=1 evaluations=0/0 used=0",
+          "current_plan": "none",
+          "evidence_ids": [
+            "attempt-c57e6bd53e474b02bdd5f73493d3cd9e",
+            "event-1104b4dfdd6c47459140b120e2f85c15",
+            "event-2d2fca0ebc0447a2b9b99d54ec1956d9",
+            "event-3d97ed5b77174c4e9a1cafd456c4cd5b",
+            "event-461083c1bc4e4c10997fa2415e84e667",
+            "event-46cdc7b8d4074c28b411a6049ec8b334",
+            "event-57bc44b7235d422f92897af183b5c85a",
+            "event-5f33f7e2bd8846709772cff79786e5cd",
+            "event-76e698557f2047df8ecd663eb9297658",
+            "event-a5893f6f71bc4397acb8c8c6e808c087",
+            "event-bcaccf85d7d94c6dbad192e432c5f6fd",
+            "event-be8055caf1af4151a685089fe17c4cf2",
+            "event-c65116037e3b453cb911017faf74a175",
+            "event-d7b4d65499754fd3baa28408d2312380",
+            "event-feda247316ae489c96ba253beb7bd926",
+            "root-phase2-stopped-question"
+          ],
+          "lineage_head": "root-phase2-stopped-question",
+          "objective": "Answer a question without restarting a stopped session",
+          "objective_version": 1,
+          "operator_direction": "The stop remains authoritative after this answer.",
+          "pending_proposal_id": null,
+          "questions": [],
+          "remaining_budgets": "actions=0/0 used=0 model_calls=0/1 used=1 evaluations=0/0 used=0",
+          "session_id": "phase2-stopped-question",
+          "status": "stopped",
+          "wait_reason": null
+        },
+        "opened_view": {
+          "__type__": "SessionView",
+          "active_attempt": {
+            "__type__": "Attempt",
+            "attempt_id": "attempt-c57e6bd53e474b02bdd5f73493d3cd9e",
+            "base_node_id": "root-phase2-stopped-question",
+            "disposition": "active",
+            "objective_version": 1,
+            "result_state": null,
+            "starting_state": {
+              "__type__": "StateRef",
+              "digest": "fbf0a67dc2ab3eb0862d2547f18487c7124ee0a589c79c9df1fe5bb5e0bec285",
+              "owner": "software-fixture",
+              "restorable": true,
+              "revision": "0",
+              "value": "rev-0"
+            }
+          },
+          "cursor": 14,
+          "lineage_head": {
+            "__type__": "CommittedNode",
+            "evaluation_receipt_id": null,
+            "node_id": "root-phase2-stopped-question",
+            "objective_version": 1,
+            "objectives": {},
+            "parent_id": null,
+            "state": {
+              "__type__": "StateRef",
+              "digest": "fbf0a67dc2ab3eb0862d2547f18487c7124ee0a589c79c9df1fe5bb5e0bec285",
+              "owner": "software-fixture",
+              "restorable": true,
+              "revision": "0",
+              "value": "rev-0"
+            }
+          },
+          "pending_proposal_id": null,
+          "session_id": "phase2-stopped-question",
+          "status": "stopped",
+          "task": {
+            "__type__": "TaskSpec",
+            "budgets": {
+              "__type__": "BudgetLimits",
+              "actions": 0,
+              "cost": null,
+              "evaluations": 0,
+              "model_calls": 1
+            },
+            "completion_mode": "finite",
+            "constraints": [],
+            "environment_id": "software-fixture",
+            "evaluation_contract_id": "software-fixture-evaluator-v1",
+            "objective": "Answer a question without restarting a stopped session",
+            "objective_version": 1,
+            "success_evidence": "external evaluator acceptance",
+            "task_id": "vharness-phase2-stopped-question"
+          },
+          "wait_reason": null
+        },
+        "operator_view_matches_replay": true,
+        "replay_cursor": 14,
+        "replay_matches_open_view": true,
+        "replay_operator_view": {
+          "__type__": "OperatorView",
+          "acknowledged_steering": [
+            "The stop remains authoritative after this answer."
+          ],
+          "action_receipt_stream": [
+            "OPERATOR The stop remains authoritative after this answer."
+          ],
+          "active_attempt_id": "attempt-c57e6bd53e474b02bdd5f73493d3cd9e",
+          "budgets": "actions=0/0 used=0 model_calls=0/1 used=1 evaluations=0/0 used=0",
+          "current_plan": "none",
+          "evidence_ids": [
+            "attempt-c57e6bd53e474b02bdd5f73493d3cd9e",
+            "event-1104b4dfdd6c47459140b120e2f85c15",
+            "event-2d2fca0ebc0447a2b9b99d54ec1956d9",
+            "event-3d97ed5b77174c4e9a1cafd456c4cd5b",
+            "event-461083c1bc4e4c10997fa2415e84e667",
+            "event-46cdc7b8d4074c28b411a6049ec8b334",
+            "event-57bc44b7235d422f92897af183b5c85a",
+            "event-5f33f7e2bd8846709772cff79786e5cd",
+            "event-76e698557f2047df8ecd663eb9297658",
+            "event-a5893f6f71bc4397acb8c8c6e808c087",
+            "event-bcaccf85d7d94c6dbad192e432c5f6fd",
+            "event-be8055caf1af4151a685089fe17c4cf2",
+            "event-c65116037e3b453cb911017faf74a175",
+            "event-d7b4d65499754fd3baa28408d2312380",
+            "event-feda247316ae489c96ba253beb7bd926",
+            "root-phase2-stopped-question"
+          ],
+          "lineage_head": "root-phase2-stopped-question",
+          "objective": "Answer a question without restarting a stopped session",
+          "objective_version": 1,
+          "operator_direction": "The stop remains authoritative after this answer.",
+          "pending_proposal_id": null,
+          "questions": [],
+          "remaining_budgets": "actions=0/0 used=0 model_calls=0/1 used=1 evaluations=0/0 used=0",
+          "session_id": "phase2-stopped-question",
+          "status": "stopped",
+          "wait_reason": null
+        },
+        "replay_projection_sha256": "0872a992f517c5c92cce7f440b915ee92e0b3dc4904931bfd1dc1bcc74cb8d25",
+        "replay_status": "stopped",
+        "session_id": "phase2-stopped-question"
+      }
+    ]
+  },
+  "model": {
+    "__type__": "ModelConfiguration",
+    "context_coefficients": {
+      "causal_proximity": 1.0,
+      "mmr": 8.0,
+      "overlap": 1.0,
+      "recency": 1.0,
+      "salience": 1.0,
+      "unresolved": 2.0
+    },
+    "model_id": "phase2-operator-scripted-v1",
+    "output_settings": {
+      "reserved_output_tokens": 256
+    },
+    "policy_version": 1,
+    "provider_id": "ScriptedModel",
+    "repair_settings": {
+      "repair_budget": 0
+    },
+    "retry_settings": {
+      "coordinator_owned": true
+    },
+    "system_prompt_digest": "43f0394ad0cc07fc7c795813cffba60681dbee9337a06ec170eaa1871221b97f",
+    "token_budget": 4096,
+    "token_counter": "whitespace-v1"
+  },
+  "operator_interventions": {
+    "classification_counts": {
+      "abort": 0,
+      "corrective": 2,
+      "requested": 2
+    },
+    "notes": "Direction and pause are corrective; the question answer and resume are requested controls; the intentionally wrong answer is a rejected corrective input; no abort was issued."
+  },
+  "package_version": "0.2.0",
+  "primary_run": {
+    "accepted_lineage": [
+      {
+        "__type__": "CommittedNode",
+        "evaluation_receipt_id": null,
+        "node_id": "root-phase2-operator-steering-resume",
+        "objective_version": 1,
+        "objectives": {},
+        "parent_id": null,
+        "state": {
+          "__type__": "StateRef",
+          "digest": "fbf0a67dc2ab3eb0862d2547f18487c7124ee0a589c79c9df1fe5bb5e0bec285",
+          "owner": "software-fixture",
+          "restorable": true,
+          "revision": "0",
+          "value": "rev-0"
+        }
+      },
+      {
+        "__type__": "CommittedNode",
+        "evaluation_receipt_id": "evaluation-evaluation-b586639a948b439a822fe47af46d7357",
+        "node_id": "node-13099a450f6f4b6e9526a0d32c7e1bda",
+        "objective_version": 1,
+        "objectives": {
+          "check_passed": true
+        },
+        "parent_id": "root-phase2-operator-steering-resume",
+        "state": {
+          "__type__": "StateRef",
+          "digest": "2f142cfe76bfc0a598dd76bb02bca01485aac9376fe5aae6e345718850c6564e",
+          "owner": "software-fixture",
+          "restorable": true,
+          "revision": "2",
+          "value": "rev-2"
+        }
+      }
+    ],
+    "action_receipts": [
+      {
+        "action_name": "read",
+        "proposal_id": "proposal-041cf988b48e40c2a83f9528c390ba79",
+        "proposal_sequence": 14,
+        "receipt_id": "receipt-proposal-041cf988b48e40c2a83f9528c390ba79",
+        "receipt_sequence": 15,
+        "status": "succeeded"
+      },
+      {
+        "action_name": "write",
+        "proposal_id": "proposal-4115491f75994817bed52eae89d8b225",
+        "proposal_sequence": 35,
+        "receipt_id": "receipt-proposal-4115491f75994817bed52eae89d8b225",
+        "receipt_sequence": 36,
+        "status": "succeeded"
+      },
+      {
+        "action_name": "test",
+        "proposal_id": "proposal-3057a3b9b6df40468bc6e6037dd43315",
+        "proposal_sequence": 40,
+        "receipt_id": "receipt-proposal-3057a3b9b6df40468bc6e6037dd43315",
+        "receipt_sequence": 41,
+        "status": "succeeded"
+      }
+    ],
+    "artifacts": "artifacts",
+    "checkpoint": {
+      "cursor": 48,
+      "projection_sha256": "31fa5dcb9ab7d34ca270e1f134608dba46b10a3753d083e1915322bb0c8108bc",
+      "sequence": 49
+    },
+    "counters": {
+      "__type__": "RunCounters",
+      "abandoned_attempts": 0,
+      "actions": 3,
+      "attempts": 1,
+      "checkpoints": 1,
+      "commits": 1,
+      "conservative_supervisor_calls": 0,
+      "duration_ms": null,
+      "envelope": {
+        "__type__": "RecordEnvelope",
+        "causation_id": null,
+        "correlation_id": null,
+        "extensions": {},
+        "objective_version": 1,
+        "provenance": "vharness.replay",
+        "record_id": "event-296c2cf9353b4d998ebefbcaa05a93d5",
+        "recorded_at": "2026-09-15T02:29:17.067877+00:00",
+        "schema_version": 1,
+        "session_id": "phase2-operator-steering-resume"
+      },
+      "evaluations": 1,
+      "hard_constraint_failed_attempts": 0,
+      "incomparable_attempts": 0,
+      "input_tokens": null,
+      "invalid_attempts": 0,
+      "known_cost": "0",
+      "model_calls": 6,
+      "operator_commands": 5,
+      "output_tokens": null,
+      "reconciliations": 0,
+      "rejected_attempts": 0,
+      "runtime_receipts": 3,
+      "stale_attempts": 0,
+      "supervisor_calls": 0,
+      "supervisor_input_tokens": 0,
+      "supervisor_output_tokens": 0,
+      "unknown_cost_operations": 10
+    },
+    "journal": "session.sqlite3",
+    "journal_cursor": 49,
+    "manifest": {
+      "__type__": "RunManifest",
+      "configuration_digest": "094655c36fce153b692ea10a148874c7e86d1434a329a85b00debb4ca585e39e",
+      "envelope": {
+        "__type__": "RecordEnvelope",
+        "causation_id": null,
+        "correlation_id": null,
+        "extensions": {},
+        "objective_version": 1,
+        "provenance": "vharness.session",
+        "record_id": "event-75aeaec7f80e4612bdd599cdbc5be0c5",
+        "recorded_at": "2026-09-15T02:29:03.647191+00:00",
+        "schema_version": 1,
+        "session_id": "phase2-operator-steering-resume"
+      },
+      "environment_id": "software-fixture",
+      "environment_version": "1",
+      "evaluator": {
+        "__type__": "ComponentIdentity",
+        "component_id": "software-fixture-evaluator",
+        "configuration_digest": null,
+        "version": "v1"
+      },
+      "evaluator_version": "software-fixture-evaluator-v1",
+      "package_version": "0.2.0",
+      "runtime": {
+        "__type__": "ComponentIdentity",
+        "component_id": "software-fixture-runtime",
+        "configuration_digest": null,
+        "version": "v1"
+      },
+      "schema_version": 1,
+      "session_id": "phase2-operator-steering-resume",
+      "task_id": "vharness-phase2-operator-steering-resume"
+    },
+    "operator_context": {
+      "context_assembly_sequence": 12,
+      "message_sequence": 9,
+      "model_request_id": "decision-93a142bfa41a4a91a4dceea3facd21de",
+      "visible_input_contains_direction": true,
+      "visible_input_sha256": "4e322e722fc8df365048ee85e65dfc7d88be01121b43dcebdb1280a0d47bdac7"
+    },
+    "pause_resume": {
+      "acknowledged_steering_after_resume": [
+        "Prioritize a read before any write and keep the plan visible.",
+        "Yes. Continue with the planned write and test after resume."
+      ],
+      "after_suppressed_step_metrics": {
+        "accepted_commits": 0,
+        "action_proposals": 1,
+        "evaluations": 0,
+        "model_calls": 3,
+        "runtime_receipts": 1
+      },
+      "before_pause_metrics": {
+        "accepted_commits": 0,
+        "action_proposals": 1,
+        "evaluations": 0,
+        "model_calls": 3,
+        "runtime_receipts": 1
+      },
+      "model_calls_at_pause": 3,
+      "operator_direction_after_resume": "Yes. Continue with the planned write and test after resume.",
+      "pause_sequence": 23,
+      "paused_metrics": {
+        "accepted_commits": 0,
+        "action_proposals": 1,
+        "evaluations": 0,
+        "model_calls": 3,
+        "runtime_receipts": 1
+      },
+      "pending_effect_after_resume": null,
+      "pending_effect_before_resume": null,
+      "resume_sequence": 30
+    },
+    "pending_effect": null,
+    "projection_sha256": "31fa5dcb9ab7d34ca270e1f134608dba46b10a3753d083e1915322bb0c8108bc",
+    "question": {
+      "answer_command_id": "msg-3b973faac05a",
+      "answer_sequence": 27,
+      "question_id": "question-19",
+      "question_sequence": 19
+    },
+    "status": "completed"
+  },
+  "runtime": {
+    "__type__": "ComponentIdentity",
+    "component_id": "software-fixture-runtime",
+    "configuration_digest": null,
+    "version": "v1"
+  },
+  "scope": "Deterministic scripted-model operator-control evidence. It proves durability, CLI presentation, pause/answer/resume/stop mechanics, replay, and fixture acceptance. It does not claim autonomous model reasoning, live-provider behavior, or broad software capability.",
+  "snapshots": {
+    "answered_still_paused": {
+      "acknowledged_steering": [
+        "Prioritize a read before any write and keep the plan visible.",
+        "Yes. Continue with the planned write and test after resume."
+      ],
+      "action_receipt_stream": [
+        "OPERATOR Prioritize a read before any write and keep the plan visible.",
+        "ACTION read {path='main.py'}",
+        "RUNTIME succeeded proposal-041cf988b48e40c2a83f9528c390ba79",
+        "OPERATOR Yes. Continue with the planned write and test after resume."
+      ],
+      "budgets": "actions=2/3 used=1 model_calls=3/6 used=3 evaluations=1/1 used=0",
+      "current_plan": "Read the fixture, apply the requested change, then evaluate.",
+      "cursor": 27,
+      "lineage_head": "root-phase2-operator-steering-resume",
+      "objective": "Preserve operator direction while safely completing the fixture",
+      "objective_version": 1,
+      "operator_direction": "Yes. Continue with the planned write and test after resume.",
+      "pending_effect": null,
+      "projection_sha256": "32ce1b59933dbdc13fb24f3f623921d08a483d1622ab8226fec4add794ec656b",
+      "questions": [],
+      "status": "paused"
+    },
+    "final": {
+      "acknowledged_steering": [
+        "Prioritize a read before any write and keep the plan visible.",
+        "Yes. Continue with the planned write and test after resume."
+      ],
+      "action_receipt_stream": [
+        "OPERATOR Prioritize a read before any write and keep the plan visible.",
+        "ACTION read {path='main.py'}",
+        "RUNTIME succeeded proposal-041cf988b48e40c2a83f9528c390ba79",
+        "OPERATOR Yes. Continue with the planned write and test after resume.",
+        "ACTION write {content='value = 1\\n', path='main.py'}",
+        "RUNTIME succeeded proposal-4115491f75994817bed52eae89d8b225",
+        "ACTION test {}",
+        "RUNTIME succeeded proposal-3057a3b9b6df40468bc6e6037dd43315",
+        "EVALUATION requested",
+        "EVALUATION accepted comparison=improved",
+        "LINEAGE promoted"
+      ],
+      "budgets": "actions=0/3 used=3 model_calls=0/6 used=6 evaluations=0/1 used=1",
+      "current_plan": "Read the fixture, apply the requested change, then evaluate.",
+      "cursor": 49,
+      "lineage_head": "node-13099a450f6f4b6e9526a0d32c7e1bda",
+      "objective": "Preserve operator direction while safely completing the fixture",
+      "objective_version": 1,
+      "operator_direction": "Yes. Continue with the planned write and test after resume.",
+      "pending_effect": null,
+      "projection_sha256": "31fa5dcb9ab7d34ca270e1f134608dba46b10a3753d083e1915322bb0c8108bc",
+      "questions": [],
+      "status": "completed"
+    },
+    "paused_question_open": {
+      "acknowledged_steering": [
+        "Prioritize a read before any write and keep the plan visible."
+      ],
+      "action_receipt_stream": [
+        "OPERATOR Prioritize a read before any write and keep the plan visible.",
+        "ACTION read {path='main.py'}",
+        "RUNTIME succeeded proposal-041cf988b48e40c2a83f9528c390ba79"
+      ],
+      "budgets": "actions=2/3 used=1 model_calls=3/6 used=3 evaluations=1/1 used=0",
+      "current_plan": "Read the fixture, apply the requested change, then evaluate.",
+      "cursor": 23,
+      "lineage_head": "root-phase2-operator-steering-resume",
+      "objective": "Preserve operator direction while safely completing the fixture",
+      "objective_version": 1,
+      "operator_direction": "Prioritize a read before any write and keep the plan visible.",
+      "pending_effect": null,
+      "projection_sha256": "c3fef8480abcf9b2d3e96682ff18ae046401dbf97e1dbd3754c38238f148b33a",
+      "questions": [
+        "question-19: May I continue with the planned write and test?"
+      ],
+      "status": "paused"
+    },
+    "question_open": {
+      "acknowledged_steering": [
+        "Prioritize a read before any write and keep the plan visible."
+      ],
+      "action_receipt_stream": [
+        "OPERATOR Prioritize a read before any write and keep the plan visible.",
+        "ACTION read {path='main.py'}",
+        "RUNTIME succeeded proposal-041cf988b48e40c2a83f9528c390ba79"
+      ],
+      "budgets": "actions=2/3 used=1 model_calls=3/6 used=3 evaluations=1/1 used=0",
+      "current_plan": "Read the fixture, apply the requested change, then evaluate.",
+      "cursor": 19,
+      "lineage_head": "root-phase2-operator-steering-resume",
+      "objective": "Preserve operator direction while safely completing the fixture",
+      "objective_version": 1,
+      "operator_direction": "Prioritize a read before any write and keep the plan visible.",
+      "pending_effect": null,
+      "projection_sha256": "7ec140aaf0c5ca8ac1cc06eb6b287b15a6c0b2271e09f72c52c559bea84c6c49",
+      "questions": [
+        "question-19: May I continue with the planned write and test?"
+      ],
+      "status": "waiting"
+    },
+    "resumed": {
+      "acknowledged_steering": [
+        "Prioritize a read before any write and keep the plan visible.",
+        "Yes. Continue with the planned write and test after resume."
+      ],
+      "action_receipt_stream": [
+        "OPERATOR Prioritize a read before any write and keep the plan visible.",
+        "ACTION read {path='main.py'}",
+        "RUNTIME succeeded proposal-041cf988b48e40c2a83f9528c390ba79",
+        "OPERATOR Yes. Continue with the planned write and test after resume."
+      ],
+      "budgets": "actions=2/3 used=1 model_calls=3/6 used=3 evaluations=1/1 used=0",
+      "current_plan": "Read the fixture, apply the requested change, then evaluate.",
+      "cursor": 30,
+      "lineage_head": "root-phase2-operator-steering-resume",
+      "objective": "Preserve operator direction while safely completing the fixture",
+      "objective_version": 1,
+      "operator_direction": "Yes. Continue with the planned write and test after resume.",
+      "pending_effect": null,
+      "projection_sha256": "dd6fa5b48d6dc2effe315954b6734f8a0254acaa485b765bc6f2470313c0e5ed",
+      "questions": [],
+      "status": "running"
+    },
+    "stopped_answered": {
+      "acknowledged_steering": [
+        "The stop remains authoritative after this answer."
+      ],
+      "action_receipt_stream": [
+        "OPERATOR The stop remains authoritative after this answer."
+      ],
+      "budgets": "actions=0/0 used=0 model_calls=0/1 used=1 evaluations=0/0 used=0",
+      "current_plan": "none",
+      "cursor": 14,
+      "lineage_head": "root-phase2-stopped-question",
+      "objective": "Answer a question without restarting a stopped session",
+      "objective_version": 1,
+      "operator_direction": "The stop remains authoritative after this answer.",
+      "pending_effect": null,
+      "projection_sha256": "0872a992f517c5c92cce7f440b915ee92e0b3dc4904931bfd1dc1bcc74cb8d25",
+      "questions": [],
+      "status": "stopped"
+    }
+  },
+  "source": {
+    "generator_sha256": "758874e3512c929d56e48039241e07bedc36fb07e1860a2c8e1bf056caaa5a5f",
+    "git_dirty": false,
+    "git_revision": "88e644712f2b4b115a0d21f2888c27f7401d2332"
+  },
+  "stopped_question_run": {
+    "answer_sequence": 13,
+    "artifacts": "stopped-artifacts",
+    "counters": {
+      "__type__": "RunCounters",
+      "abandoned_attempts": 0,
+      "actions": 0,
+      "attempts": 1,
+      "checkpoints": 0,
+      "commits": 0,
+      "conservative_supervisor_calls": 0,
+      "duration_ms": null,
+      "envelope": {
+        "__type__": "RecordEnvelope",
+        "causation_id": "answer-after-stop",
+        "correlation_id": null,
+        "extensions": {},
+        "objective_version": 1,
+        "provenance": "vharness.replay",
+        "record_id": "event-57bc44b7235d422f92897af183b5c85a",
+        "recorded_at": "2026-09-15T02:29:18.985357+00:00",
+        "schema_version": 1,
+        "session_id": "phase2-stopped-question"
+      },
+      "evaluations": 0,
+      "hard_constraint_failed_attempts": 0,
+      "incomparable_attempts": 0,
+      "input_tokens": null,
+      "invalid_attempts": 0,
+      "known_cost": "0",
+      "model_calls": 1,
+      "operator_commands": 2,
+      "output_tokens": null,
+      "reconciliations": 0,
+      "rejected_attempts": 0,
+      "runtime_receipts": 0,
+      "stale_attempts": 0,
+      "supervisor_calls": 0,
+      "supervisor_input_tokens": 0,
+      "supervisor_output_tokens": 0,
+      "unknown_cost_operations": 1
+    },
+    "journal": "stopped-question.sqlite3",
+    "manifest": {
+      "__type__": "RunManifest",
+      "configuration_digest": "094655c36fce153b692ea10a148874c7e86d1434a329a85b00debb4ca585e39e",
+      "envelope": {
+        "__type__": "RecordEnvelope",
+        "causation_id": null,
+        "correlation_id": null,
+        "extensions": {},
+        "objective_version": 1,
+        "provenance": "vharness.session",
+        "record_id": "event-feda247316ae489c96ba253beb7bd926",
+        "recorded_at": "2026-09-15T02:29:18.941800+00:00",
+        "schema_version": 1,
+        "session_id": "phase2-stopped-question"
+      },
+      "environment_id": "software-fixture",
+      "environment_version": "1",
+      "evaluator": {
+        "__type__": "ComponentIdentity",
+        "component_id": "software-fixture-evaluator",
+        "configuration_digest": null,
+        "version": "v1"
+      },
+      "evaluator_version": "software-fixture-evaluator-v1",
+      "package_version": "0.2.0",
+      "runtime": {
+        "__type__": "ComponentIdentity",
+        "component_id": "software-fixture-runtime",
+        "configuration_digest": null,
+        "version": "v1"
+      },
+      "schema_version": 1,
+      "session_id": "phase2-stopped-question",
+      "task_id": "vharness-phase2-stopped-question"
+    },
+    "model_calls": 1,
+    "pending_effect": null,
+    "question_id": "question-7",
+    "question_sequence": 7,
+    "status": "stopped",
+    "stop_sequence": 9
+  },
+  "task_ids": {
+    "primary": "vharness-phase2-operator-steering-resume",
+    "stopped": "vharness-phase2-stopped-question"
+  }
+}

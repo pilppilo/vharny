@@ -1,0 +1,11 @@
+{
+  "operator_cues": [],
+  "policy_parameters": {
+    "cooldown_calls": 4,
+    "kind": "repetition",
+    "repeat_threshold": 3,
+    "window_calls": 8
+  },
+  "run_id": "productive/s2/P1",
+  "triggers": []
+}

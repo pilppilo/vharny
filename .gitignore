@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+activate/
+*.egg-info/
+dist/
+build/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+
+# Local workspace artifacts
+.zcode/
+.workbuddy-ai/
+.vharness/
+
+# Scan outputs / caches / logs
+report.*
+*report*.sarif
+*report*.md
+*report*.json
+*.sarif
+eval_report*.md
+eval_report*_detail.json
+eval_metrics.json
+*.jsonl
+*.sqlite3
+!evidence/**/*.sqlite3
+
+# Retained evidence report payloads are hash inventory, not scan output.
+!evidence/**/report.json

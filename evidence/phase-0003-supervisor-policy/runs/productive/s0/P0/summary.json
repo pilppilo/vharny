@@ -1,0 +1,104 @@
+{
+  "accepted": true,
+  "accepted_at_call": 7,
+  "actions_to_recovery": 4,
+  "calls_to_recovery": 6,
+  "counters": {
+    "actions": 4,
+    "attempts": 1,
+    "commits": 1,
+    "evaluations": 1,
+    "model_calls": 7,
+    "reconciliations": 0
+  },
+  "error": null,
+  "facts": [
+    {
+      "actions": 1,
+      "call": 1,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:inspect:{}"
+      ],
+      "input_tokens": 576,
+      "progress_signals": 0
+    },
+    {
+      "actions": 0,
+      "call": 2,
+      "failed_receipts": 0,
+      "fingerprints": [],
+      "input_tokens": 676,
+      "progress_signals": 1
+    },
+    {
+      "actions": 0,
+      "call": 3,
+      "failed_receipts": 0,
+      "fingerprints": [],
+      "input_tokens": 707,
+      "progress_signals": 1
+    },
+    {
+      "actions": 1,
+      "call": 4,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:focus:{}"
+      ],
+      "input_tokens": 759,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 5,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:repair:{}"
+      ],
+      "input_tokens": 791,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 6,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:verify:{}"
+      ],
+      "input_tokens": 823,
+      "progress_signals": 0
+    },
+    {
+      "actions": 0,
+      "call": 7,
+      "failed_receipts": 0,
+      "fingerprints": [],
+      "input_tokens": 855,
+      "progress_signals": 0
+    }
+  ],
+  "fixture": "productive",
+  "journal": {
+    "event_count": 38,
+    "format": "canonical-event-stream-gzip-jsonl",
+    "path": "events.jsonl.gz",
+    "sha256": "6da298e9c24d3e0548758e0db0aef82ea07a623844494ee0cbb21af68ba61a7a",
+    "source_journal_sha256": "491c66bf2e082e96941862d320f1337c031fdc35127f30e9ca021fd1ee588a8a",
+    "uncompressed_bytes": 291047,
+    "wal_sidecars": []
+  },
+  "onset_call": 1,
+  "operator_cues": [],
+  "policy": "P0",
+  "repeat": false,
+  "run_id": "productive/s0/P0",
+  "seed": 0,
+  "session_id": "exp0001-productive-s0-p0",
+  "steps": 7,
+  "supervisor_allocation_exceeded": false,
+  "supervisor_calls": 0,
+  "supervisor_tokens": 0,
+  "terminal": "accepted",
+  "triggers": []
+}

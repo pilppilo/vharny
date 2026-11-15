@@ -1,0 +1,175 @@
+{
+  "accepted": false,
+  "accepted_at_call": null,
+  "actions_to_recovery": null,
+  "calls_to_recovery": null,
+  "counters": {
+    "actions": 12,
+    "attempts": 1,
+    "commits": 0,
+    "evaluations": 0,
+    "model_calls": 12,
+    "reconciliations": 0
+  },
+  "error": null,
+  "facts": [
+    {
+      "actions": 1,
+      "call": 1,
+      "failed_receipts": 1,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}",
+        "receipt:failed:probe did not change the fixture state"
+      ],
+      "input_tokens": 576,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 2,
+      "failed_receipts": 1,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}",
+        "receipt:failed:probe did not change the fixture state"
+      ],
+      "input_tokens": 688,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 3,
+      "failed_receipts": 1,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}",
+        "receipt:failed:probe did not change the fixture state"
+      ],
+      "input_tokens": 720,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 4,
+      "failed_receipts": 1,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}",
+        "receipt:failed:probe did not change the fixture state"
+      ],
+      "input_tokens": 752,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 5,
+      "failed_receipts": 1,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}",
+        "receipt:failed:probe did not change the fixture state"
+      ],
+      "input_tokens": 784,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 6,
+      "failed_receipts": 1,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}",
+        "receipt:failed:probe did not change the fixture state"
+      ],
+      "input_tokens": 816,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 7,
+      "failed_receipts": 1,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}",
+        "receipt:failed:probe did not change the fixture state"
+      ],
+      "input_tokens": 848,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 8,
+      "failed_receipts": 1,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}",
+        "receipt:failed:probe did not change the fixture state"
+      ],
+      "input_tokens": 880,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 9,
+      "failed_receipts": 1,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}",
+        "receipt:failed:probe did not change the fixture state"
+      ],
+      "input_tokens": 912,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 10,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:focus:{}"
+      ],
+      "input_tokens": 999,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 11,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:repair:{}"
+      ],
+      "input_tokens": 1012,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 12,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:verify:{}"
+      ],
+      "input_tokens": 1044,
+      "progress_signals": 0
+    }
+  ],
+  "fixture": "repetitive",
+  "journal": {
+    "event_count": 66,
+    "format": "canonical-event-stream-gzip-jsonl",
+    "path": "events.jsonl.gz",
+    "sha256": "928e86a9d4285622693f2943bcc44907241bec2f33c096ca98c86960c7f29484",
+    "source_journal_sha256": "b0985c44a1ed72564ea51d93d69c56715a591b57e225f8c10e12567cf7e1ce9b",
+    "uncompressed_bytes": 619904,
+    "wal_sidecars": []
+  },
+  "onset_call": 1,
+  "operator_cues": [
+    {
+      "call": 10,
+      "scheduled": true,
+      "source": "operator"
+    }
+  ],
+  "policy": "P0",
+  "repeat": true,
+  "run_id": "repetitive/s4/P0-repeat",
+  "seed": 4,
+  "session_id": "exp0001-repetitive-s4-p0-repeat",
+  "steps": 12,
+  "supervisor_allocation_exceeded": false,
+  "supervisor_calls": 0,
+  "supervisor_tokens": 0,
+  "terminal": "model_budget_exhausted",
+  "triggers": []
+}

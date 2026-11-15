@@ -1,0 +1,374 @@
+"""Runner: orchestrates probe → generator → detector with concurrency + a JSONL log."""
+
+from __future__ import annotations
+
+import dataclasses
+import hashlib
+import json
+import os
+import threading
+import time
+import uuid
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+from .core import (
+    DETECTOR_REGISTRY,
+    EVALUATOR_REGISTRY,
+    PROBE_REGISTRY,
+    Attempt,
+    load_entry_points,
+    normalize_names,
+)
+from .generators.base import Generator
+from .log import get_verbosity, log
+from .skills import Skill, render_skill_instructions
+
+# Built-ins register when the stage packages are imported.
+from . import detectors  # noqa: F401,E402
+from . import evaluators  # noqa: F401,E402
+from . import generators  # noqa: F401,E402
+from . import probes  # noqa: F401,E402
+
+
+class RunPersistenceError(RuntimeError):
+    """A run produced work that could not be durably recorded."""
+
+
+def _format_location(attempt: Attempt) -> str:
+    ctx = attempt.context or {}
+    fn = ctx.get("function")
+    line = ctx.get("line")
+    src = attempt.source or "unknown"
+    if fn and fn != "<file>":
+        return f"{src}:{fn}:{line}" if line else f"{src}:{fn}"
+    if line and line > 1:
+        return f"{src}:{line}"
+    return src
+
+
+def _format_telemetry(attempt: Attempt) -> str:
+    gen = attempt.generation
+    if not gen:
+        return ""
+    parts = []
+    if gen.cached:
+        parts.append("cached")
+    elif gen.latency > 0:
+        parts.append(f"{gen.latency:.2f}s")
+    if gen.prompt_tokens or gen.completion_tokens:
+        parts.append(f"{gen.prompt_tokens}+{gen.completion_tokens} toks")
+    if parts:
+        return f" [{', '.join(parts)}]"
+    return ""
+
+
+@dataclasses.dataclass
+class RunInfo:
+    run_id: str
+    probes: list[str]
+    generator: str
+    model: str = ""
+    provider: str = ""
+    detectors: list[str] | None = None
+    evaluators: list[str] | None = None
+    targets: list[str] | None = None
+    dry_run: bool = False
+    started_at: float = 0.0
+    wall_seconds: float = 0.0
+    attempts_total: int = 0
+    ok: int = 0
+    parse_errors: int = 0
+    api_errors: int = 0
+    internal_errors: int = 0
+    skipped: int = 0
+    findings: int = 0
+    skills: list[dict] | None = None
+
+
+class Runner:
+    def __init__(
+        self,
+        generator: Generator,
+        *,
+        detectors: list[str] | None = None,
+        workers: int = 4,
+        log_file: str | None = None,
+        log_raw: bool = False,
+        skills: list[Skill] | None = None,
+        verbose: int | None = None,
+        show_findings: bool = False,
+    ) -> None:
+        load_entry_points()  # third-party plugins, idempotent
+        self.generator = generator
+        self.detector_names = normalize_names(detectors, ["json-verdict"], field="detectors")
+        self.workers = workers
+        self.log_file = log_file
+        self.log_raw = log_raw
+        self.skills = list(skills or [])
+        self._skill_instructions = render_skill_instructions(self.skills)
+        self.verbose = verbose if verbose is not None else get_verbosity()
+        self.show_findings = show_findings or (self.verbose >= 1)
+        self._log_lock = threading.Lock()
+        if log_file:
+            os.makedirs(os.path.dirname(os.path.abspath(log_file)), exist_ok=True)
+
+    # ---- public API ------------------------------------------------------
+    def run(
+        self,
+        probe_names: list[str],
+        probe_kwargs: dict | None = None,
+        *,
+        dry_run: bool = False,
+        run_id: str | None = None,
+    ) -> tuple[list[Attempt], RunInfo]:
+        """Execute a full pipeline pass; returns (attempts, run_info)."""
+        self._fh = open(self.log_file, "a", encoding="utf-8") if self.log_file else None
+        try:
+            return self._run_impl(probe_names, probe_kwargs, dry_run=dry_run, run_id=run_id)
+        finally:
+            if getattr(self, "_fh", None) is not None:
+                self._fh.close()
+                self._fh = None
+
+    def _run_impl(
+        self,
+        probe_names: list[str],
+        probe_kwargs: dict | None = None,
+        *,
+        dry_run: bool = False,
+        run_id: str | None = None,
+    ) -> tuple[list[Attempt], RunInfo]:
+        probe_kwargs = probe_kwargs or {}
+        attempts: list[Attempt] = []
+        for name in probe_names:
+            probe = PROBE_REGISTRY.instantiate(name)
+            got = probe.attempts(**probe_kwargs)
+            for a in got:
+                a.probe = name
+                if self._skill_instructions:
+                    a.system = (a.system.rstrip() + self._skill_instructions)
+                    a.context = dict(a.context)
+                    a.context["skills"] = [s.metadata() for s in self.skills]
+            attempts.extend(got)
+
+        # Reconnaissance summary
+        file_chunks: dict[str, list[Attempt]] = {}
+        for a in attempts:
+            file_chunks.setdefault(a.source, []).append(a)
+
+        target_arg = probe_kwargs.get("targets") or probe_kwargs.get("path")
+        target_disp = ""
+        if target_arg:
+            if isinstance(target_arg, list):
+                target_disp = " on " + ", ".join(str(t) for t in target_arg)
+            else:
+                target_disp = f" on {target_arg}"
+
+        log.info(
+            "[recon] Triaged %d chunk(s) across %d file(s)%s (probes: %s)",
+            len(attempts),
+            len(file_chunks),
+            target_disp,
+            ", ".join(probe_names),
+        )
+
+        if (self.verbose >= 1 or self.show_findings) and file_chunks:
+            for src, chs in sorted(file_chunks.items()):
+                details = []
+                for c in chs:
+                    fn = c.context.get("function") if c.context else None
+                    ln = c.context.get("line") if c.context else None
+                    if fn and fn != "<file>":
+                        details.append(f"{fn}:{ln}" if ln else fn)
+                    elif ln and ln > 1:
+                        details.append(f"L{ln}")
+                    else:
+                        details.append("<file>")
+                log.info(
+                    "    • %s (%d chunk%s: %s)",
+                    src,
+                    len(chs),
+                    "s" if len(chs) != 1 else "",
+                    ", ".join(details),
+                )
+
+        info = RunInfo(
+            run_id=run_id or uuid.uuid4().hex[:12],
+            probes=list(probe_names),
+            generator="pending",  # filled after construction (dry runs never construct)
+            model="",
+            detectors=list(self.detector_names),
+            targets=probe_kwargs.get("targets") or probe_kwargs.get("path"),
+            dry_run=dry_run,
+            started_at=time.time(),
+            attempts_total=len(attempts),
+            skills=[s.metadata() for s in self.skills] or None,
+        )
+        # Construct the generator only for a real run so run metadata records
+        # the exact endpoint/model used. Dry runs retain their no-client-call
+        # guarantee.
+        if not dry_run:
+            info.generator = getattr(self.generator, "name", "custom")
+            info.model = getattr(self.generator, "model", "")
+            info.provider = (getattr(self.generator, "base_url", "") or "").rstrip("/")
+        self._log_event({"type": "run_start", "run_id": info.run_id, "ts": time.time(),
+                         "probes": info.probes, "targets": info.targets,
+                         "attempts": len(attempts), "dry_run": dry_run,
+                         "detectors": info.detectors, "skills": info.skills,
+                         "generator": info.generator, "model": info.model,
+                         "provider": info.provider})
+        if dry_run:
+            info.wall_seconds = time.time() - info.started_at
+            self._log_event({"type": "run_end", "run_id": info.run_id, "ts": time.time(),
+                             "status": "dry_run", "attempts": len(attempts)})
+            return attempts, info
+
+        detectors = [DETECTOR_REGISTRY.instantiate(n) for n in self.detector_names]
+
+        def work(attempt: Attempt, attempt_index: int) -> Attempt:
+            try:
+                gen = self.generator.generate(attempt.system, attempt.prompt)
+                attempt.record(gen)
+                for d in detectors:
+                    d.detect(attempt)
+            except Exception as e:  # noqa: BLE001 — a detector/generator bug must not kill the run
+                log.exception("internal error on attempt %s (%s)", attempt.source, attempt.id)
+                attempt.status = "internal_error"
+                attempt.verdict = "error"
+                attempt.detector_notes.append(f"internal error: {e}")
+            try:
+                self._log(attempt, info, attempt_index)
+            except Exception as exc:  # noqa: BLE001 — a completed attempt must be durable
+                raise RunPersistenceError(f"attempt log write failed: {exc}") from exc
+            return attempt
+
+        done: list[Attempt | None] = [None] * len(attempts)
+        persistence_errors: list[Exception] = []
+        total = len(attempts)
+        with ThreadPoolExecutor(max_workers=max(1, self.workers)) as pool:
+            futures = {pool.submit(work, a, index): index for index, a in enumerate(attempts)}
+            for completed, fut in enumerate(as_completed(futures), 1):
+                attempt_index = futures[fut]
+                try:
+                    a = fut.result()
+                except Exception as exc:  # noqa: BLE001 — belt & braces around work()
+                    log.exception("worker future failed (%d/%d)", completed, total)
+                    if isinstance(exc, RunPersistenceError):
+                        persistence_errors.append(exc)
+                    a = attempts[attempt_index]
+                    a.status = "internal_error"
+                    a.verdict = "error"
+                    a.detector_notes.append(f"worker future failed: {type(exc).__name__}: {exc}")
+                    try:
+                        self._log(a, info, attempt_index)
+                    except Exception as log_exc:  # noqa: BLE001 — reporting must be durable
+                        persistence_errors.append(log_exc)
+                done[attempt_index] = a
+                loc = _format_location(a)
+                telem = _format_telemetry(a)
+                n_find = len(a.findings)
+                f_str = f"({n_find} finding{'s' if n_find != 1 else ''})"
+                if a.status == "ok":
+                    log.info("[%d/%d] %s → %s %s%s", completed, total, loc, a.verdict, f_str, telem)
+                else:
+                    log.info("[%d/%d] %s → %s (%s)%s", completed, total, loc, a.verdict or "?", a.status, telem)
+
+                # Show explicit error message if generation or detector failed
+                if a.status != "ok":
+                    err_msg = None
+                    if a.generation and a.generation.error:
+                        err_msg = a.generation.error
+                    elif a.detector_notes:
+                        err_msg = "; ".join(a.detector_notes)
+                    if err_msg:
+                        log.info("    ↳ error: %s", err_msg)
+
+                # Show finding details if verbose or --show-findings
+                if (self.verbose >= 1 or self.show_findings) and a.findings:
+                    for f in a.findings:
+                        sink_str = f" in {f.sink}" if f.sink else ""
+                        line_str = f" (line {f.line})" if f.line else ""
+                        summary_str = ""
+                        if f.explanation:
+                            exp = f.explanation.splitlines()[0].strip()
+                            if self.verbose < 2 and len(exp) > 110:
+                                exp = exp[:107] + "..."
+                            summary_str = f": {exp}"
+                        log.info("    ↳ [%s] %s%s%s%s", f.severity, f.cwe, sink_str, line_str, summary_str)
+
+        ordered = [a if a is not None else attempts[index] for index, a in enumerate(done)]
+        for a in ordered:
+            info.ok += a.status == "ok"
+            info.parse_errors += a.status == "parse_error"
+            info.api_errors += a.status == "api_error"
+            info.internal_errors += a.status == "internal_error"
+            info.skipped += a.status == "skipped"
+            info.findings += len(a.findings)
+        info.wall_seconds = time.time() - info.started_at
+        if persistence_errors:
+            raise RunPersistenceError(
+                f"failed to durably record {len(persistence_errors)} attempt(s): {persistence_errors[0]}"
+            ) from persistence_errors[0]
+        self._log_event({"type": "run_end", "run_id": info.run_id, "ts": time.time(),
+                         "status": "complete", "attempts": info.attempts_total,
+                         "ok": info.ok, "parse_errors": info.parse_errors,
+                         "api_errors": info.api_errors, "internal_errors": info.internal_errors,
+                         "skipped": info.skipped, "findings": info.findings,
+                         "wall_seconds": info.wall_seconds})
+        return ordered, info
+
+    def evaluate(self, attempts: list[Attempt], run_info: dict, evaluator_names: list[str]) -> None:
+        """Run evaluators; run_info is passed through as-is (cli adds out paths)."""
+        for name in evaluator_names:
+            ev = EVALUATOR_REGISTRY.instantiate(name)
+            ev.evaluate(attempts, run_info)
+
+    # ---- logging ---------------------------------------------------------
+    def _log_event(self, record: dict) -> None:
+        if not hasattr(self, "_fh") or self._fh is None:
+            return
+        with self._log_lock:
+            self._fh.write(json.dumps(record, default=str) + "\n")
+            self._fh.flush()
+
+    def _log(self, attempt: Attempt, info: RunInfo, attempt_index: int | None = None) -> None:
+        if not hasattr(self, "_fh") or self._fh is None:
+            return
+        rec = {
+            "type": "attempt",
+            "run_id": info.run_id,
+            "ts": time.time(),
+            "probe": attempt.probe,
+            "source": attempt.source,
+            "context": attempt.context,
+            "id": attempt.id,
+            "attempt_index": attempt_index,
+            "status": attempt.status,
+            "verdict": attempt.verdict,
+            "findings": [dataclasses.asdict(f) for f in attempt.findings],
+            "notes": attempt.detector_notes,
+            "expected_verdict": attempt.expected_verdict,
+            "expected_cwes": [f.cwe for f in (attempt.expected_findings or [])],
+            "prompt_chars": len(attempt.prompt),
+            "prompt_sha256": hashlib.sha256(
+                (attempt.system + "\x00" + attempt.prompt).encode("utf-8", "replace")
+            ).hexdigest(),
+            "generation": attempt.generation and {
+                "model": attempt.generation.model,
+                "finish_reason": attempt.generation.finish_reason,
+                "latency": attempt.generation.latency,
+                "error": attempt.generation.error,
+                "cached": attempt.generation.cached,
+                "prompt_tokens": attempt.generation.prompt_tokens,
+                "completion_tokens": attempt.generation.completion_tokens,
+            },
+        }
+        if self.log_raw:
+            rec["prompt"] = attempt.prompt
+            rec["system_prompt"] = attempt.system
+            if attempt.generation is not None:
+                rec["generation_text"] = attempt.generation.text
+        line = json.dumps(rec, default=str)
+        with self._log_lock:
+            self._fh.write(line + "\n")
+            self._fh.flush()

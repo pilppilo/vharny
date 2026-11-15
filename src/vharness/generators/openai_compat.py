@@ -1,0 +1,289 @@
+"""OpenAI-compatible HTTP generator: retry, truncation retry, SQLite cache, usage stats."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import random
+import sqlite3
+import threading
+import time
+from collections.abc import Mapping
+
+from openai import APIConnectionError, APIStatusError, APITimeoutError, OpenAI
+
+from ..config import EndpointConfig
+from ..core import Generation, ModelFailureClass
+from .base import Generator, register_builtin
+
+DEFAULT_MAX_TOKENS = 1024
+DEFAULT_TEMPERATURE = 0.0
+RESPONSE_FORMAT_JSON_OBJECT = "json_object"
+_VALID_RESPONSE_FORMATS = (RESPONSE_FORMAT_JSON_OBJECT,)
+
+
+def _transient(exc: Exception) -> bool:
+    if isinstance(exc, (APIConnectionError, APITimeoutError)):
+        return True
+    if isinstance(exc, APIStatusError):
+        return exc.status_code == 429 or exc.status_code >= 500
+    return False
+
+
+def _failure_class(exc: Exception) -> str:
+    """Classify one caught provider exception without retaining its text."""
+    if isinstance(exc, APITimeoutError):
+        return ModelFailureClass.TRANSIENT_TIMEOUT.value
+    if isinstance(exc, APIConnectionError):
+        return ModelFailureClass.TRANSIENT_CONNECTION.value
+    if isinstance(exc, APIStatusError):
+        if exc.status_code in (401, 403):
+            return ModelFailureClass.AUTHENTICATION.value
+        if exc.status_code == 429:
+            return ModelFailureClass.RATE_LIMIT.value
+        if exc.status_code >= 500:
+            return ModelFailureClass.TRANSIENT_SERVER.value
+        return ModelFailureClass.INVALID_REQUEST.value
+    return ModelFailureClass.UNKNOWN.value
+
+
+def _reasoning_tokens(usage: object) -> int | None:
+    """Return provider-reported reasoning tokens, or ``None`` when not reported.
+
+    Reasoning text is never retained; only this count crosses into the model
+    record, so a reasoning-only response is distinguishable from an empty one.
+    """
+    details = getattr(usage, "completion_tokens_details", None)
+    value = getattr(details, "reasoning_tokens", None) if details is not None else None
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        return None
+    return value
+
+
+@register_builtin
+class OpenAICompatible(Generator):
+    name = "openai"
+    help = "any OpenAI-compatible chat-completions endpoint (Ollama, vLLM, llama.cpp, hosted APIs, …)"
+
+    def __init__(
+        self,
+        base_url: str,
+        model: str,
+        api_key: str = "no-key",
+        *,
+        timeout: float = 120.0,
+        max_retries: int = 3,
+        length_retries: int = 1,
+        max_tokens: int = DEFAULT_MAX_TOKENS,
+        temperature: float = DEFAULT_TEMPERATURE,
+        cache_path: str | None = None,
+        response_format: str | None = None,
+        extra_headers: Mapping[str, str] | None = None,
+    ) -> None:
+        if (
+            response_format is not None
+            and response_format not in _VALID_RESPONSE_FORMATS
+        ):
+            raise ValueError(
+                f"response_format must be one of {_VALID_RESPONSE_FORMATS} or None"
+            )
+        self.model = model
+        self.base_url = base_url
+        self.max_retries = max_retries
+        self.length_retries = length_retries
+        self.max_tokens = max_tokens
+        self.temperature = temperature
+        self.response_format = response_format
+        self.stats = {
+            "queries": 0,
+            "cache_hits": 0,
+            "api_errors": 0,
+            "parse_notice": 0,
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
+            "latencies": [],
+        }
+        self._client = OpenAI(
+            base_url=base_url,
+            api_key=api_key,
+            timeout=timeout,
+            max_retries=0,
+            default_headers=dict(extra_headers) if extra_headers else None,
+        )
+        self._cache_path = cache_path
+        self._cache_lock = threading.Lock()
+        self._stats_lock = threading.Lock()
+        self._cache: sqlite3.Connection | None = None
+        if cache_path:
+            self._cache = sqlite3.connect(cache_path, check_same_thread=False)
+            self._cache.execute(
+                "CREATE TABLE IF NOT EXISTS responses "
+                "(key TEXT PRIMARY KEY, text TEXT NOT NULL, created_at REAL DEFAULT (strftime('%s','now')))"
+            )
+            self._cache.commit()
+
+    @classmethod
+    def from_config(cls, cfg: EndpointConfig, **kwargs) -> "OpenAICompatible":
+        return cls(cfg.base_url, cfg.model, cfg.api_key, **kwargs)
+
+    def close(self) -> None:
+        if self._cache is not None:
+            self._cache.close()
+            self._cache = None
+
+    def _cache_key(self, system: str, prompt: str) -> str:
+        h = hashlib.sha256()
+        for part in (
+            self.base_url,
+            self.model,
+            self.response_format or "",
+            system,
+            prompt,
+        ):
+            h.update(part.encode("utf-8", "replace"))
+            h.update(b"\x00")
+        return h.hexdigest()
+
+    def _cache_get(self, key: str) -> str | None:
+        if self._cache is None:
+            return None
+        with self._cache_lock:
+            row = self._cache.execute(
+                "SELECT text FROM responses WHERE key = ?", (key,)
+            ).fetchone()
+        return row[0] if row else None
+
+    def _cache_put(self, key: str, text: str) -> None:
+        if self._cache is None:
+            return
+        with self._cache_lock:
+            self._cache.execute(
+                "INSERT OR REPLACE INTO responses (key, text) VALUES (?, ?)",
+                (key, text),
+            )
+            self._cache.commit()
+
+    def summary(self) -> str:
+        with self._stats_lock:
+            s = {
+                key: (list(value) if key == "latencies" else value)
+                for key, value in self.stats.items()
+            }
+        lat = s["latencies"]
+        p50 = sorted(lat)[len(lat) // 2] if lat else 0.0
+        return (
+            f"queries={s['queries']} cache_hits={s['cache_hits']} api_errors={s['api_errors']} "
+            f"tokens={s['prompt_tokens'] + s['completion_tokens']} latency_p50={p50:.2f}s"
+        )
+
+    def _response_format_kwargs(self) -> dict[str, object]:
+        """Return the request kwargs enforcing provider-side JSON when selected."""
+        if self.response_format is None:
+            return {}
+        return {"response_format": {"type": self.response_format}}
+
+    def generate(self, system: str, prompt: str) -> Generation:
+        key = self._cache_key(system, prompt)
+        cached = self._cache_get(key)
+        if cached is not None:
+            with self._stats_lock:
+                self.stats["cache_hits"] += 1
+            return Generation(text=cached, model=self.model, cached=True)
+
+        with self._stats_lock:
+            self.stats["queries"] += 1
+        max_tokens = self.max_tokens
+        # Default length_retries=1 preserves the legacy extra truncation attempt.
+        # Agent adapters set length_retries=0 so the coordinator owns retries.
+        total_attempts = self.max_retries + 1 + self.length_retries
+        last_error: str | None = None
+        last_failure_class: str | None = None
+        total_prompt_tokens = 0
+        total_completion_tokens = 0
+        total_reasoning_tokens: int | None = 0
+        total_latency = 0.0
+        for attempt in range(total_attempts):
+            started = time.perf_counter()
+            try:
+                response = self._client.chat.completions.create(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": system},
+                        {"role": "user", "content": prompt},
+                    ],
+                    temperature=self.temperature,
+                    max_tokens=max_tokens,
+                    **self._response_format_kwargs(),
+                )
+            except Exception as e:  # noqa: BLE001 — classified below
+                latency = time.perf_counter() - started
+                total_latency += latency
+                with self._stats_lock:
+                    self.stats["latencies"].append(latency)
+                last_error = f"{type(e).__name__}: {e}"
+                last_failure_class = _failure_class(e)
+                if _transient(e) and attempt < total_attempts - 1:
+                    time.sleep(min(30.0, (2**attempt) + random.random()))
+                    continue
+                break
+
+            latency = time.perf_counter() - started
+            usage = getattr(response, "usage", None)
+            p_toks = (
+                (getattr(usage, "prompt_tokens", 0) or 0) if usage is not None else 0
+            )
+            c_toks = (
+                (getattr(usage, "completion_tokens", 0) or 0)
+                if usage is not None
+                else 0
+            )
+            total_latency += latency
+            total_prompt_tokens += p_toks
+            total_completion_tokens += c_toks
+            reasoning_tokens = _reasoning_tokens(usage)
+            if reasoning_tokens is None:
+                total_reasoning_tokens = None
+            elif total_reasoning_tokens is not None:
+                total_reasoning_tokens += reasoning_tokens
+            with self._stats_lock:
+                self.stats["latencies"].append(latency)
+                if usage is not None:
+                    self.stats["prompt_tokens"] += p_toks
+                    self.stats["completion_tokens"] += c_toks
+
+            if not getattr(response, "choices", None):
+                last_error = "endpoint returned empty choices (content filter?)"
+                last_failure_class = ModelFailureClass.INVALID_REQUEST.value
+                break
+            raw = (response.choices[0].message.content or "").strip()
+            finish = response.choices[0].finish_reason
+            if finish == "length" and attempt < total_attempts - 1:
+                # Truncated JSON — retry with a bigger budget before giving up.
+                last_error = (
+                    "truncated (finish_reason=length); retried with larger max_tokens"
+                )
+                max_tokens *= 2
+                continue
+
+            self._cache_put(key, raw)
+            return Generation(
+                text=raw,
+                model=self.model,
+                finish_reason=finish,
+                latency=total_latency,
+                prompt_tokens=total_prompt_tokens,
+                completion_tokens=total_completion_tokens,
+                reasoning_tokens=total_reasoning_tokens,
+            )
+
+        with self._stats_lock:
+            self.stats["api_errors"] += 1
+        return Generation(
+            text="",
+            model=self.model,
+            error=last_error,
+            latency=total_latency,
+            prompt_tokens=total_prompt_tokens,
+            completion_tokens=total_completion_tokens,
+            failure_class=last_failure_class,
+        )

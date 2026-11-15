@@ -1,0 +1,82 @@
+{
+  "baseline_reproducible": true,
+  "benefit": {
+    "class_improvements": {
+      "recovery-drill": 5,
+      "regressing": 5,
+      "repetitive": 5,
+      "stalled": 5
+    },
+    "classes_meeting_3_of_5": 4,
+    "recovery_actions_median": 3.0,
+    "stagnation_pairs_improved": 20,
+    "stagnation_pairs_total": 20
+  },
+  "bundle": "evidence/phase-0003-paired-recovery",
+  "censored_runs": [],
+  "cost": {
+    "allocation_exceeded_runs": 0,
+    "supervisor_call_allocation": 4,
+    "supervisor_calls": 20,
+    "supervisor_token_allocation": 2048,
+    "supervisor_tokens": 10240
+  },
+  "executions": 90,
+  "false_triggers": {},
+  "fixtures": [
+    "productive",
+    "plateaued-exploring",
+    "stalled",
+    "repetitive",
+    "regressing",
+    "recovery-drill"
+  ],
+  "guidance": {
+    "accepted": 15,
+    "expired": 0,
+    "rejected": 5,
+    "response_rejected": 0
+  },
+  "guidance_decisions": {
+    "accept": 10,
+    "reject": 5,
+    "replan": 5
+  },
+  "harm": {
+    "acceptance_harm_runs": [],
+    "operator_escalations": 0,
+    "retriggers_during_recovery": 20
+  },
+  "policy": {
+    "cooldown_calls": 4,
+    "repeat_threshold": 3,
+    "version": "monitor.p1.v1",
+    "window_calls": 8
+  },
+  "runs": 90,
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "tolerances": {
+    "inconclusive": false,
+    "inconclusive_reasons": [],
+    "interpretation": "A run is censored only on an unexpected error; ending at the predeclared decision budget without acceptance is a valid negative observation.",
+    "meets_acceptance": true,
+    "rejected": false,
+    "rejection_reasons": [],
+    "source": "EXP-0001 predeclared paired-sample tolerances"
+  },
+  "uncertainty": {
+    "measure": "stagnation-pair benefit fraction",
+    "note": "Scripted labeled fixtures; bounds the trigger/recovery separation on these fixtures, not live-task benefit.",
+    "point": 1.0,
+    "wilson_95": [
+      0.8388748419471806,
+      1.0
+    ]
+  }
+}

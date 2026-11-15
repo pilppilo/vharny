@@ -1,0 +1,281 @@
+{
+  "budgets": {
+    "actions": 24,
+    "context_tokens": 4096,
+    "evaluations": 3,
+    "main_calls": 12,
+    "supervisor_calls": 4,
+    "supervisor_tokens": 2048,
+    "supervisor_tokens_per_call": 512
+  },
+  "bundle": "PHASE-0003 item 6 paired recovery",
+  "conditions": [
+    "unsupervised",
+    "supervised"
+  ],
+  "document": "plans/phases/phase-0003-supervision-and-recovery.md",
+  "fixtures": {
+    "plateaued-exploring": {
+      "guidance_response": "accept",
+      "interrupt_opening": false,
+      "opening": [],
+      "probe_failure": false,
+      "stagnation": [
+        {
+          "arguments": {
+            "target": "t1"
+          },
+          "kind": "action",
+          "name": "probe"
+        },
+        {
+          "arguments": {
+            "target": "t2"
+          },
+          "kind": "action",
+          "name": "probe"
+        },
+        {
+          "arguments": {
+            "target": "t3"
+          },
+          "kind": "action",
+          "name": "probe"
+        },
+        {
+          "arguments": {},
+          "kind": "action",
+          "name": "focus"
+        },
+        {
+          "arguments": {
+            "target": "t4"
+          },
+          "kind": "action",
+          "name": "probe"
+        },
+        {
+          "arguments": {
+            "target": "t5"
+          },
+          "kind": "action",
+          "name": "probe"
+        },
+        {
+          "arguments": {},
+          "kind": "action",
+          "name": "repair"
+        },
+        {
+          "arguments": {
+            "target": "t6"
+          },
+          "kind": "action",
+          "name": "probe"
+        },
+        {
+          "arguments": {},
+          "kind": "action",
+          "name": "verify"
+        },
+        {
+          "arguments": {},
+          "kind": "evaluate",
+          "name": ""
+        }
+      ],
+      "success_expected_without_intervention": true
+    },
+    "productive": {
+      "guidance_response": "accept",
+      "interrupt_opening": false,
+      "opening": [],
+      "probe_failure": false,
+      "stagnation": [
+        {
+          "arguments": {},
+          "kind": "action",
+          "name": "inspect"
+        },
+        {
+          "arguments": {},
+          "kind": "action",
+          "name": "focus"
+        },
+        {
+          "arguments": {},
+          "kind": "action",
+          "name": "repair"
+        },
+        {
+          "arguments": {},
+          "kind": "action",
+          "name": "verify"
+        },
+        {
+          "arguments": {},
+          "kind": "evaluate",
+          "name": ""
+        }
+      ],
+      "success_expected_without_intervention": true
+    },
+    "recovery-drill": {
+      "guidance_response": "replan",
+      "interrupt_opening": true,
+      "opening": [
+        {
+          "arguments": {
+            "target": "interrupted"
+          },
+          "kind": "action",
+          "name": "probe"
+        }
+      ],
+      "probe_failure": false,
+      "stagnation": [
+        {
+          "arguments": {
+            "target": "a"
+          },
+          "kind": "action",
+          "name": "probe"
+        }
+      ],
+      "success_expected_without_intervention": false
+    },
+    "regressing": {
+      "guidance_response": "accept",
+      "interrupt_opening": false,
+      "opening": [],
+      "probe_failure": false,
+      "stagnation": [
+        {
+          "arguments": {},
+          "kind": "action",
+          "name": "focus"
+        },
+        {
+          "arguments": {},
+          "kind": "action",
+          "name": "revert"
+        },
+        {
+          "arguments": {},
+          "kind": "action",
+          "name": "focus"
+        },
+        {
+          "arguments": {},
+          "kind": "evaluate",
+          "name": ""
+        },
+        {
+          "arguments": {},
+          "kind": "action",
+          "name": "revert"
+        }
+      ],
+      "success_expected_without_intervention": false
+    },
+    "repetitive": {
+      "guidance_response": "reject",
+      "interrupt_opening": false,
+      "opening": [],
+      "probe_failure": true,
+      "stagnation": [
+        {
+          "arguments": {
+            "target": "t1"
+          },
+          "kind": "action",
+          "name": "probe"
+        },
+        {
+          "arguments": {
+            "target": "t2"
+          },
+          "kind": "action",
+          "name": "probe"
+        },
+        {
+          "arguments": {
+            "target": "t3"
+          },
+          "kind": "action",
+          "name": "probe"
+        },
+        {
+          "arguments": {
+            "target": "t4"
+          },
+          "kind": "action",
+          "name": "probe"
+        },
+        {
+          "arguments": {
+            "target": "t5"
+          },
+          "kind": "action",
+          "name": "probe"
+        }
+      ],
+      "success_expected_without_intervention": false
+    },
+    "stalled": {
+      "guidance_response": "accept",
+      "interrupt_opening": false,
+      "opening": [],
+      "probe_failure": false,
+      "stagnation": [
+        {
+          "arguments": {
+            "target": "a"
+          },
+          "kind": "action",
+          "name": "probe"
+        }
+      ],
+      "success_expected_without_intervention": false
+    }
+  },
+  "policy": {
+    "cooldown_calls": 4,
+    "repeat_threshold": 3,
+    "version": "monitor.p1.v1",
+    "window_calls": 8
+  },
+  "provider_calls": 0,
+  "retention": {
+    "aggregate": [
+      "manifest.json",
+      "results.json",
+      "report.md",
+      "aggregate.py"
+    ],
+    "per_run": [
+      "events.jsonl.gz",
+      "summary.json"
+    ]
+  },
+  "retention_note": "Each run's sqlite journal is compacted to a canonical gzip JSONL event-stream export; summaries and result tables are derived from the exported streams.",
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "source": {
+    "git_dirty": false,
+    "git_revision": "ad5fdf40fdb3e943bb3532877c9e974b9b9a2e79",
+    "tool": "tools/phase3_paired_recovery.py",
+    "tool_sha256": "1b16ace016263b8befd54b393f1844b840f8f3ca56b0e6303697b82394092936"
+  },
+  "terminal_conditions": [
+    "external fixture-evaluator acceptance",
+    "decision-budget end without acceptance",
+    "operator escalation"
+  ],
+  "tolerances": "plans/experiments/exp-0001-supervisor-policy.md"
+}

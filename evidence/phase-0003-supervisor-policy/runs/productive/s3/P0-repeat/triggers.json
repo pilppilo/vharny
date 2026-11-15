@@ -1,0 +1,9 @@
+{
+  "operator_cues": [],
+  "policy_parameters": {
+    "kind": "operator-only",
+    "operator_cue_call": 10
+  },
+  "run_id": "productive/s3/P0-repeat",
+  "triggers": []
+}

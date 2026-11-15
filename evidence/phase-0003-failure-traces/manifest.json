@@ -1,0 +1,17 @@
+{
+  "event_count": 49,
+  "evidence_id": "phase-0003-failure-traces",
+  "failure_traces_present": true,
+  "files": {
+    "report.json": "cd245451d9f3c7e27e7cb001a79830794fde71086f7037bdba8631754bc6aead",
+    "session.sqlite3": "55d282975ada0ffc7a26483433eef6ae693feea1842ce3001a921b08193754f7",
+    "transcript.json": "e62f34fcb701731db8ba9c3c4cafee3b71caceb043f245334dbc44b31faa9bec"
+  },
+  "source": {
+    "git_dirty": false,
+    "git_revision": "218b27277fdeb30ba74aa4937ffcc25c63b3f205",
+    "tool": "tools/phase3_failure_traces.py",
+    "tool_sha256": "5b3156f6aaedc337ec4894c30505505aa0753a34d806b8e8ad38d3405b9a5be7"
+  },
+  "terminal": "budget_exhausted"
+}

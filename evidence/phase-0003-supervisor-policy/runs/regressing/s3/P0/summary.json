@@ -1,0 +1,166 @@
+{
+  "accepted": false,
+  "accepted_at_call": null,
+  "actions_to_recovery": null,
+  "calls_to_recovery": null,
+  "counters": {
+    "actions": 10,
+    "attempts": 3,
+    "commits": 0,
+    "evaluations": 2,
+    "model_calls": 12,
+    "reconciliations": 0
+  },
+  "error": null,
+  "facts": [
+    {
+      "actions": 1,
+      "call": 1,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:focus:{}"
+      ],
+      "input_tokens": 576,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 2,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:revert:{}"
+      ],
+      "input_tokens": 676,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 3,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:focus:{}"
+      ],
+      "input_tokens": 708,
+      "progress_signals": 0
+    },
+    {
+      "actions": 0,
+      "call": 4,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "evaluation:rejected"
+      ],
+      "input_tokens": 740,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 5,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:revert:{}"
+      ],
+      "input_tokens": 809,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 6,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:focus:{}"
+      ],
+      "input_tokens": 818,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 7,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:revert:{}"
+      ],
+      "input_tokens": 850,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 8,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:focus:{}"
+      ],
+      "input_tokens": 882,
+      "progress_signals": 0
+    },
+    {
+      "actions": 0,
+      "call": 9,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "evaluation:rejected"
+      ],
+      "input_tokens": 914,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 10,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:focus:{}"
+      ],
+      "input_tokens": 1011,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 11,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:repair:{}"
+      ],
+      "input_tokens": 1040,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 12,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:verify:{}"
+      ],
+      "input_tokens": 1072,
+      "progress_signals": 0
+    }
+  ],
+  "fixture": "regressing",
+  "journal": {
+    "event_count": 70,
+    "format": "canonical-event-stream-gzip-jsonl",
+    "path": "events.jsonl.gz",
+    "sha256": "8644b7907d92a2556f18e62c574c59c8201ee3e7ff7b193779b3d68a45aa4e9c",
+    "source_journal_sha256": "7b8e71f8407ad6c54a080d4c1dcf0f83ece5ab890aa54014ef73ab5a59742c01",
+    "uncompressed_bytes": 641811,
+    "wal_sidecars": []
+  },
+  "onset_call": 1,
+  "operator_cues": [
+    {
+      "call": 10,
+      "scheduled": true,
+      "source": "operator"
+    }
+  ],
+  "policy": "P0",
+  "repeat": false,
+  "run_id": "regressing/s3/P0",
+  "seed": 3,
+  "session_id": "exp0001-regressing-s3-p0",
+  "steps": 12,
+  "supervisor_allocation_exceeded": false,
+  "supervisor_calls": 0,
+  "supervisor_tokens": 0,
+  "terminal": "model_budget_exhausted",
+  "triggers": []
+}

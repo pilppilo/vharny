@@ -1,0 +1,6 @@
+{
+  "include": ["src/vharness/agent"],
+  "pythonVersion": "3.10",
+  "typeCheckingMode": "basic",
+  "reportMissingTypeStubs": "none"
+}

@@ -1,0 +1,49 @@
+{
+  "accepted": true,
+  "accepted_at_call": 10,
+  "actions_to_recovery": null,
+  "attempt_abandoned": 0,
+  "attempt_started": 1,
+  "condition": "unsupervised",
+  "counters": {
+    "actions": 9,
+    "attempts": 1,
+    "commits": 1,
+    "evaluations": 1,
+    "model_calls": 10,
+    "reconciliations": 0
+  },
+  "error": null,
+  "fixture": "plateaued-exploring",
+  "guidance": {
+    "accepted": 0,
+    "expired": 0,
+    "rejected": 0,
+    "response_rejected": 0
+  },
+  "guidance_decisions": {
+    "accept": 0,
+    "reject": 0,
+    "replan": 0
+  },
+  "journal": {
+    "event_count": 55,
+    "format": "canonical-event-stream-gzip-jsonl",
+    "path": "events.jsonl.gz",
+    "sha256": "49476ed71b34563f560b48e8c351200614a817a0fdc6eeae30195de56788f716",
+    "uncompressed_bytes": 485174,
+    "wal_sidecars": []
+  },
+  "main_calls": 10,
+  "operator_escalated": 0,
+  "repeat": false,
+  "run_id": "plateaued-exploring/s1/unsupervised",
+  "seed": 1,
+  "session_id": "phase3-paired-plateaued-exploring-s1-unsupervised",
+  "steps": 10,
+  "supervisor_allocation_exceeded": false,
+  "supervisor_calls": 0,
+  "supervisor_tokens": 0,
+  "terminal": "accepted",
+  "triggers": []
+}

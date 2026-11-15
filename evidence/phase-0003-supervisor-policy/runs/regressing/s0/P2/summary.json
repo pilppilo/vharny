@@ -1,0 +1,128 @@
+{
+  "accepted": true,
+  "accepted_at_call": 8,
+  "actions_to_recovery": 6,
+  "calls_to_recovery": 7,
+  "counters": {
+    "actions": 6,
+    "attempts": 2,
+    "commits": 1,
+    "evaluations": 2,
+    "model_calls": 8,
+    "reconciliations": 0
+  },
+  "error": null,
+  "facts": [
+    {
+      "actions": 1,
+      "call": 1,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:focus:{}"
+      ],
+      "input_tokens": 576,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 2,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:revert:{}"
+      ],
+      "input_tokens": 676,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 3,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:focus:{}"
+      ],
+      "input_tokens": 708,
+      "progress_signals": 0
+    },
+    {
+      "actions": 0,
+      "call": 4,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "evaluation:rejected"
+      ],
+      "input_tokens": 740,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 5,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:focus:{}"
+      ],
+      "input_tokens": 809,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 6,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:repair:{}"
+      ],
+      "input_tokens": 818,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 7,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:verify:{}"
+      ],
+      "input_tokens": 850,
+      "progress_signals": 0
+    },
+    {
+      "actions": 0,
+      "call": 8,
+      "failed_receipts": 0,
+      "fingerprints": [],
+      "input_tokens": 882,
+      "progress_signals": 0
+    }
+  ],
+  "fixture": "regressing",
+  "journal": {
+    "event_count": 47,
+    "format": "canonical-event-stream-gzip-jsonl",
+    "path": "events.jsonl.gz",
+    "sha256": "d6b70a7cc187d218800a3c8b75d11ad3888d62b3893ce9b3fcc2d708f1a5b0ef",
+    "source_journal_sha256": "cb477063be6f857296f7380079da49a8d863658de6d3b9a0ebb48899f0a36552",
+    "uncompressed_bytes": 363787,
+    "wal_sidecars": []
+  },
+  "onset_call": 1,
+  "operator_cues": [],
+  "policy": "P2",
+  "repeat": false,
+  "run_id": "regressing/s0/P2",
+  "seed": 0,
+  "session_id": "exp0001-regressing-s0-p2",
+  "steps": 8,
+  "supervisor_allocation_exceeded": false,
+  "supervisor_calls": 1,
+  "supervisor_tokens": 512,
+  "terminal": "accepted",
+  "triggers": [
+    {
+      "actions_used": 3,
+      "call": 5,
+      "fingerprint": null,
+      "policy": "P2",
+      "reason": "budget-burn",
+      "repeat_count": null,
+      "tokens_used": 2700
+    }
+  ]
+}

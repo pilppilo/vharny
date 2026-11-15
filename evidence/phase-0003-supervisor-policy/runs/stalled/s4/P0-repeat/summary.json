@@ -1,0 +1,166 @@
+{
+  "accepted": false,
+  "accepted_at_call": null,
+  "actions_to_recovery": null,
+  "calls_to_recovery": null,
+  "counters": {
+    "actions": 12,
+    "attempts": 1,
+    "commits": 0,
+    "evaluations": 0,
+    "model_calls": 12,
+    "reconciliations": 0
+  },
+  "error": null,
+  "facts": [
+    {
+      "actions": 1,
+      "call": 1,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}"
+      ],
+      "input_tokens": 576,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 2,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}"
+      ],
+      "input_tokens": 676,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 3,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}"
+      ],
+      "input_tokens": 708,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 4,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}"
+      ],
+      "input_tokens": 740,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 5,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}"
+      ],
+      "input_tokens": 772,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 6,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}"
+      ],
+      "input_tokens": 804,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 7,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}"
+      ],
+      "input_tokens": 836,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 8,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}"
+      ],
+      "input_tokens": 868,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 9,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}"
+      ],
+      "input_tokens": 900,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 10,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:focus:{}"
+      ],
+      "input_tokens": 980,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 11,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:repair:{}"
+      ],
+      "input_tokens": 1012,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 12,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:verify:{}"
+      ],
+      "input_tokens": 1044,
+      "progress_signals": 0
+    }
+  ],
+  "fixture": "stalled",
+  "journal": {
+    "event_count": 66,
+    "format": "canonical-event-stream-gzip-jsonl",
+    "path": "events.jsonl.gz",
+    "sha256": "44f27e390ff0e46980cf265f23aa97088879884c93b4fa153473ef153b651d77",
+    "source_journal_sha256": "f200eddeec063e7a706b1221dff2921bea8e466d18dec61a0a9098853b0bb6a1",
+    "uncompressed_bytes": 617978,
+    "wal_sidecars": []
+  },
+  "onset_call": 1,
+  "operator_cues": [
+    {
+      "call": 10,
+      "scheduled": true,
+      "source": "operator"
+    }
+  ],
+  "policy": "P0",
+  "repeat": true,
+  "run_id": "stalled/s4/P0-repeat",
+  "seed": 4,
+  "session_id": "exp0001-stalled-s4-p0-repeat",
+  "steps": 12,
+  "supervisor_allocation_exceeded": false,
+  "supervisor_calls": 0,
+  "supervisor_tokens": 0,
+  "terminal": "model_budget_exhausted",
+  "triggers": []
+}

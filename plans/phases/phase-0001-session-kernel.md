@@ -1,0 +1,158 @@
+---
+id: PHASE-0001
+title: Establish the durable session kernel and external contracts
+type: phase
+status: verified
+owners: []
+created: 2026-09-04
+updated: 2026-09-07
+depends_on: [ARCH-0001, ROAD-0001, BENCH-0001, ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005]
+supersedes: []
+related: [WORK-0001]
+---
+
+# Establish the durable session kernel and external contracts
+
+## Observable outcome
+
+A deterministic scripted agent can create a session, ingest environment,
+knowledge, and evaluation contracts, start an attempt from a seeded committed
+state, perform multiple proposed actions, receive external receipts, and commit
+a successor only after external acceptance. Failed attempts remain replayable
+without entering the committed lineage. The session can checkpoint, restart,
+reconcile pending work, and reproduce the same state. Vharness executes no action.
+
+## Entrance criteria
+
+ARCH-0001, ROAD-0001, BENCH-0001, and ADR-0001 through ADR-0005 are accepted.
+The current test suite passes before implementation begins. WORK-0001 records
+the baseline revision and commands.
+
+## In scope
+
+- Versioned Python records for task, environment, knowledge sources, state
+  references, attempts, committed nodes, events, proposals, execution receipts,
+  evaluation receipts, operator commands, and checkpoints.
+- Objective versions and finite/ongoing completion semantics; steering that
+  changes intent or acceptance creates a new version without rewriting history.
+- SQLite journal with atomic sequence assignment, replay, integrity checks, and
+  content-addressed artifact references.
+- Temporary-write, hash-verify, atomic-rename artifact publication.
+- Session state machine and a single-writer coordinator.
+- Durable message, steer, pause, resume, stop, checkpoint, and evaluation-request
+  operator events, with a minimal programmatic/CLI observation surface.
+- External runtime/evaluator protocols plus deterministic fakes for tests.
+- A minimal single-active-lineage projection separating all attempts from only
+  externally accepted committed states.
+- Pending-proposal recovery with reconciliation and `indeterminate` handling.
+- Transactional resource reservation before dispatch and measured-usage
+  reconciliation on success, denial, failure, timeout, or late receipt.
+- Stale-result protection using objective version, evaluated state/hash,
+  evaluator version, baseline, and expected committed head.
+- Counters and run manifest fields required by BENCH-0001.
+
+## Out of scope
+
+Model-driven planning, semantic retrieval, supervisor calls, population/archive
+branching, recurring scheduling for ongoing objectives, real benchmark adapters,
+distributed coordination, UI redesign,
+historical run migration, and any Vharness-side authorization, credentials,
+execution policy, target lifecycle, audit enforcement, or grading.
+
+## Contracts added or changed
+
+Implement the ARCH-0001 public contracts without adding speculative fields.
+Provide one `Environment` protocol for task/observation/action-space and opaque
+state-reference exchange, one `Runtime` protocol for submit/reconcile/receipt
+exchange, and one `Evaluator` protocol for evaluation requests/receipts. The
+trusted connector/runtime contract declares cancellation, idempotency,
+reconciliation, snapshot, and revision semantics, including unsupported cases;
+model output cannot strengthen those guarantees. It also declares whether state
+references are restorable or trajectory-only.
+The evaluator supplies validity, objective vector, baseline comparison, and
+acceptance; Vharness records rather than recomputes that judgment. Production
+execution and evaluation remain external; only deterministic fakes belong here.
+
+## Implementation sequence
+
+1. Capture current tests and map existing reusable model/usage primitives.
+2. Implement records and strict validation at external deserialization edges.
+3. Implement journal append, atomic artifact publication, replay, and projection
+   versioning.
+4. Implement objective-version, attempt, and single-lineage projections with a
+   seeded root state.
+5. Implement the coordinator state machine, waiting state, and operator commands.
+6. Add resource reservation, intent recording, dispatch, and receipt/usage
+   reconciliation against deterministic fakes.
+7. Add external evaluation handling, stale applicability checks, and atomic
+   accepted-successor commits.
+8. Add checkpoint/restart and pending-proposal reconciliation.
+9. Expose a thin CLI command or internal demo that exercises the full slice.
+
+## Compatibility and migration
+
+Add the kernel beside existing runner behavior; do not change the default CLI
+path. Reuse package logging/configuration only where it does not weaken the new
+contracts. Use a new database namespace and fail clearly on unknown versions.
+
+## Test strategy
+
+Unit-test contract validation and state transitions. Use temporary SQLite files
+for journal/replay checks. One table-driven end-to-end test covers create, run,
+pause, steer, resume, a multi-action attempt, evaluation, accepted commit,
+checkpoint, restart, and completion. Separate cases prove invalid, regressed, and
+incomparable evaluations remain in attempt history without advancing lineage.
+Inject crashes before submit, after submit/before receipt, after evaluation, and
+before commit projection; assert no blind duplicate submission or commit and
+identical replay.
+Steer from objective A to B while A's action/evaluation is pending; its late
+receipt must remain evidence but cannot complete B or advance B's lineage. Tests
+also cover stale heads, changed state hashes, unsupported connector guarantees,
+reservation reconciliation, unknown cost, cancellation without assumed undo,
+atomic artifact failure, and waiting distinct from paused/completed.
+Property-style loops may use seeded standard-library randomness; add no testing
+dependency unless it finds failures the table tests cannot cover.
+
+## Exit criteria and required evidence
+
+- All current and new tests pass and `git diff --check` is clean.
+- Journal replay is byte-stable for canonical event payloads and yields the same
+  projection hashes across repeated runs.
+- Duplicate event and receipt ingestion is idempotent by stable ID.
+- Each crash point resumes correctly; indeterminate work is never resent.
+- Operator commands survive restart and affect the next coordinator decision.
+- Objective changes create durable versions; late or stale results cannot affect
+  a newer objective or lineage head.
+- Resource reservations reconcile on every terminal path, and unknown cost is
+  never recorded as zero.
+- No event references an artifact before verified atomic publication.
+- A variation attempt may contain multiple actions and evaluations in any order.
+- Only an externally accepted evaluation creates one single-parent committed node;
+  failed and non-improving attempts remain queryable outside that lineage.
+- Candidate-capable and trajectory-only fake environments both preserve correct
+  state semantics without Vharness rollback or lifecycle control.
+- No implementation path executes environment effects or evaluates success.
+- WORK-0001 links commands, fixtures, and test output; then status becomes
+  `implemented`. Independent verification is required for `verified`.
+
+## Implementation progress
+
+All nine completion fragments are implemented: atomic command application
+(`1228429`), external-operation recovery (`08f06e1`), operation identity and
+receipt progression (`d701470`), resource ledger replacement (`81aa150`),
+evaluation/evidence/promotion semantics (`6a490f2`), durable attempt and lineage
+history (`c900771`), and the public-contract and evidence surface (`656b49d`,
+corrected by `0ee9aa6`), and the recovery/integration matrix (`ff1b5a1`).
+Fragment 9 adds the scripted two-action finite-completion/reopen path,
+checkpoint-plus-suffix replay equivalence, and atomic artifact-publication
+failure coverage. WORK-0001 records the reported full-suite, Python 3.10,
+formatting, lint, type, and whitespace evidence. Independent verification
+reviewed the implementation and evidence without code findings; this phase is
+verified.
+
+## Risks and recovery
+
+The main risk is encoding too much future behavior in foundational records.
+Prefer opaque extension metadata and add fields only when the vertical slice
+needs them. If existing code forces incompatible assumptions, wrap the smallest
+reusable boundary rather than refactoring the current product during this phase.

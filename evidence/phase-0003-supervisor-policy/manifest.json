@@ -1,0 +1,460 @@
+{
+  "budgets": {
+    "actions": 24,
+    "context_tokens": 4096,
+    "evaluations": 3,
+    "model_calls": 12,
+    "supervisor_calls": 4,
+    "supervisor_tokens": 2048,
+    "supervisor_tokens_per_call": 512
+  },
+  "document": "plans/experiments/exp-0001-supervisor-policy.md",
+  "experiment": "EXP-0001",
+  "fixtures": {
+    "plateaued-exploring": {
+      "interrupt_opening": false,
+      "onset_call": 1,
+      "opening": [],
+      "plateau": [
+        {
+          "arguments": {
+            "target": "t1"
+          },
+          "claim_after": "",
+          "kind": "action",
+          "name": "probe"
+        },
+        {
+          "arguments": {
+            "target": "t2"
+          },
+          "claim_after": "",
+          "kind": "action",
+          "name": "probe"
+        },
+        {
+          "arguments": {
+            "target": "t3"
+          },
+          "claim_after": "",
+          "kind": "action",
+          "name": "probe"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "focus"
+        },
+        {
+          "arguments": {
+            "target": "t4"
+          },
+          "claim_after": "",
+          "kind": "action",
+          "name": "probe"
+        },
+        {
+          "arguments": {
+            "target": "t5"
+          },
+          "claim_after": "",
+          "kind": "action",
+          "name": "probe"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "repair"
+        },
+        {
+          "arguments": {
+            "target": "t6"
+          },
+          "claim_after": "",
+          "kind": "action",
+          "name": "probe"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "verify"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "evaluate",
+          "name": ""
+        }
+      ],
+      "probe_failure": false,
+      "recovery": [
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "focus"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "repair"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "verify"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "evaluate",
+          "name": ""
+        }
+      ],
+      "success_expected_without_intervention": true
+    },
+    "productive": {
+      "interrupt_opening": false,
+      "onset_call": 1,
+      "opening": [],
+      "plateau": [
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "inspect"
+        },
+        {
+          "arguments": {},
+          "claim_after": "the fixture goal requires focus, repair, and verify",
+          "kind": "knowledge-item",
+          "name": ""
+        },
+        {
+          "arguments": {},
+          "claim_after": "the fixture goal requires focus, repair, and verify",
+          "kind": "knowledge-progress",
+          "name": ""
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "focus"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "repair"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "verify"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "evaluate",
+          "name": ""
+        }
+      ],
+      "probe_failure": false,
+      "recovery": [
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "focus"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "repair"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "verify"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "evaluate",
+          "name": ""
+        }
+      ],
+      "success_expected_without_intervention": true
+    },
+    "recovery-drill": {
+      "interrupt_opening": true,
+      "onset_call": 2,
+      "opening": [
+        {
+          "arguments": {
+            "target": "interrupted"
+          },
+          "claim_after": "",
+          "kind": "action",
+          "name": "probe"
+        }
+      ],
+      "plateau": [
+        {
+          "arguments": {
+            "target": "a"
+          },
+          "claim_after": "",
+          "kind": "action",
+          "name": "probe"
+        }
+      ],
+      "probe_failure": false,
+      "recovery": [
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "focus"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "repair"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "verify"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "evaluate",
+          "name": ""
+        }
+      ],
+      "success_expected_without_intervention": false
+    },
+    "regressing": {
+      "interrupt_opening": false,
+      "onset_call": 1,
+      "opening": [],
+      "plateau": [
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "focus"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "revert"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "focus"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "evaluate",
+          "name": ""
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "revert"
+        }
+      ],
+      "probe_failure": false,
+      "recovery": [
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "focus"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "repair"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "verify"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "evaluate",
+          "name": ""
+        }
+      ],
+      "success_expected_without_intervention": false
+    },
+    "repetitive": {
+      "interrupt_opening": false,
+      "onset_call": 1,
+      "opening": [],
+      "plateau": [
+        {
+          "arguments": {
+            "target": "a"
+          },
+          "claim_after": "",
+          "kind": "action",
+          "name": "probe"
+        }
+      ],
+      "probe_failure": true,
+      "recovery": [
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "focus"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "repair"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "verify"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "evaluate",
+          "name": ""
+        }
+      ],
+      "success_expected_without_intervention": false
+    },
+    "stalled": {
+      "interrupt_opening": false,
+      "onset_call": 1,
+      "opening": [],
+      "plateau": [
+        {
+          "arguments": {
+            "target": "a"
+          },
+          "claim_after": "",
+          "kind": "action",
+          "name": "probe"
+        }
+      ],
+      "probe_failure": false,
+      "recovery": [
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "focus"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "repair"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "action",
+          "name": "verify"
+        },
+        {
+          "arguments": {},
+          "claim_after": "",
+          "kind": "evaluate",
+          "name": ""
+        }
+      ],
+      "success_expected_without_intervention": false
+    }
+  },
+  "policies": {
+    "P0": {
+      "kind": "operator-only",
+      "operator_cue_call": 10
+    },
+    "P1": {
+      "cooldown_calls": 4,
+      "kind": "repetition",
+      "repeat_threshold": 3,
+      "window_calls": 8
+    },
+    "P2": {
+      "action_fraction": 0.6,
+      "cooldown_calls": 4,
+      "kind": "budget-burn",
+      "token_fraction": 0.6
+    },
+    "P3": {
+      "action_fraction": 0.6,
+      "cooldown_calls": 6,
+      "kind": "combined",
+      "repeat_threshold": 3,
+      "token_fraction": 0.6,
+      "window_calls": 8
+    }
+  },
+  "provider_calls": 0,
+  "retention": {
+    "aggregate": [
+      "manifest.json",
+      "results.json",
+      "report.md",
+      "aggregate.py"
+    ],
+    "per_run": [
+      "events.jsonl.gz",
+      "summary.json",
+      "triggers.json"
+    ]
+  },
+  "retention_note": "Each run's sqlite journal is compacted to a canonical gzip JSONL event-stream export with the source journal hash recorded; summaries and result tables are derived from the exported streams.",
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "source": {
+    "git_dirty": false,
+    "git_revision": "aaaa7458c0064f69990c13b787cb9eb21773df77",
+    "tool": "tools/exp_0001_supervisor_policy.py",
+    "tool_sha256": "6a151658512acf3ebd0ecfbcc504ea820aeb7c5cb2d50e5cf9e1b4b69eb22e88"
+  },
+  "terminal_conditions": [
+    "external fixture-evaluator acceptance",
+    "decision-budget end without acceptance"
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "accepted": true,
+  "accepted_at_call": 11,
+  "actions_to_recovery": 6,
+  "attempt_abandoned": 1,
+  "attempt_started": 2,
+  "condition": "supervised",
+  "counters": {
+    "actions": 9,
+    "attempts": 2,
+    "commits": 1,
+    "evaluations": 1,
+    "model_calls": 12,
+    "reconciliations": 0
+  },
+  "error": null,
+  "fixture": "repetitive",
+  "guidance": {
+    "accepted": 0,
+    "expired": 0,
+    "rejected": 1,
+    "response_rejected": 0
+  },
+  "guidance_decisions": {
+    "accept": 0,
+    "reject": 1,
+    "replan": 0
+  },
+  "journal": {
+    "event_count": 66,
+    "format": "canonical-event-stream-gzip-jsonl",
+    "path": "events.jsonl.gz",
+    "sha256": "9d2d90faf1ebde6cef1edafe12d13202f10bcab1501e00e82704ffd5a2141239",
+    "uncompressed_bytes": 578886,
+    "wal_sidecars": []
+  },
+  "main_calls": 11,
+  "operator_escalated": 0,
+  "repeat": false,
+  "run_id": "repetitive/s4/supervised",
+  "seed": 4,
+  "session_id": "phase3-paired-repetitive-s4-supervised",
+  "steps": 11,
+  "supervisor_allocation_exceeded": false,
+  "supervisor_calls": 1,
+  "supervisor_tokens": 512,
+  "terminal": "accepted",
+  "triggers": [
+    4,
+    8
+  ]
+}

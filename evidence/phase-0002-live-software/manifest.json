@@ -1,0 +1,123 @@
+{
+  "artifacts": {
+    "inventory": [
+      {
+        "digest": "2996bf0f7127843575c8f72002ce0067b580e3fc82b3460a927f33e060a6443d",
+        "size": 55
+      },
+      {
+        "digest": "61040f8e5b88ad17bf8bcb278c0f026fd31c26d55c004667f11d8fbeeb2a4e49",
+        "size": 55
+      },
+      {
+        "digest": "c80e5b6596acaf3500b56d3873a1694f8e58cd7cae97e7229df7b20d74d9b3d3",
+        "size": 21
+      }
+    ],
+    "journal_pointer": "../session.sqlite3",
+    "path": "artifacts",
+    "reachable_artifacts": [
+      {
+        "actual_size": 55,
+        "digest": "2996bf0f7127843575c8f72002ce0067b580e3fc82b3460a927f33e060a6443d",
+        "relative_path": "artifacts/29/96bf0f7127843575c8f72002ce0067b580e3fc82b3460a927f33e060a6443d",
+        "sha256": "2996bf0f7127843575c8f72002ce0067b580e3fc82b3460a927f33e060a6443d",
+        "size": 55
+      },
+      {
+        "actual_size": 55,
+        "digest": "61040f8e5b88ad17bf8bcb278c0f026fd31c26d55c004667f11d8fbeeb2a4e49",
+        "relative_path": "artifacts/61/040f8e5b88ad17bf8bcb278c0f026fd31c26d55c004667f11d8fbeeb2a4e49",
+        "sha256": "61040f8e5b88ad17bf8bcb278c0f026fd31c26d55c004667f11d8fbeeb2a4e49",
+        "size": 55
+      },
+      {
+        "actual_size": 21,
+        "digest": "c80e5b6596acaf3500b56d3873a1694f8e58cd7cae97e7229df7b20d74d9b3d3",
+        "relative_path": "artifacts/c8/0e5b6596acaf3500b56d3873a1694f8e58cd7cae97e7229df7b20d74d9b3d3",
+        "sha256": "c80e5b6596acaf3500b56d3873a1694f8e58cd7cae97e7229df7b20d74d9b3d3",
+        "size": 21
+      },
+      {
+        "actual_size": 21,
+        "digest": "c80e5b6596acaf3500b56d3873a1694f8e58cd7cae97e7229df7b20d74d9b3d3",
+        "relative_path": "artifacts/c8/0e5b6596acaf3500b56d3873a1694f8e58cd7cae97e7229df7b20d74d9b3d3",
+        "sha256": "c80e5b6596acaf3500b56d3873a1694f8e58cd7cae97e7229df7b20d74d9b3d3",
+        "size": 21
+      }
+    ]
+  },
+  "configuration_digest": "5693504494f8d2714d8c91a2ba2e2677fbe0ff0b552b0849e80dfb4a2f297fb1",
+  "derived_files": {
+    "context_manifests": "context-manifests.json",
+    "fresh_process_reopen": "fresh-process-reopen.json",
+    "report": "report.json",
+    "reproducer": "reproduce.py",
+    "transcript": "transcript.json"
+  },
+  "evidence_id": "phase-0002-live-software",
+  "files": {
+    "artifacts/.journals": {
+      "sha256": "590236f7bfc2c61440f2ca51c72c9ef7430582fb0011f1263ab7b29646fe8c32",
+      "size": 19
+    },
+    "artifacts/29/96bf0f7127843575c8f72002ce0067b580e3fc82b3460a927f33e060a6443d": {
+      "sha256": "2996bf0f7127843575c8f72002ce0067b580e3fc82b3460a927f33e060a6443d",
+      "size": 55
+    },
+    "artifacts/61/040f8e5b88ad17bf8bcb278c0f026fd31c26d55c004667f11d8fbeeb2a4e49": {
+      "sha256": "61040f8e5b88ad17bf8bcb278c0f026fd31c26d55c004667f11d8fbeeb2a4e49",
+      "size": 55
+    },
+    "artifacts/c8/0e5b6596acaf3500b56d3873a1694f8e58cd7cae97e7229df7b20d74d9b3d3": {
+      "sha256": "c80e5b6596acaf3500b56d3873a1694f8e58cd7cae97e7229df7b20d74d9b3d3",
+      "size": 21
+    },
+    "context-manifests.json": {
+      "sha256": "c42f17859f02ca513a8e4982c77885014f03e9506c7a0b57d16bf5d977fd6f5c",
+      "size": 18204
+    },
+    "fresh-process-reopen.json": {
+      "sha256": "4564c37ef36d366d7592bdec1f72dc0c31d690273a6050efffae0e66bec37e96",
+      "size": 5562
+    },
+    "report.json": {
+      "sha256": "756af7816eb229181f7edaff2097e7d94d3d3dc2f43370eee1604f98088b501f",
+      "size": 21912
+    },
+    "reproduce.py": {
+      "sha256": "9384de262aae7a5f76daac55b904b5f213bbc629eefa84723f4b95981fe759fe",
+      "size": 43833
+    },
+    "session.sqlite3": {
+      "sha256": "2ebd0496a673c64f87ed8d038449ba18e234b5914a78f25526ff86108f349f71",
+      "size": 401408
+    },
+    "transcript.json": {
+      "sha256": "a120a08c7b6ba0bf658470379a2756612696c7ab8428c03323f09d396b15cc2a",
+      "size": 189302
+    }
+  },
+  "journal": {
+    "cursor": 24,
+    "event_count": 24,
+    "event_stream_sha256": "f1140cd23f0b7af5f81bdfbd02737b454795f56bf2c8a1504dad3c25b74ebb8f",
+    "foreign_key_check": [],
+    "integrity_check": "ok",
+    "path": "session.sqlite3",
+    "projection_sha256": "5b0ba0e4291ae5df0364ef308f6bd01af711b92b3333ffc8c058ff046f4f1cb5",
+    "replay_status": "completed",
+    "sha256": "2ebd0496a673c64f87ed8d038449ba18e234b5914a78f25526ff86108f349f71",
+    "size": 401408,
+    "wal_sidecars": []
+  },
+  "manifest_version": 1,
+  "package_version": "0.2.0",
+  "scope": "unscripted live LongCat CompatibleModel software-fixture acceptance",
+  "self_hash": "omitted to avoid recursive manifest hashing",
+  "source": {
+    "generator_sha256": "9384de262aae7a5f76daac55b904b5f213bbc629eefa84723f4b95981fe759fe",
+    "git_dirty": false,
+    "git_revision": "0138047de4fe60cd15a2c9ab461768a68d322160"
+  }
+}

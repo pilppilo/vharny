@@ -1,0 +1,6 @@
+# Retained evidence hashes raw bytes, including text and extensionless artifacts.
+/evidence/phase-0002-operator-steering-resume/** -text
+/evidence/phase-0002-live-software/** -text
+/evidence/phase-0003-failure-traces/** -text
+
+tools/exp_0001_supervisor_policy.py text eol=lf

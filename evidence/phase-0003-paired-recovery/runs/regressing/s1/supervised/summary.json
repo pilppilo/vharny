@@ -1,0 +1,52 @@
+{
+  "accepted": true,
+  "accepted_at_call": 11,
+  "actions_to_recovery": 3,
+  "attempt_abandoned": 1,
+  "attempt_started": 3,
+  "condition": "supervised",
+  "counters": {
+    "actions": 8,
+    "attempts": 3,
+    "commits": 1,
+    "evaluations": 2,
+    "model_calls": 12,
+    "reconciliations": 0
+  },
+  "error": null,
+  "fixture": "regressing",
+  "guidance": {
+    "accepted": 1,
+    "expired": 0,
+    "rejected": 0,
+    "response_rejected": 0
+  },
+  "guidance_decisions": {
+    "accept": 1,
+    "reject": 0,
+    "replan": 0
+  },
+  "journal": {
+    "event_count": 68,
+    "format": "canonical-event-stream-gzip-jsonl",
+    "path": "events.jsonl.gz",
+    "sha256": "d13c5c9e3ac812bb18002d614586a6ceb0c673fdd206a9b08836b483f0874614",
+    "uncompressed_bytes": 583585,
+    "wal_sidecars": []
+  },
+  "main_calls": 11,
+  "operator_escalated": 0,
+  "repeat": false,
+  "run_id": "regressing/s1/supervised",
+  "seed": 1,
+  "session_id": "phase3-paired-regressing-s1-supervised",
+  "steps": 11,
+  "supervisor_allocation_exceeded": false,
+  "supervisor_calls": 1,
+  "supervisor_tokens": 512,
+  "terminal": "accepted",
+  "triggers": [
+    7,
+    11
+  ]
+}

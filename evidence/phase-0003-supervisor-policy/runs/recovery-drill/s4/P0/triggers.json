@@ -1,0 +1,15 @@
+{
+  "operator_cues": [
+    {
+      "call": 10,
+      "scheduled": true,
+      "source": "operator"
+    }
+  ],
+  "policy_parameters": {
+    "kind": "operator-only",
+    "operator_cue_call": 10
+  },
+  "run_id": "recovery-drill/s4/P0",
+  "triggers": []
+}

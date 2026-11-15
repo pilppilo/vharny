@@ -1,0 +1,177 @@
+PHASE-0002 operator steering/resume evidence
+Scope: deterministic scripted-model operator-control mechanics only.
+
+OPT-IN CLI TRANSCRIPT
+[status-before-direction] exit=0
+STDOUT:
+STATUS running
+OBJECTIVE Preserve operator direction while safely completing the fixture
+PLAN Read the fixture, apply the requested change, then evaluate.
+BUDGET remaining actions=3/3 used=0 model_calls=5/6 used=1 evaluations=1/1 used=0
+STDERR:
+
+
+[message-direction] exit=0
+STDOUT:
+STATUS running
+OBJECTIVE Preserve operator direction while safely completing the fixture
+PLAN Read the fixture, apply the requested change, then evaluate.
+BUDGET remaining actions=3/3 used=0 model_calls=5/6 used=1 evaluations=1/1 used=0
+STREAM OPERATOR Prioritize a read before any write and keep the plan visible.
+STDERR:
+
+
+[status-question] exit=0
+STDOUT:
+STATUS waiting
+OBJECTIVE Preserve operator direction while safely completing the fixture
+PLAN Read the fixture, apply the requested change, then evaluate.
+BUDGET remaining actions=2/3 used=1 model_calls=3/6 used=3 evaluations=1/1 used=0
+WAIT operator answer
+QUESTION question-19: May I continue with the planned write and test?
+STREAM OPERATOR Prioritize a read before any write and keep the plan visible.
+STREAM ACTION read {path='main.py'}
+STREAM RUNTIME succeeded proposal-041cf988b48e40c2a83f9528c390ba79
+STDERR:
+
+
+[message-wrong-question-id] exit=1
+STDOUT:
+STATUS waiting
+OBJECTIVE Preserve operator direction while safely completing the fixture
+PLAN Read the fixture, apply the requested change, then evaluate.
+BUDGET remaining actions=2/3 used=1 model_calls=3/6 used=3 evaluations=1/1 used=0
+WAIT operator answer
+QUESTION question-19: May I continue with the planned write and test?
+STREAM OPERATOR Prioritize a read before any write and keep the plan visible.
+STREAM ACTION read {path='main.py'}
+STREAM RUNTIME succeeded proposal-041cf988b48e40c2a83f9528c390ba79
+STDERR:
+ERROR message rejected: message does not answer the open question
+
+[status-paused] exit=0
+STDOUT:
+STATUS paused
+OBJECTIVE Preserve operator direction while safely completing the fixture
+PLAN Read the fixture, apply the requested change, then evaluate.
+BUDGET remaining actions=2/3 used=1 model_calls=3/6 used=3 evaluations=1/1 used=0
+WAIT operator answer
+QUESTION question-19: May I continue with the planned write and test?
+STREAM OPERATOR Prioritize a read before any write and keep the plan visible.
+STREAM ACTION read {path='main.py'}
+STREAM RUNTIME succeeded proposal-041cf988b48e40c2a83f9528c390ba79
+STDERR:
+
+
+[message-answer-while-paused] exit=0
+STDOUT:
+STATUS paused
+OBJECTIVE Preserve operator direction while safely completing the fixture
+PLAN Read the fixture, apply the requested change, then evaluate.
+BUDGET remaining actions=2/3 used=1 model_calls=3/6 used=3 evaluations=1/1 used=0
+STREAM OPERATOR Prioritize a read before any write and keep the plan visible.
+STREAM ACTION read {path='main.py'}
+STREAM RUNTIME succeeded proposal-041cf988b48e40c2a83f9528c390ba79
+STREAM OPERATOR Yes. Continue with the planned write and test after resume.
+STDERR:
+
+
+[status-answered-still-paused] exit=0
+STDOUT:
+STATUS paused
+OBJECTIVE Preserve operator direction while safely completing the fixture
+PLAN Read the fixture, apply the requested change, then evaluate.
+BUDGET remaining actions=2/3 used=1 model_calls=3/6 used=3 evaluations=1/1 used=0
+STREAM OPERATOR Prioritize a read before any write and keep the plan visible.
+STREAM ACTION read {path='main.py'}
+STREAM RUNTIME succeeded proposal-041cf988b48e40c2a83f9528c390ba79
+STREAM OPERATOR Yes. Continue with the planned write and test after resume.
+STDERR:
+
+
+[status-final] exit=0
+STDOUT:
+STATUS completed
+OBJECTIVE Preserve operator direction while safely completing the fixture
+PLAN Read the fixture, apply the requested change, then evaluate.
+BUDGET remaining actions=0/3 used=3 model_calls=0/6 used=6 evaluations=0/1 used=1
+STREAM OPERATOR Prioritize a read before any write and keep the plan visible.
+STREAM ACTION read {path='main.py'}
+STREAM RUNTIME succeeded proposal-041cf988b48e40c2a83f9528c390ba79
+STREAM OPERATOR Yes. Continue with the planned write and test after resume.
+STREAM ACTION write {content='value = 1\n', path='main.py'}
+STREAM RUNTIME succeeded proposal-4115491f75994817bed52eae89d8b225
+STREAM ACTION test {}
+STREAM RUNTIME succeeded proposal-3057a3b9b6df40468bc6e6037dd43315
+STREAM EVALUATION requested
+STREAM EVALUATION accepted comparison=improved
+STREAM LINEAGE promoted
+STDERR:
+
+
+PRIMARY DURABLE EVENT TRANSCRIPT
+0001 session_created objective=Preserve operator direction while safely completing the fixture
+0002 attempt_started
+0003 model_configuration_bound
+0004 context_assembled included=(('objective', 'mandatory'), ('environment', 'mandatory'), ('operator', 'mandatory'), ('evaluation', 'mandatory'), ('lineage_head', 'mandatory'), ('attempt', 'mandatory'), ('plan', 'mandatory'), ('budgets', 'mandatory'), ('receipt', 'mandatory'), ('observation', 'mandatory'), ('node:root-phase2-operator-steering-resume', 'retrieved'), ('attempt:attempt-63200fee68634c7d9c8658c3de0f9659', 'retrieved'), ('event:event-75aeaec7f80e4612bdd599cdbc5be0c5', 'recent'), ('event:event-f8b964599f864133ae15dc4e3970483d', 'recent'), ('event:event-de670793de094456af24f7477f035dc0', 'recent')) omitted=()
+0005 model_intended
+0006 model_decided result=PlanUpdate request=decision-16086c24361e48b997627bf26474f156
+0007 plan_recorded plan=Read the fixture, apply the requested change, then evaluate.
+0008 command_admitted
+0009 operator_message command=msg-d81409d13247 text=Prioritize a read before any write and keep the plan visible.
+0010 command_applied
+0011 context_assembled included=(('objective', 'mandatory'), ('environment', 'mandatory'), ('operator', 'mandatory'), ('evaluation', 'mandatory'), ('lineage_head', 'mandatory'), ('attempt', 'mandatory'), ('plan', 'mandatory'), ('budgets', 'mandatory'), ('receipt', 'mandatory'), ('observation', 'mandatory'), ('fts:event-e940dd35959542a082b14adcf42a2420', 'retrieved'), ('node:root-phase2-operator-steering-resume', 'retrieved'), ('attempt:attempt-63200fee68634c7d9c8658c3de0f9659', 'retrieved'), ('event:event-75aeaec7f80e4612bdd599cdbc5be0c5', 'recent'), ('event:event-f8b964599f864133ae15dc4e3970483d', 'recent'), ('event:event-de670793de094456af24f7477f035dc0', 'recent'), ('event:event-4b639d190b2b441b9fae35c9babef7a4', 'recent'), ('event:event-377ef2d7a0ea4168a6e4a4b62ba5095d', 'recent'), ('event:event-3b5ea1d3df9f4ebd95c7a317da882bba', 'recent'), ('event:event-f93c75530e6f47cab72a16bc70744f10', 'recent'), ('event:event-245d9e0449af45eba15043d45faf3d06', 'recent'), ('event:event-8c617614e0e54d949fecb14e5ad248a8', 'recent')) omitted=(('event:event-e940dd35959542a082b14adcf42a2420', 'duplicate'),)
+0012 model_intended
+0013 model_decided result=ActionChoice request=decision-93a142bfa41a4a91a4dceea3facd21de
+0014 action_intended proposal=proposal-041cf988b48e40c2a83f9528c390ba79 action=read arguments={'path': 'main.py'}
+0015 receipt_received receipt=receipt-proposal-041cf988b48e40c2a83f9528c390ba79 proposal=proposal-041cf988b48e40c2a83f9528c390ba79 status=succeeded
+0016 context_assembled included=(('objective', 'mandatory'), ('environment', 'mandatory'), ('operator', 'mandatory'), ('evaluation', 'mandatory'), ('lineage_head', 'mandatory'), ('attempt', 'mandatory'), ('plan', 'mandatory'), ('budgets', 'mandatory'), ('receipt', 'mandatory'), ('observation', 'mandatory'), ('fts:event-e940dd35959542a082b14adcf42a2420', 'retrieved'), ('node:root-phase2-operator-steering-resume', 'retrieved'), ('fts:event-1ab65f6b655e44728ddb724988ad26f1', 'retrieved'), ('attempt:attempt-63200fee68634c7d9c8658c3de0f9659', 'retrieved'), ('event:event-75aeaec7f80e4612bdd599cdbc5be0c5', 'recent'), ('event:event-f8b964599f864133ae15dc4e3970483d', 'recent'), ('event:event-de670793de094456af24f7477f035dc0', 'recent'), ('event:event-4b639d190b2b441b9fae35c9babef7a4', 'recent'), ('event:event-377ef2d7a0ea4168a6e4a4b62ba5095d', 'recent'), ('event:event-3b5ea1d3df9f4ebd95c7a317da882bba', 'recent'), ('event:event-f93c75530e6f47cab72a16bc70744f10', 'recent'), ('event:event-245d9e0449af45eba15043d45faf3d06', 'recent'), ('event:event-8c617614e0e54d949fecb14e5ad248a8', 'recent'), ('event:event-afb740c939fd4cc2aa676f71b1e587e5', 'recent'), ('event:event-d62d7595f0314c188c03d78225ff0b07', 'recent'), ('event:event-180b6bce9343487580e349362d6fface', 'recent'), ('event:event-d1fc0d559d444f8fad9ae787567161bd', 'recent')) omitted=(('event:event-1ab65f6b655e44728ddb724988ad26f1', 'duplicate'), ('event:event-e940dd35959542a082b14adcf42a2420', 'duplicate'))
+0017 model_intended
+0018 model_decided result=OperatorQuestion request=decision-96ed9163b1e249a9895b6c528993e281
+0019 question_recorded question_id=question-19 text=May I continue with the planned write and test?
+0020 command_admitted
+0021 command_rejected command=msg-921cb6378817 reason=message does not answer the open question
+0022 command_admitted
+0023 session_paused command=pause-for-operator-evidence
+0024 command_applied
+0025 command_admitted
+0026 operator_message command=msg-3b973faac05a text=Yes. Continue with the planned write and test after resume.
+0027 question_answered question_id=question-19 command=msg-3b973faac05a
+0028 command_applied
+0029 command_admitted
+0030 session_resumed command=resume-after-operator-answer
+0031 command_applied
+0032 context_assembled included=(('objective', 'mandatory'), ('environment', 'mandatory'), ('operator', 'mandatory'), ('evaluation', 'mandatory'), ('lineage_head', 'mandatory'), ('attempt', 'mandatory'), ('plan', 'mandatory'), ('budgets', 'mandatory'), ('receipt', 'mandatory'), ('observation', 'mandatory'), ('fts:event-e368190c30104880bb845004f7bb374e', 'retrieved'), ('node:root-phase2-operator-steering-resume', 'retrieved'), ('attempt:attempt-63200fee68634c7d9c8658c3de0f9659', 'retrieved'), ('fts:event-1ab65f6b655e44728ddb724988ad26f1', 'retrieved'), ('event:event-75aeaec7f80e4612bdd599cdbc5be0c5', 'recent'), ('event:event-f8b964599f864133ae15dc4e3970483d', 'recent'), ('event:event-de670793de094456af24f7477f035dc0', 'recent'), ('event:event-4b639d190b2b441b9fae35c9babef7a4', 'recent'), ('event:event-377ef2d7a0ea4168a6e4a4b62ba5095d', 'recent'), ('event:event-3b5ea1d3df9f4ebd95c7a317da882bba', 'recent'), ('event:event-f93c75530e6f47cab72a16bc70744f10', 'recent'), ('event:event-245d9e0449af45eba15043d45faf3d06', 'recent'), ('event:event-e940dd35959542a082b14adcf42a2420', 'recent'), ('event:event-8c617614e0e54d949fecb14e5ad248a8', 'recent'), ('event:event-afb740c939fd4cc2aa676f71b1e587e5', 'recent'), ('event:event-d62d7595f0314c188c03d78225ff0b07', 'recent'), ('event:event-180b6bce9343487580e349362d6fface', 'recent'), ('event:event-d1fc0d559d444f8fad9ae787567161bd', 'recent'), ('event:event-41b0976d226f441baeae03af64715dcc', 'recent'), ('event:event-40b628a517424f3e9151cdb431d3dce8', 'recent'), ('event:event-90478c80d54a4d6da3c593c56582fc26', 'recent'), ('event:event-b3886512a20c412d93b7bd6060b26a1b', 'recent'), ('event:event-a0f6a7051edc4f60b032550586de121e', 'recent'), ('event:event-79ba757834c44d64878aea3fe6a6f064', 'recent'), ('event:event-6670c51e64694ed8938c9da971aca7d8', 'recent'), ('event:event-db27d439bb7145c4adf3e38f4a011021', 'recent'), ('event:event-e9de81a98517498b8e087979b484ea77', 'recent'), ('event:event-1663062638084f7a99c2242a32e7c6c0', 'recent'), ('event:event-c106816d2ad542888eca1ae95d16c1c2', 'recent'), ('event:event-84f88713a1d14249afdecca30f39fafd', 'recent'), ('event:event-bd9805ff0f2f417b9e45bf364c2dcd8c', 'recent'), ('event:event-2cd7861e94274b4b8b28a3450696e772', 'recent'), ('event:event-fde22c2434224649be7d19291ff2bf42', 'recent')) omitted=(('fts:event-b3886512a20c412d93b7bd6060b26a1b', 'low_relevance'), ('fts:event-e940dd35959542a082b14adcf42a2420', 'low_relevance'), ('event:event-e368190c30104880bb845004f7bb374e', 'duplicate'), ('event:event-1ab65f6b655e44728ddb724988ad26f1', 'duplicate'))
+0033 model_intended
+0034 model_decided result=ActionChoice request=decision-be4a373e245c40a08971b2c7ca6bff71
+0035 action_intended proposal=proposal-4115491f75994817bed52eae89d8b225 action=write arguments={'content': 'value = 1\n', 'path': 'main.py'}
+0036 receipt_received receipt=receipt-proposal-4115491f75994817bed52eae89d8b225 proposal=proposal-4115491f75994817bed52eae89d8b225 status=succeeded
+0037 context_assembled included=(('objective', 'mandatory'), ('environment', 'mandatory'), ('operator', 'mandatory'), ('evaluation', 'mandatory'), ('lineage_head', 'mandatory'), ('attempt', 'mandatory'), ('plan', 'mandatory'), ('budgets', 'mandatory'), ('receipt', 'mandatory'), ('observation', 'mandatory'), ('fts:event-e368190c30104880bb845004f7bb374e', 'retrieved'), ('node:root-phase2-operator-steering-resume', 'retrieved'), ('fts:event-d497d640b7fb4c2d81d1f5859b420849', 'retrieved'), ('attempt:attempt-63200fee68634c7d9c8658c3de0f9659', 'retrieved'), ('event:event-75aeaec7f80e4612bdd599cdbc5be0c5', 'recent'), ('event:event-f8b964599f864133ae15dc4e3970483d', 'recent'), ('event:event-de670793de094456af24f7477f035dc0', 'recent'), ('event:event-4b639d190b2b441b9fae35c9babef7a4', 'recent'), ('event:event-377ef2d7a0ea4168a6e4a4b62ba5095d', 'recent'), ('event:event-3b5ea1d3df9f4ebd95c7a317da882bba', 'recent'), ('event:event-f93c75530e6f47cab72a16bc70744f10', 'recent'), ('event:event-245d9e0449af45eba15043d45faf3d06', 'recent'), ('event:event-e940dd35959542a082b14adcf42a2420', 'recent'), ('event:event-8c617614e0e54d949fecb14e5ad248a8', 'recent'), ('event:event-afb740c939fd4cc2aa676f71b1e587e5', 'recent'), ('event:event-d62d7595f0314c188c03d78225ff0b07', 'recent'), ('event:event-180b6bce9343487580e349362d6fface', 'recent'), ('event:event-d1fc0d559d444f8fad9ae787567161bd', 'recent'), ('event:event-1ab65f6b655e44728ddb724988ad26f1', 'recent'), ('event:event-41b0976d226f441baeae03af64715dcc', 'recent'), ('event:event-40b628a517424f3e9151cdb431d3dce8', 'recent'), ('event:event-90478c80d54a4d6da3c593c56582fc26', 'recent'), ('event:event-b3886512a20c412d93b7bd6060b26a1b', 'recent'), ('event:event-a0f6a7051edc4f60b032550586de121e', 'recent'), ('event:event-79ba757834c44d64878aea3fe6a6f064', 'recent'), ('event:event-6670c51e64694ed8938c9da971aca7d8', 'recent'), ('event:event-db27d439bb7145c4adf3e38f4a011021', 'recent'), ('event:event-e9de81a98517498b8e087979b484ea77', 'recent'), ('event:event-1663062638084f7a99c2242a32e7c6c0', 'recent'), ('event:event-c106816d2ad542888eca1ae95d16c1c2', 'recent'), ('event:event-84f88713a1d14249afdecca30f39fafd', 'recent'), ('event:event-bd9805ff0f2f417b9e45bf364c2dcd8c', 'recent'), ('event:event-2cd7861e94274b4b8b28a3450696e772', 'recent'), ('event:event-fde22c2434224649be7d19291ff2bf42', 'recent'), ('event:event-40cb8ec44f4e46f48e5d65af34db464a', 'recent'), ('event:event-7c6e36b2ee8344beb761273889545f7a', 'recent'), ('event:event-203570e9cedb4c8ca7236504338dd784', 'recent'), ('event:event-f5084598b1504820b6e3b45382d1ca0d', 'recent')) omitted=(('fts:event-b3886512a20c412d93b7bd6060b26a1b', 'low_relevance'), ('fts:event-e940dd35959542a082b14adcf42a2420', 'low_relevance'), ('fts:event-1ab65f6b655e44728ddb724988ad26f1', 'low_relevance'), ('event:event-d497d640b7fb4c2d81d1f5859b420849', 'duplicate'), ('event:event-e368190c30104880bb845004f7bb374e', 'duplicate'))
+0038 model_intended
+0039 model_decided result=ActionChoice request=decision-cea3196e2449429b8abbdaf7a95ee8e4
+0040 action_intended proposal=proposal-3057a3b9b6df40468bc6e6037dd43315 action=test arguments={}
+0041 receipt_received receipt=receipt-proposal-3057a3b9b6df40468bc6e6037dd43315 proposal=proposal-3057a3b9b6df40468bc6e6037dd43315 status=succeeded
+0042 context_assembled included=(('objective', 'mandatory'), ('environment', 'mandatory'), ('operator', 'mandatory'), ('evaluation', 'mandatory'), ('lineage_head', 'mandatory'), ('attempt', 'mandatory'), ('plan', 'mandatory'), ('budgets', 'mandatory'), ('receipt', 'mandatory'), ('observation', 'mandatory'), ('fts:event-e368190c30104880bb845004f7bb374e', 'retrieved'), ('node:root-phase2-operator-steering-resume', 'retrieved'), ('fts:event-847905c97643426fbc3cd41c22375585', 'retrieved'), ('attempt:attempt-63200fee68634c7d9c8658c3de0f9659', 'retrieved'), ('event:event-75aeaec7f80e4612bdd599cdbc5be0c5', 'recent'), ('event:event-f8b964599f864133ae15dc4e3970483d', 'recent'), ('event:event-de670793de094456af24f7477f035dc0', 'recent'), ('event:event-4b639d190b2b441b9fae35c9babef7a4', 'recent'), ('event:event-377ef2d7a0ea4168a6e4a4b62ba5095d', 'recent'), ('event:event-3b5ea1d3df9f4ebd95c7a317da882bba', 'recent'), ('event:event-f93c75530e6f47cab72a16bc70744f10', 'recent'), ('event:event-245d9e0449af45eba15043d45faf3d06', 'recent'), ('event:event-e940dd35959542a082b14adcf42a2420', 'recent'), ('event:event-8c617614e0e54d949fecb14e5ad248a8', 'recent'), ('event:event-afb740c939fd4cc2aa676f71b1e587e5', 'recent'), ('event:event-d62d7595f0314c188c03d78225ff0b07', 'recent'), ('event:event-180b6bce9343487580e349362d6fface', 'recent'), ('event:event-d1fc0d559d444f8fad9ae787567161bd', 'recent'), ('event:event-1ab65f6b655e44728ddb724988ad26f1', 'recent'), ('event:event-41b0976d226f441baeae03af64715dcc', 'recent'), ('event:event-40b628a517424f3e9151cdb431d3dce8', 'recent'), ('event:event-90478c80d54a4d6da3c593c56582fc26', 'recent'), ('event:event-b3886512a20c412d93b7bd6060b26a1b', 'recent'), ('event:event-a0f6a7051edc4f60b032550586de121e', 'recent'), ('event:event-79ba757834c44d64878aea3fe6a6f064', 'recent'), ('event:event-6670c51e64694ed8938c9da971aca7d8', 'recent'), ('event:event-db27d439bb7145c4adf3e38f4a011021', 'recent'), ('event:event-e9de81a98517498b8e087979b484ea77', 'recent'), ('event:event-1663062638084f7a99c2242a32e7c6c0', 'recent'), ('event:event-c106816d2ad542888eca1ae95d16c1c2', 'recent'), ('event:event-84f88713a1d14249afdecca30f39fafd', 'recent'), ('event:event-bd9805ff0f2f417b9e45bf364c2dcd8c', 'recent'), ('event:event-2cd7861e94274b4b8b28a3450696e772', 'recent'), ('event:event-fde22c2434224649be7d19291ff2bf42', 'recent'), ('event:event-40cb8ec44f4e46f48e5d65af34db464a', 'recent'), ('event:event-7c6e36b2ee8344beb761273889545f7a', 'recent'), ('event:event-203570e9cedb4c8ca7236504338dd784', 'recent'), ('event:event-f5084598b1504820b6e3b45382d1ca0d', 'recent'), ('event:event-d497d640b7fb4c2d81d1f5859b420849', 'recent'), ('event:event-0818cc26cca1458ab3ce02276fdb9310', 'recent'), ('event:event-9a19c18c05cf431fa039450f2090a311', 'recent'), ('event:event-98385311823b4a61ab9c03ca26585ef2', 'recent'), ('event:event-0ee47be4d6e243d8a2ead39053a5bb14', 'recent')) omitted=(('fts:event-b3886512a20c412d93b7bd6060b26a1b', 'low_relevance'), ('fts:event-e940dd35959542a082b14adcf42a2420', 'low_relevance'), ('fts:event-1ab65f6b655e44728ddb724988ad26f1', 'low_relevance'), ('fts:event-d497d640b7fb4c2d81d1f5859b420849', 'low_relevance'), ('event:event-847905c97643426fbc3cd41c22375585', 'duplicate'), ('event:event-e368190c30104880bb845004f7bb374e', 'duplicate'))
+0043 model_intended
+0044 model_decided result=EvaluationChoice request=decision-0e6af1ab6a0142e8ace5a0ba5ed30730
+0045 evaluation_intended
+0046 evaluation_intake
+0047 evaluation_received receipt=evaluation-evaluation-b586639a948b439a822fe47af46d7357 accepted=True comparison=improved
+0048 lineage_promoted evaluation_receipt=evaluation-evaluation-b586639a948b439a822fe47af46d7357 node=node-13099a450f6f4b6e9526a0d32c7e1bda
+0049 checkpoint cursor=48
+
+STOPPED-QUESTION DURABLE EVENT TRANSCRIPT
+0001 session_created objective=Answer a question without restarting a stopped session
+0002 attempt_started
+0003 model_configuration_bound
+0004 context_assembled included=(('objective', 'mandatory'), ('environment', 'mandatory'), ('operator', 'mandatory'), ('evaluation', 'mandatory'), ('lineage_head', 'mandatory'), ('attempt', 'mandatory'), ('plan', 'mandatory'), ('budgets', 'mandatory'), ('receipt', 'mandatory'), ('observation', 'mandatory'), ('node:root-phase2-stopped-question', 'retrieved'), ('attempt:attempt-c57e6bd53e474b02bdd5f73493d3cd9e', 'retrieved'), ('event:event-feda247316ae489c96ba253beb7bd926', 'recent'), ('event:event-c65116037e3b453cb911017faf74a175', 'recent'), ('event:event-5f33f7e2bd8846709772cff79786e5cd', 'recent')) omitted=()
+0005 model_intended
+0006 model_decided result=OperatorQuestion request=decision-b88a95d7240e45a2b0523880d85dba59
+0007 question_recorded question_id=question-7 text=Answering this must not restart a stopped session.
+0008 command_admitted
+0009 session_stopped command=stop-before-answer
+0010 command_applied
+0011 command_admitted
+0012 operator_message command=answer-after-stop text=The stop remains authoritative after this answer.
+0013 question_answered question_id=question-7 command=answer-after-stop
+0014 command_applied

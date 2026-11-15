@@ -1,0 +1,605 @@
+{
+  "acceptance_claims": {
+    "external_evaluator_accepted": true,
+    "hidden_validator_data_supplied": false,
+    "lineage_promoted": true,
+    "provider_rejected": false,
+    "scripted_action_sequence_supplied": false
+  },
+  "configuration": {
+    "budgets": {
+      "actions": 6,
+      "coordinator_retries": 0,
+      "evaluations": 2,
+      "model_calls": 8,
+      "output_tokens": 1024,
+      "per_decision_context_window_tokens": 4096,
+      "repair_budget": 1
+    },
+    "environment": {
+      "environment_id": "software-fixture",
+      "evaluator": "software-fixture-evaluator:v1",
+      "runtime": "software-fixture-runtime:v1"
+    },
+    "evidence": "phase-0002-live-software",
+    "mode": "unscripted-compatible-model",
+    "model": {
+      "length_retries": 0,
+      "max_retries": 0,
+      "model_id": "LongCat-2.0",
+      "per_decision_context_window_tokens": 4096,
+      "repair_budget": 1,
+      "reserved_output_tokens": 1024,
+      "temperature": 0.0,
+      "timeout_seconds": 120.0,
+      "token_budget": 4096
+    },
+    "provider": {
+      "base_url": "https://api.longcat.ai/openai/v1/",
+      "credential_env": "LONGCAT_API_KEY",
+      "name": "LongCat"
+    },
+    "task": {
+      "completion_mode": "finite",
+      "objective": "Set value to 1 in main.py and verify it with the fixture test.",
+      "success_evidence": "external software-fixture evaluator acceptance",
+      "task_id": "vharness-phase2-live-software"
+    }
+  },
+  "configuration_digest": "5693504494f8d2714d8c91a2ba2e2677fbe0ff0b552b0849e80dfb4a2f297fb1",
+  "event_hashes": {
+    "1": "983b74063947d8cca362c597ef4308a30075017c25bb571686abd7652fc21b33",
+    "10": "f4f6f7c7fcbd5cd514e44316b8da1c6d13013e9daec125ef2646b5ce1ec7d74d",
+    "11": "b62047d98257905ba3fcca3d5c4e800024f9a43f1ffefcdd9b6405dc85e6e1e8",
+    "12": "6b3f0bada093cc54b370be7521e2263e77bce8eadb454ee9df4df96d4cb98106",
+    "13": "228a9205c103a133ac693e7bfa9f208033041837985db2ab2e320942e509c56a",
+    "14": "dfd47ff3417855664ba709f972c1304e37eb1f2b339ffac9dc0aef1131edc374",
+    "15": "2d1f2c7e10ae796f3b9ba8b5b28451d43fedf01d777f69ebc1d50021655c816d",
+    "16": "01f4b0fbd2913d5c03061a53ee65c5dd3f333106cb37157e20ae300757e7ea04",
+    "17": "cd2c79c59332605c0f8ca55a8db78e52c99e346aa4d682d6ace7ff2f8527fd6f",
+    "18": "ca212937b3747f4598c7e050d0cff626cda12f1f3deadeb2f997b98a3ed2097b",
+    "19": "fbb6e3f75b047ddfcf1079c2c0639df1b56e1c8630dbf7f6db1e432ab0ef8ec0",
+    "2": "80878ecbc01481e825e317074171c5d40ebe0af46ba0592dd36d2f675279d951",
+    "20": "5b737a3457e2771b3c801b280240361be455769c91043f54b38d444edff2a1b0",
+    "21": "12f39d1718b4a66d978c50f5045eae362b0205467b57aafe9be4786bd144946f",
+    "22": "e28ec5255ba18da2b790b16ddd2365d0fc43927bb82f05f19e9716a86b9f8584",
+    "23": "0776f2815734843c0d12e24007413889c842cd632d577083ebd51966ed85915c",
+    "24": "7f3e4d678924320452fb398bb98dee00e4eba8fcefd54a61142924725f8ad5b0",
+    "3": "5f120d97aebc86be5db8ae266572067ea5f75464fb9e4508a8c7ab193e8b1f10",
+    "4": "ca38392ceb25ab5dce86c02656945f1749838b5bd55e821890f5cd4cca2ba59f",
+    "5": "fc2a6111579ffa14051782106bcd4650bd33f9af666f59ef2c76db06a718a104",
+    "6": "134600fab4fbb1124385282a8b8bd739b33f9a88fa482cd19cb00f02b2e8517f",
+    "7": "f5c3562cf1e52e1b02b55ce7ef7602e16de86aefeab433fbbc54aa678321f47f",
+    "8": "e87eb05e0f48eb1bc838002fc34280857b38ba2487612f92c23bb543709f667a",
+    "9": "e4eabddac22ed9e1add889817b1fecdbfd43f252d077c6fb1883e716d78ee883"
+  },
+  "evidence_id": "phase-0002-live-software",
+  "fresh_process_verification": {
+    "run": {
+      "accepted_lineage": [
+        {
+          "__type__": "CommittedNode",
+          "evaluation_receipt_id": null,
+          "node_id": "root-vharness-phase2-live-software-longcat",
+          "objective_version": 1,
+          "objectives": {},
+          "parent_id": null,
+          "state": {
+            "__type__": "StateRef",
+            "digest": "fbf0a67dc2ab3eb0862d2547f18487c7124ee0a589c79c9df1fe5bb5e0bec285",
+            "owner": "software-fixture",
+            "restorable": true,
+            "revision": "0",
+            "value": "rev-0"
+          }
+        },
+        {
+          "__type__": "CommittedNode",
+          "evaluation_receipt_id": "evaluation-evaluation-f4a274a47bbb4f4ba8b17b06c645ec84",
+          "node_id": "node-4c20e46508a047f5ba8a6ce33d642b96",
+          "objective_version": 1,
+          "objectives": {
+            "check_passed": true
+          },
+          "parent_id": "root-vharness-phase2-live-software-longcat",
+          "state": {
+            "__type__": "StateRef",
+            "digest": "2f142cfe76bfc0a598dd76bb02bca01485aac9376fe5aae6e345718850c6564e",
+            "owner": "software-fixture",
+            "restorable": true,
+            "revision": "2",
+            "value": "rev-2"
+          }
+        }
+      ],
+      "counters": {
+        "__type__": "RunCounters",
+        "abandoned_attempts": 0,
+        "actions": 2,
+        "attempts": 1,
+        "checkpoints": 0,
+        "commits": 1,
+        "duration_ms": 88484,
+        "envelope": {
+          "__type__": "RecordEnvelope",
+          "causation_id": null,
+          "correlation_id": null,
+          "extensions": {},
+          "objective_version": 1,
+          "provenance": "vharness.replay",
+          "record_id": "event-ebbc0b8375d2460ebc5d7c02320c4a19",
+          "recorded_at": "2026-09-15T14:21:55.239253+00:00",
+          "schema_version": 1,
+          "session_id": "vharness-phase2-live-software-longcat"
+        },
+        "evaluations": 1,
+        "hard_constraint_failed_attempts": 0,
+        "incomparable_attempts": 0,
+        "input_tokens": 27312,
+        "invalid_attempts": 0,
+        "known_cost": "0",
+        "model_calls": 6,
+        "operator_commands": 0,
+        "output_tokens": 4154,
+        "reconciliations": 0,
+        "rejected_attempts": 0,
+        "runtime_receipts": 2,
+        "stale_attempts": 0,
+        "unknown_cost_operations": 7
+      },
+      "counters_match": true,
+      "cursor": 24,
+      "manifest": {
+        "__type__": "RunManifest",
+        "configuration_digest": "5693504494f8d2714d8c91a2ba2e2677fbe0ff0b552b0849e80dfb4a2f297fb1",
+        "envelope": {
+          "__type__": "RecordEnvelope",
+          "causation_id": null,
+          "correlation_id": null,
+          "extensions": {},
+          "objective_version": 1,
+          "provenance": "vharness.session",
+          "record_id": "event-2e979f27d6c74eea9c7576d1067cc1b8",
+          "recorded_at": "2026-09-15T14:20:26.425165+00:00",
+          "schema_version": 1,
+          "session_id": "vharness-phase2-live-software-longcat"
+        },
+        "environment_id": "software-fixture",
+        "environment_version": "1",
+        "evaluator": {
+          "__type__": "ComponentIdentity",
+          "component_id": "software-fixture-evaluator",
+          "configuration_digest": null,
+          "version": "v1"
+        },
+        "evaluator_version": "software-fixture-evaluator-v1",
+        "package_version": "0.2.0",
+        "runtime": {
+          "__type__": "ComponentIdentity",
+          "component_id": "software-fixture-runtime",
+          "configuration_digest": null,
+          "version": "v1"
+        },
+        "schema_version": 1,
+        "session_id": "vharness-phase2-live-software-longcat",
+        "task_id": "vharness-phase2-live-software"
+      },
+      "manifest_match": true,
+      "opened_view": {
+        "__type__": "SessionView",
+        "active_attempt": null,
+        "cursor": 24,
+        "lineage_head": {
+          "__type__": "CommittedNode",
+          "evaluation_receipt_id": "evaluation-evaluation-f4a274a47bbb4f4ba8b17b06c645ec84",
+          "node_id": "node-4c20e46508a047f5ba8a6ce33d642b96",
+          "objective_version": 1,
+          "objectives": {
+            "check_passed": true
+          },
+          "parent_id": "root-vharness-phase2-live-software-longcat",
+          "state": {
+            "__type__": "StateRef",
+            "digest": "2f142cfe76bfc0a598dd76bb02bca01485aac9376fe5aae6e345718850c6564e",
+            "owner": "software-fixture",
+            "restorable": true,
+            "revision": "2",
+            "value": "rev-2"
+          }
+        },
+        "pending_proposal_id": null,
+        "session_id": "vharness-phase2-live-software-longcat",
+        "status": "completed",
+        "task": {
+          "__type__": "TaskSpec",
+          "budgets": {
+            "__type__": "BudgetLimits",
+            "actions": 6,
+            "cost": null,
+            "evaluations": 2,
+            "model_calls": 8
+          },
+          "completion_mode": "finite",
+          "constraints": [],
+          "environment_id": "software-fixture",
+          "evaluation_contract_id": "software-fixture-evaluator-v1",
+          "objective": "Set value to 1 in main.py and verify it with the fixture test.",
+          "objective_version": 1,
+          "success_evidence": "external software-fixture evaluator acceptance",
+          "task_id": "vharness-phase2-live-software"
+        },
+        "wait_reason": null
+      },
+      "opened_view_matches_replay": true,
+      "projection_sha256": "5b0ba0e4291ae5df0364ef308f6bd01af711b92b3333ffc8c058ff046f4f1cb5",
+      "session_id": "vharness-phase2-live-software-longcat",
+      "status": "completed"
+    }
+  },
+  "model_configuration_bound": {
+    "__type__": "ModelConfiguration",
+    "context_coefficients": {
+      "causal_proximity": 1.0,
+      "mmr": 8.0,
+      "overlap": 1.0,
+      "recency": 1.0,
+      "salience": 1.0,
+      "unresolved": 2.0
+    },
+    "model_id": "LongCat-2.0",
+    "output_settings": {
+      "reserved_output_tokens": 1024
+    },
+    "policy_version": 1,
+    "provider_id": "LongCat",
+    "repair_settings": {
+      "repair_budget": 1
+    },
+    "retry_settings": {
+      "coordinator_owned": true,
+      "length_retries": 0,
+      "max_retries": 0
+    },
+    "system_prompt_digest": "103769d19b9f07dc0ebd020696f71404eca1e4f6fc96f2d01d64da4d11c6acab",
+    "token_budget": 4096,
+    "token_counter": "whitespace-v1"
+  },
+  "package_version": "0.2.0",
+  "run": {
+    "accepted": true,
+    "accepted_lineage": [
+      {
+        "__type__": "CommittedNode",
+        "evaluation_receipt_id": null,
+        "node_id": "root-vharness-phase2-live-software-longcat",
+        "objective_version": 1,
+        "objectives": {},
+        "parent_id": null,
+        "state": {
+          "__type__": "StateRef",
+          "digest": "fbf0a67dc2ab3eb0862d2547f18487c7124ee0a589c79c9df1fe5bb5e0bec285",
+          "owner": "software-fixture",
+          "restorable": true,
+          "revision": "0",
+          "value": "rev-0"
+        }
+      },
+      {
+        "__type__": "CommittedNode",
+        "evaluation_receipt_id": "evaluation-evaluation-f4a274a47bbb4f4ba8b17b06c645ec84",
+        "node_id": "node-4c20e46508a047f5ba8a6ce33d642b96",
+        "objective_version": 1,
+        "objectives": {
+          "check_passed": true
+        },
+        "parent_id": "root-vharness-phase2-live-software-longcat",
+        "state": {
+          "__type__": "StateRef",
+          "digest": "2f142cfe76bfc0a598dd76bb02bca01485aac9376fe5aae6e345718850c6564e",
+          "owner": "software-fixture",
+          "restorable": true,
+          "revision": "2",
+          "value": "rev-2"
+        }
+      }
+    ],
+    "action_names": [
+      "write",
+      "test"
+    ],
+    "action_receipts": [
+      {
+        "proposal_id": "proposal-9686e0bd0d0a41748ec6b84bc01181e8",
+        "sequence": 8,
+        "status": "succeeded"
+      },
+      {
+        "proposal_id": "proposal-f71e2b9926224c88955dc91979b99107",
+        "sequence": 13,
+        "status": "succeeded"
+      }
+    ],
+    "attempts": [
+      {
+        "attempts": [
+          {
+            "__type__": "ModelAttempt",
+            "completion_tokens": 576,
+            "duration_ms": 12826,
+            "error": null,
+            "finish_reason": "stop",
+            "output": "{\"kind\": \"ActionChoice\", \"action_name\": \"write\", \"arguments\": {\"path\": \"main.py\", \"content\": \"value = 1\\n\"}, \"rationale\": \"Update main.py to set value to 1 as required by the objective.\"}",
+            "prompt_tokens": 2757
+          }
+        ],
+        "error": null,
+        "finish_reason": "stop",
+        "kind": "model_decided",
+        "request_id": "decision-978556bb6a7e4b34b027b6e35696a88a",
+        "result_kind": "ActionChoice",
+        "sequence": 6,
+        "usage": {
+          "__type__": "UsageMeasurement",
+          "actions": 0,
+          "cost": null,
+          "duration_ms": 12826,
+          "evaluations": 0,
+          "input_tokens": 2757,
+          "measurement_id": "decision-978556bb6a7e4b34b027b6e35696a88a-usage",
+          "model_calls": 1,
+          "output_tokens": 576
+        }
+      },
+      {
+        "attempts": [
+          {
+            "__type__": "ModelAttempt",
+            "completion_tokens": 791,
+            "duration_ms": 15980,
+            "error": null,
+            "finish_reason": "stop",
+            "output": "{\n  \"kind\": \"ActionChoice\",\n  \"action_name\": \"test\",\n  \"arguments\": {},\n  \"rationale\": \"The observation shows that main.py already contains 'value = 1'. The next step is to run the test action to verify the change as required by the objective.\"\n}",
+            "prompt_tokens": 4423
+          }
+        ],
+        "error": null,
+        "finish_reason": "stop",
+        "kind": "model_decided",
+        "request_id": "decision-816e1a22ad0e4fd2b214aa7dbc6a1dee",
+        "result_kind": "ActionChoice",
+        "sequence": 11,
+        "usage": {
+          "__type__": "UsageMeasurement",
+          "actions": 0,
+          "cost": null,
+          "duration_ms": 15980,
+          "evaluations": 0,
+          "input_tokens": 4423,
+          "measurement_id": "decision-816e1a22ad0e4fd2b214aa7dbc6a1dee-usage",
+          "model_calls": 1,
+          "output_tokens": 791
+        }
+      },
+      {
+        "attempts": [
+          {
+            "__type__": "ModelAttempt",
+            "completion_tokens": 1024,
+            "duration_ms": 20439,
+            "error": null,
+            "finish_reason": "length",
+            "output": "",
+            "prompt_tokens": 4859
+          },
+          {
+            "__type__": "ModelAttempt",
+            "completion_tokens": 166,
+            "duration_ms": 8097,
+            "error": null,
+            "finish_reason": "stop",
+            "output": "{\"kind\": \"CompletionProposal\", \"rationale\": \"The workspace check has already succeeded (receipt status: succeeded, state: rev-2, observation check_passed: true). The objective to set value to 1 in main.py and verify it with the fixture test is complete, with external evidence from the software-fixture test evaluator.\"}",
+            "prompt_tokens": 4883
+          }
+        ],
+        "error": null,
+        "finish_reason": "stop",
+        "kind": "model_decided",
+        "request_id": "decision-37fe0ba5056b49cdbdc8e25ccae16668",
+        "result_kind": "CompletionProposal",
+        "sequence": 16,
+        "usage": {
+          "__type__": "UsageMeasurement",
+          "actions": 0,
+          "cost": null,
+          "duration_ms": 28536,
+          "evaluations": 0,
+          "input_tokens": 9742,
+          "measurement_id": "decision-37fe0ba5056b49cdbdc8e25ccae16668-usage",
+          "model_calls": 2,
+          "output_tokens": 1190
+        }
+      },
+      {
+        "attempts": [
+          {
+            "__type__": "ModelAttempt",
+            "completion_tokens": 1024,
+            "duration_ms": 20076,
+            "error": null,
+            "finish_reason": "length",
+            "output": "",
+            "prompt_tokens": 5183
+          },
+          {
+            "__type__": "ModelAttempt",
+            "completion_tokens": 573,
+            "duration_ms": 11066,
+            "error": null,
+            "finish_reason": "stop",
+            "output": "{\"kind\": \"EvaluationChoice\", \"rationale\": \"The workspace test has passed (check_passed: true, status: succeeded, rev-2), indicating the objective to set value to 1 in main.py is complete. However, the previous CompletionProposal was rejected for lacking current external evidence, and the success_evidence requires external software-fixture evaluator acceptance. Requesting external evaluation to confirm completion.\"}",
+            "prompt_tokens": 5207
+          }
+        ],
+        "error": null,
+        "finish_reason": "stop",
+        "kind": "model_decided",
+        "request_id": "decision-68d6dda4964f40fda6ba06f4f6aaa759",
+        "result_kind": "EvaluationChoice",
+        "sequence": 20,
+        "usage": {
+          "__type__": "UsageMeasurement",
+          "actions": 0,
+          "cost": null,
+          "duration_ms": 31142,
+          "evaluations": 0,
+          "input_tokens": 10390,
+          "measurement_id": "decision-68d6dda4964f40fda6ba06f4f6aaa759-usage",
+          "model_calls": 2,
+          "output_tokens": 1597
+        }
+      }
+    ],
+    "counters": {
+      "__type__": "RunCounters",
+      "abandoned_attempts": 0,
+      "actions": 2,
+      "attempts": 1,
+      "checkpoints": 0,
+      "commits": 1,
+      "conservative_supervisor_calls": 0,
+      "duration_ms": 88484,
+      "envelope": {
+        "__type__": "RecordEnvelope",
+        "causation_id": null,
+        "correlation_id": null,
+        "extensions": {},
+        "objective_version": 1,
+        "provenance": "vharness.replay",
+        "record_id": "event-ebbc0b8375d2460ebc5d7c02320c4a19",
+        "recorded_at": "2026-09-15T14:21:55.239253+00:00",
+        "schema_version": 1,
+        "session_id": "vharness-phase2-live-software-longcat"
+      },
+      "evaluations": 1,
+      "hard_constraint_failed_attempts": 0,
+      "incomparable_attempts": 0,
+      "input_tokens": 27312,
+      "invalid_attempts": 0,
+      "known_cost": "0",
+      "model_calls": 6,
+      "operator_commands": 0,
+      "output_tokens": 4154,
+      "reconciliations": 0,
+      "rejected_attempts": 0,
+      "runtime_receipts": 2,
+      "stale_attempts": 0,
+      "supervisor_calls": 0,
+      "supervisor_input_tokens": 0,
+      "supervisor_output_tokens": 0,
+      "unknown_cost_operations": 7
+    },
+    "evaluation_receipts": [
+      {
+        "accepted": true,
+        "disposition": "accepted",
+        "sequence": 23
+      }
+    ],
+    "journal_cursor": 24,
+    "manifest": {
+      "__type__": "RunManifest",
+      "configuration_digest": "5693504494f8d2714d8c91a2ba2e2677fbe0ff0b552b0849e80dfb4a2f297fb1",
+      "envelope": {
+        "__type__": "RecordEnvelope",
+        "causation_id": null,
+        "correlation_id": null,
+        "extensions": {},
+        "objective_version": 1,
+        "provenance": "vharness.session",
+        "record_id": "event-2e979f27d6c74eea9c7576d1067cc1b8",
+        "recorded_at": "2026-09-15T14:20:26.425165+00:00",
+        "schema_version": 1,
+        "session_id": "vharness-phase2-live-software-longcat"
+      },
+      "environment_id": "software-fixture",
+      "environment_version": "1",
+      "evaluator": {
+        "__type__": "ComponentIdentity",
+        "component_id": "software-fixture-evaluator",
+        "configuration_digest": null,
+        "version": "v1"
+      },
+      "evaluator_version": "software-fixture-evaluator-v1",
+      "package_version": "0.2.0",
+      "runtime": {
+        "__type__": "ComponentIdentity",
+        "component_id": "software-fixture-runtime",
+        "configuration_digest": null,
+        "version": "v1"
+      },
+      "schema_version": 1,
+      "session_id": "vharness-phase2-live-software-longcat",
+      "task_id": "vharness-phase2-live-software"
+    },
+    "model_calls_observed_by_adapter": 6,
+    "projection_sha256": "5b0ba0e4291ae5df0364ef308f6bd01af711b92b3333ffc8c058ff046f4f1cb5",
+    "session_counters": {
+      "__type__": "RunCounters",
+      "abandoned_attempts": 0,
+      "actions": 2,
+      "attempts": 1,
+      "checkpoints": 0,
+      "commits": 1,
+      "conservative_supervisor_calls": 0,
+      "duration_ms": 88484,
+      "envelope": {
+        "__type__": "RecordEnvelope",
+        "causation_id": null,
+        "correlation_id": null,
+        "extensions": {},
+        "objective_version": 1,
+        "provenance": "vharness.replay",
+        "record_id": "event-ebbc0b8375d2460ebc5d7c02320c4a19",
+        "recorded_at": "2026-09-15T14:21:55.239253+00:00",
+        "schema_version": 1,
+        "session_id": "vharness-phase2-live-software-longcat"
+      },
+      "evaluations": 1,
+      "hard_constraint_failed_attempts": 0,
+      "incomparable_attempts": 0,
+      "input_tokens": 27312,
+      "invalid_attempts": 0,
+      "known_cost": "0",
+      "model_calls": 6,
+      "operator_commands": 0,
+      "output_tokens": 4154,
+      "reconciliations": 0,
+      "rejected_attempts": 0,
+      "runtime_receipts": 2,
+      "stale_attempts": 0,
+      "supervisor_calls": 0,
+      "supervisor_input_tokens": 0,
+      "supervisor_output_tokens": 0,
+      "unknown_cost_operations": 7
+    },
+    "session_id": "vharness-phase2-live-software-longcat",
+    "status": "completed",
+    "task_id": "vharness-phase2-live-software",
+    "unknown_cost_operation_ids": [
+      "decision-978556bb6a7e4b34b027b6e35696a88a",
+      "proposal-9686e0bd0d0a41748ec6b84bc01181e8",
+      "decision-816e1a22ad0e4fd2b214aa7dbc6a1dee",
+      "proposal-f71e2b9926224c88955dc91979b99107",
+      "decision-37fe0ba5056b49cdbdc8e25ccae16668",
+      "decision-68d6dda4964f40fda6ba06f4f6aaa759",
+      "evaluation-f4a274a47bbb4f4ba8b17b06c645ec84"
+    ],
+    "unknown_usage_operation_ids": []
+  },
+  "scope": "Unscripted live CompatibleModel acceptance on the software fixture. The model selected typed actions/evaluation from the visible request; the harness supplied no scripted action sequence or hidden validator data.",
+  "source": {
+    "generator_sha256": "9384de262aae7a5f76daac55b904b5f213bbc629eefa84723f4b95981fe759fe",
+    "git_dirty": false,
+    "git_revision": "0138047de4fe60cd15a2c9ab461768a68d322160"
+  }
+}

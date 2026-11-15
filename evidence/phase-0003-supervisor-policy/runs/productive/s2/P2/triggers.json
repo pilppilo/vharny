@@ -1,0 +1,11 @@
+{
+  "operator_cues": [],
+  "policy_parameters": {
+    "action_fraction": 0.6,
+    "cooldown_calls": 4,
+    "kind": "budget-burn",
+    "token_fraction": 0.6
+  },
+  "run_id": "productive/s2/P2",
+  "triggers": []
+}

@@ -1,0 +1,885 @@
+[
+  {
+    "manifest": {
+      "__type__": "ContextManifest",
+      "allocation": {
+        "mandatory": 55,
+        "overhead": 474,
+        "recent": 9,
+        "reserved_output": 1024,
+        "retrieved": 8,
+        "unused": 2435
+      },
+      "coefficients": {
+        "causal_proximity": 1.0,
+        "mmr": 8.0,
+        "overlap": 1.0,
+        "recency": 1.0,
+        "salience": 1.0,
+        "unresolved": 2.0
+      },
+      "included": [
+        [
+          "objective",
+          "mandatory"
+        ],
+        [
+          "environment",
+          "mandatory"
+        ],
+        [
+          "operator",
+          "mandatory"
+        ],
+        [
+          "evaluation",
+          "mandatory"
+        ],
+        [
+          "lineage_head",
+          "mandatory"
+        ],
+        [
+          "attempt",
+          "mandatory"
+        ],
+        [
+          "plan",
+          "mandatory"
+        ],
+        [
+          "budgets",
+          "mandatory"
+        ],
+        [
+          "receipt",
+          "mandatory"
+        ],
+        [
+          "observation",
+          "mandatory"
+        ],
+        [
+          "node:root-vharness-phase2-live-software-longcat",
+          "retrieved"
+        ],
+        [
+          "attempt:attempt-4ad2eca21a3c4e678f93cd8fcfc851c3",
+          "retrieved"
+        ],
+        [
+          "event:event-2e979f27d6c74eea9c7576d1067cc1b8",
+          "recent"
+        ],
+        [
+          "event:event-8ead7af56f5943249e45e3d4babcc642",
+          "recent"
+        ],
+        [
+          "event:event-1a943b5c8f0f451aa8acb4e698da55c2",
+          "recent"
+        ]
+      ],
+      "item_tokens": [
+        [
+          "objective",
+          18
+        ],
+        [
+          "environment",
+          12
+        ],
+        [
+          "operator",
+          2
+        ],
+        [
+          "evaluation",
+          2
+        ],
+        [
+          "lineage_head",
+          3
+        ],
+        [
+          "attempt",
+          4
+        ],
+        [
+          "plan",
+          2
+        ],
+        [
+          "budgets",
+          8
+        ],
+        [
+          "receipt",
+          2
+        ],
+        [
+          "observation",
+          2
+        ],
+        [
+          "node:root-vharness-phase2-live-software-longcat",
+          4
+        ],
+        [
+          "attempt:attempt-4ad2eca21a3c4e678f93cd8fcfc851c3",
+          4
+        ],
+        [
+          "event:event-2e979f27d6c74eea9c7576d1067cc1b8",
+          3
+        ],
+        [
+          "event:event-8ead7af56f5943249e45e3d4babcc642",
+          3
+        ],
+        [
+          "event:event-1a943b5c8f0f451aa8acb4e698da55c2",
+          3
+        ]
+      ],
+      "journal_cursor": 3,
+      "objective_version": 1,
+      "omitted": [],
+      "policy_version": 1,
+      "reserved_output_tokens": 1024,
+      "serialization_overhead_tokens": 474,
+      "serialized_input_tokens": 546,
+      "system_prompt_tokens": 91,
+      "token_budget": 4096,
+      "token_counter": "whitespace-v1",
+      "tokens_used": 72
+    },
+    "sequence": 4
+  },
+  {
+    "manifest": {
+      "__type__": "ContextManifest",
+      "allocation": {
+        "mandatory": 55,
+        "overhead": 552,
+        "recent": 21,
+        "reserved_output": 1024,
+        "retrieved": 33,
+        "unused": 2320
+      },
+      "coefficients": {
+        "causal_proximity": 1.0,
+        "mmr": 8.0,
+        "overlap": 1.0,
+        "recency": 1.0,
+        "salience": 1.0,
+        "unresolved": 2.0
+      },
+      "included": [
+        [
+          "objective",
+          "mandatory"
+        ],
+        [
+          "environment",
+          "mandatory"
+        ],
+        [
+          "operator",
+          "mandatory"
+        ],
+        [
+          "evaluation",
+          "mandatory"
+        ],
+        [
+          "lineage_head",
+          "mandatory"
+        ],
+        [
+          "attempt",
+          "mandatory"
+        ],
+        [
+          "plan",
+          "mandatory"
+        ],
+        [
+          "budgets",
+          "mandatory"
+        ],
+        [
+          "receipt",
+          "mandatory"
+        ],
+        [
+          "observation",
+          "mandatory"
+        ],
+        [
+          "fts:event-1d5e577dfcbc4cb3a0cc89b2fe845534",
+          "retrieved"
+        ],
+        [
+          "node:root-vharness-phase2-live-software-longcat",
+          "retrieved"
+        ],
+        [
+          "attempt:attempt-4ad2eca21a3c4e678f93cd8fcfc851c3",
+          "retrieved"
+        ],
+        [
+          "event:event-2e979f27d6c74eea9c7576d1067cc1b8",
+          "recent"
+        ],
+        [
+          "event:event-8ead7af56f5943249e45e3d4babcc642",
+          "recent"
+        ],
+        [
+          "event:event-1a943b5c8f0f451aa8acb4e698da55c2",
+          "recent"
+        ],
+        [
+          "event:event-202745e5819345078c54104eb805e8f8",
+          "recent"
+        ],
+        [
+          "event:event-e74069616d31446b92d412d0376c43fb",
+          "recent"
+        ],
+        [
+          "event:event-3d2b0b70bacf4a74980e6367ff2d19fa",
+          "recent"
+        ],
+        [
+          "event:event-cf5e96d3e13940c683920f4a64431193",
+          "recent"
+        ]
+      ],
+      "item_tokens": [
+        [
+          "objective",
+          18
+        ],
+        [
+          "environment",
+          12
+        ],
+        [
+          "operator",
+          2
+        ],
+        [
+          "evaluation",
+          2
+        ],
+        [
+          "lineage_head",
+          3
+        ],
+        [
+          "attempt",
+          4
+        ],
+        [
+          "plan",
+          2
+        ],
+        [
+          "budgets",
+          8
+        ],
+        [
+          "receipt",
+          2
+        ],
+        [
+          "observation",
+          2
+        ],
+        [
+          "fts:event-1d5e577dfcbc4cb3a0cc89b2fe845534",
+          25
+        ],
+        [
+          "node:root-vharness-phase2-live-software-longcat",
+          4
+        ],
+        [
+          "attempt:attempt-4ad2eca21a3c4e678f93cd8fcfc851c3",
+          4
+        ],
+        [
+          "event:event-2e979f27d6c74eea9c7576d1067cc1b8",
+          3
+        ],
+        [
+          "event:event-8ead7af56f5943249e45e3d4babcc642",
+          3
+        ],
+        [
+          "event:event-1a943b5c8f0f451aa8acb4e698da55c2",
+          3
+        ],
+        [
+          "event:event-202745e5819345078c54104eb805e8f8",
+          3
+        ],
+        [
+          "event:event-e74069616d31446b92d412d0376c43fb",
+          3
+        ],
+        [
+          "event:event-3d2b0b70bacf4a74980e6367ff2d19fa",
+          3
+        ],
+        [
+          "event:event-cf5e96d3e13940c683920f4a64431193",
+          3
+        ]
+      ],
+      "journal_cursor": 8,
+      "objective_version": 1,
+      "omitted": [
+        [
+          "event:event-1d5e577dfcbc4cb3a0cc89b2fe845534",
+          "duplicate"
+        ]
+      ],
+      "policy_version": 1,
+      "reserved_output_tokens": 1024,
+      "serialization_overhead_tokens": 552,
+      "serialized_input_tokens": 661,
+      "system_prompt_tokens": 91,
+      "token_budget": 4096,
+      "token_counter": "whitespace-v1",
+      "tokens_used": 109
+    },
+    "sequence": 9
+  },
+  {
+    "manifest": {
+      "__type__": "ContextManifest",
+      "allocation": {
+        "mandatory": 55,
+        "overhead": 564,
+        "recent": 36,
+        "reserved_output": 1024,
+        "retrieved": 33,
+        "unused": 2293
+      },
+      "coefficients": {
+        "causal_proximity": 1.0,
+        "mmr": 8.0,
+        "overlap": 1.0,
+        "recency": 1.0,
+        "salience": 1.0,
+        "unresolved": 2.0
+      },
+      "included": [
+        [
+          "objective",
+          "mandatory"
+        ],
+        [
+          "environment",
+          "mandatory"
+        ],
+        [
+          "operator",
+          "mandatory"
+        ],
+        [
+          "evaluation",
+          "mandatory"
+        ],
+        [
+          "lineage_head",
+          "mandatory"
+        ],
+        [
+          "attempt",
+          "mandatory"
+        ],
+        [
+          "plan",
+          "mandatory"
+        ],
+        [
+          "budgets",
+          "mandatory"
+        ],
+        [
+          "receipt",
+          "mandatory"
+        ],
+        [
+          "observation",
+          "mandatory"
+        ],
+        [
+          "fts:event-fd7f352629c2408eb7abe4ee6b8b913c",
+          "retrieved"
+        ],
+        [
+          "node:root-vharness-phase2-live-software-longcat",
+          "retrieved"
+        ],
+        [
+          "attempt:attempt-4ad2eca21a3c4e678f93cd8fcfc851c3",
+          "retrieved"
+        ],
+        [
+          "event:event-2e979f27d6c74eea9c7576d1067cc1b8",
+          "recent"
+        ],
+        [
+          "event:event-8ead7af56f5943249e45e3d4babcc642",
+          "recent"
+        ],
+        [
+          "event:event-1a943b5c8f0f451aa8acb4e698da55c2",
+          "recent"
+        ],
+        [
+          "event:event-202745e5819345078c54104eb805e8f8",
+          "recent"
+        ],
+        [
+          "event:event-e74069616d31446b92d412d0376c43fb",
+          "recent"
+        ],
+        [
+          "event:event-3d2b0b70bacf4a74980e6367ff2d19fa",
+          "recent"
+        ],
+        [
+          "event:event-cf5e96d3e13940c683920f4a64431193",
+          "recent"
+        ],
+        [
+          "event:event-1d5e577dfcbc4cb3a0cc89b2fe845534",
+          "recent"
+        ],
+        [
+          "event:event-94e8157f3f8b41419203e203929fe372",
+          "recent"
+        ],
+        [
+          "event:event-f44ba518554141609e6c4fe5c9351624",
+          "recent"
+        ],
+        [
+          "event:event-21b84213be37416eab220eadb3aea289",
+          "recent"
+        ],
+        [
+          "event:event-691a0a71388f4d8c8a71d7a2c5665ea4",
+          "recent"
+        ]
+      ],
+      "item_tokens": [
+        [
+          "objective",
+          18
+        ],
+        [
+          "environment",
+          12
+        ],
+        [
+          "operator",
+          2
+        ],
+        [
+          "evaluation",
+          2
+        ],
+        [
+          "lineage_head",
+          3
+        ],
+        [
+          "attempt",
+          4
+        ],
+        [
+          "plan",
+          2
+        ],
+        [
+          "budgets",
+          8
+        ],
+        [
+          "receipt",
+          2
+        ],
+        [
+          "observation",
+          2
+        ],
+        [
+          "fts:event-fd7f352629c2408eb7abe4ee6b8b913c",
+          25
+        ],
+        [
+          "node:root-vharness-phase2-live-software-longcat",
+          4
+        ],
+        [
+          "attempt:attempt-4ad2eca21a3c4e678f93cd8fcfc851c3",
+          4
+        ],
+        [
+          "event:event-2e979f27d6c74eea9c7576d1067cc1b8",
+          3
+        ],
+        [
+          "event:event-8ead7af56f5943249e45e3d4babcc642",
+          3
+        ],
+        [
+          "event:event-1a943b5c8f0f451aa8acb4e698da55c2",
+          3
+        ],
+        [
+          "event:event-202745e5819345078c54104eb805e8f8",
+          3
+        ],
+        [
+          "event:event-e74069616d31446b92d412d0376c43fb",
+          3
+        ],
+        [
+          "event:event-3d2b0b70bacf4a74980e6367ff2d19fa",
+          3
+        ],
+        [
+          "event:event-cf5e96d3e13940c683920f4a64431193",
+          3
+        ],
+        [
+          "event:event-1d5e577dfcbc4cb3a0cc89b2fe845534",
+          3
+        ],
+        [
+          "event:event-94e8157f3f8b41419203e203929fe372",
+          3
+        ],
+        [
+          "event:event-f44ba518554141609e6c4fe5c9351624",
+          3
+        ],
+        [
+          "event:event-21b84213be37416eab220eadb3aea289",
+          3
+        ],
+        [
+          "event:event-691a0a71388f4d8c8a71d7a2c5665ea4",
+          3
+        ]
+      ],
+      "journal_cursor": 13,
+      "objective_version": 1,
+      "omitted": [
+        [
+          "fts:event-1d5e577dfcbc4cb3a0cc89b2fe845534",
+          "low_relevance"
+        ],
+        [
+          "event:event-fd7f352629c2408eb7abe4ee6b8b913c",
+          "duplicate"
+        ]
+      ],
+      "policy_version": 1,
+      "reserved_output_tokens": 1024,
+      "serialization_overhead_tokens": 564,
+      "serialized_input_tokens": 688,
+      "system_prompt_tokens": 91,
+      "token_budget": 4096,
+      "token_counter": "whitespace-v1",
+      "tokens_used": 124
+    },
+    "sequence": 14
+  },
+  {
+    "manifest": {
+      "__type__": "ContextManifest",
+      "allocation": {
+        "mandatory": 55,
+        "overhead": 576,
+        "recent": 52,
+        "reserved_output": 1024,
+        "retrieved": 33,
+        "unused": 2265
+      },
+      "coefficients": {
+        "causal_proximity": 1.0,
+        "mmr": 8.0,
+        "overlap": 1.0,
+        "recency": 1.0,
+        "salience": 1.0,
+        "unresolved": 2.0
+      },
+      "included": [
+        [
+          "objective",
+          "mandatory"
+        ],
+        [
+          "environment",
+          "mandatory"
+        ],
+        [
+          "operator",
+          "mandatory"
+        ],
+        [
+          "evaluation",
+          "mandatory"
+        ],
+        [
+          "lineage_head",
+          "mandatory"
+        ],
+        [
+          "attempt",
+          "mandatory"
+        ],
+        [
+          "plan",
+          "mandatory"
+        ],
+        [
+          "budgets",
+          "mandatory"
+        ],
+        [
+          "receipt",
+          "mandatory"
+        ],
+        [
+          "observation",
+          "mandatory"
+        ],
+        [
+          "node:root-vharness-phase2-live-software-longcat",
+          "retrieved"
+        ],
+        [
+          "fts:event-fd7f352629c2408eb7abe4ee6b8b913c",
+          "retrieved"
+        ],
+        [
+          "attempt:attempt-4ad2eca21a3c4e678f93cd8fcfc851c3",
+          "retrieved"
+        ],
+        [
+          "event:event-2e979f27d6c74eea9c7576d1067cc1b8",
+          "recent"
+        ],
+        [
+          "event:event-8ead7af56f5943249e45e3d4babcc642",
+          "recent"
+        ],
+        [
+          "event:event-1a943b5c8f0f451aa8acb4e698da55c2",
+          "recent"
+        ],
+        [
+          "event:event-202745e5819345078c54104eb805e8f8",
+          "recent"
+        ],
+        [
+          "event:event-e74069616d31446b92d412d0376c43fb",
+          "recent"
+        ],
+        [
+          "event:event-3d2b0b70bacf4a74980e6367ff2d19fa",
+          "recent"
+        ],
+        [
+          "event:event-cf5e96d3e13940c683920f4a64431193",
+          "recent"
+        ],
+        [
+          "event:event-1d5e577dfcbc4cb3a0cc89b2fe845534",
+          "recent"
+        ],
+        [
+          "event:event-94e8157f3f8b41419203e203929fe372",
+          "recent"
+        ],
+        [
+          "event:event-f44ba518554141609e6c4fe5c9351624",
+          "recent"
+        ],
+        [
+          "event:event-21b84213be37416eab220eadb3aea289",
+          "recent"
+        ],
+        [
+          "event:event-691a0a71388f4d8c8a71d7a2c5665ea4",
+          "recent"
+        ],
+        [
+          "event:event-ed34d17a317449ec81da2c367a5f211f",
+          "recent"
+        ],
+        [
+          "event:event-8dd17bc8f55b4db9bb8a1d72c05aa215",
+          "recent"
+        ],
+        [
+          "event:event-4eb3a063d9b44ee1a6fd1a2b63aaf42c",
+          "recent"
+        ],
+        [
+          "event:event-4d35d1fea9f84a0292182dc3cde74651",
+          "recent"
+        ]
+      ],
+      "item_tokens": [
+        [
+          "objective",
+          18
+        ],
+        [
+          "environment",
+          12
+        ],
+        [
+          "operator",
+          2
+        ],
+        [
+          "evaluation",
+          2
+        ],
+        [
+          "lineage_head",
+          3
+        ],
+        [
+          "attempt",
+          4
+        ],
+        [
+          "plan",
+          2
+        ],
+        [
+          "budgets",
+          8
+        ],
+        [
+          "receipt",
+          2
+        ],
+        [
+          "observation",
+          2
+        ],
+        [
+          "node:root-vharness-phase2-live-software-longcat",
+          4
+        ],
+        [
+          "fts:event-fd7f352629c2408eb7abe4ee6b8b913c",
+          25
+        ],
+        [
+          "attempt:attempt-4ad2eca21a3c4e678f93cd8fcfc851c3",
+          4
+        ],
+        [
+          "event:event-2e979f27d6c74eea9c7576d1067cc1b8",
+          3
+        ],
+        [
+          "event:event-8ead7af56f5943249e45e3d4babcc642",
+          3
+        ],
+        [
+          "event:event-1a943b5c8f0f451aa8acb4e698da55c2",
+          3
+        ],
+        [
+          "event:event-202745e5819345078c54104eb805e8f8",
+          3
+        ],
+        [
+          "event:event-e74069616d31446b92d412d0376c43fb",
+          3
+        ],
+        [
+          "event:event-3d2b0b70bacf4a74980e6367ff2d19fa",
+          3
+        ],
+        [
+          "event:event-cf5e96d3e13940c683920f4a64431193",
+          3
+        ],
+        [
+          "event:event-1d5e577dfcbc4cb3a0cc89b2fe845534",
+          3
+        ],
+        [
+          "event:event-94e8157f3f8b41419203e203929fe372",
+          3
+        ],
+        [
+          "event:event-f44ba518554141609e6c4fe5c9351624",
+          3
+        ],
+        [
+          "event:event-21b84213be37416eab220eadb3aea289",
+          3
+        ],
+        [
+          "event:event-691a0a71388f4d8c8a71d7a2c5665ea4",
+          3
+        ],
+        [
+          "event:event-ed34d17a317449ec81da2c367a5f211f",
+          3
+        ],
+        [
+          "event:event-8dd17bc8f55b4db9bb8a1d72c05aa215",
+          3
+        ],
+        [
+          "event:event-4eb3a063d9b44ee1a6fd1a2b63aaf42c",
+          3
+        ],
+        [
+          "event:event-4d35d1fea9f84a0292182dc3cde74651",
+          7
+        ]
+      ],
+      "journal_cursor": 17,
+      "objective_version": 1,
+      "omitted": [
+        [
+          "fts:event-1d5e577dfcbc4cb3a0cc89b2fe845534",
+          "low_relevance"
+        ],
+        [
+          "event:event-fd7f352629c2408eb7abe4ee6b8b913c",
+          "duplicate"
+        ]
+      ],
+      "policy_version": 1,
+      "reserved_output_tokens": 1024,
+      "serialization_overhead_tokens": 576,
+      "serialized_input_tokens": 716,
+      "system_prompt_tokens": 91,
+      "token_budget": 4096,
+      "token_counter": "whitespace-v1",
+      "tokens_used": 140
+    },
+    "sequence": 18
+  }
+]

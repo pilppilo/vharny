@@ -1,0 +1,118 @@
+{
+  "accepted": true,
+  "accepted_at_call": 7,
+  "actions_to_recovery": 6,
+  "calls_to_recovery": 6,
+  "counters": {
+    "actions": 6,
+    "attempts": 1,
+    "commits": 1,
+    "evaluations": 1,
+    "model_calls": 7,
+    "reconciliations": 0
+  },
+  "error": null,
+  "facts": [
+    {
+      "actions": 1,
+      "call": 1,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}"
+      ],
+      "input_tokens": 576,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 2,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}"
+      ],
+      "input_tokens": 676,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 3,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}"
+      ],
+      "input_tokens": 708,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 4,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:focus:{}"
+      ],
+      "input_tokens": 740,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 5,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:repair:{}"
+      ],
+      "input_tokens": 772,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 6,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:verify:{}"
+      ],
+      "input_tokens": 804,
+      "progress_signals": 0
+    },
+    {
+      "actions": 0,
+      "call": 7,
+      "failed_receipts": 0,
+      "fingerprints": [],
+      "input_tokens": 836,
+      "progress_signals": 0
+    }
+  ],
+  "fixture": "stalled",
+  "journal": {
+    "event_count": 40,
+    "format": "canonical-event-stream-gzip-jsonl",
+    "path": "events.jsonl.gz",
+    "sha256": "cb058a67e11213e545cae167bc0a7cf1cdfcb4fd589de63f9e459a0c84c70b8d",
+    "source_journal_sha256": "c635a4a391c9d9952054b40b07a45d118fd227ba5e7e43a03ab8e5a8cffcea70",
+    "uncompressed_bytes": 296635,
+    "wal_sidecars": []
+  },
+  "onset_call": 1,
+  "operator_cues": [],
+  "policy": "P1",
+  "repeat": false,
+  "run_id": "stalled/s0/P1",
+  "seed": 0,
+  "session_id": "exp0001-stalled-s0-p1",
+  "steps": 7,
+  "supervisor_allocation_exceeded": false,
+  "supervisor_calls": 1,
+  "supervisor_tokens": 512,
+  "terminal": "accepted",
+  "triggers": [
+    {
+      "actions_used": 3,
+      "call": 4,
+      "fingerprint": "action:probe:{\"target\":\"a\"}",
+      "policy": "P1",
+      "reason": "repetition",
+      "repeat_count": 3,
+      "tokens_used": 1960
+    }
+  ]
+}

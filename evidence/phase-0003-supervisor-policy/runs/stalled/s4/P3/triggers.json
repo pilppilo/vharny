@@ -1,0 +1,23 @@
+{
+  "operator_cues": [],
+  "policy_parameters": {
+    "action_fraction": 0.6,
+    "cooldown_calls": 6,
+    "kind": "combined",
+    "repeat_threshold": 3,
+    "token_fraction": 0.6,
+    "window_calls": 8
+  },
+  "run_id": "stalled/s4/P3",
+  "triggers": [
+    {
+      "actions_used": 3,
+      "call": 4,
+      "fingerprint": "action:probe:{\"target\":\"a\"}",
+      "policy": "P3",
+      "reason": "repetition",
+      "repeat_count": 3,
+      "tokens_used": 1960
+    }
+  ]
+}

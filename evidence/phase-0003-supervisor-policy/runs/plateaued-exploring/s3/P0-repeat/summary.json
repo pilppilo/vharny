@@ -1,0 +1,138 @@
+{
+  "accepted": true,
+  "accepted_at_call": 10,
+  "actions_to_recovery": 9,
+  "calls_to_recovery": 9,
+  "counters": {
+    "actions": 9,
+    "attempts": 1,
+    "commits": 1,
+    "evaluations": 1,
+    "model_calls": 10,
+    "reconciliations": 0
+  },
+  "error": null,
+  "facts": [
+    {
+      "actions": 1,
+      "call": 1,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"t1\"}"
+      ],
+      "input_tokens": 576,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 2,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"t2\"}"
+      ],
+      "input_tokens": 676,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 3,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"t3\"}"
+      ],
+      "input_tokens": 708,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 4,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:focus:{}"
+      ],
+      "input_tokens": 740,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 5,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"t4\"}"
+      ],
+      "input_tokens": 772,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 6,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"t5\"}"
+      ],
+      "input_tokens": 804,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 7,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:repair:{}"
+      ],
+      "input_tokens": 836,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 8,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"t6\"}"
+      ],
+      "input_tokens": 868,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 9,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:verify:{}"
+      ],
+      "input_tokens": 900,
+      "progress_signals": 0
+    },
+    {
+      "actions": 0,
+      "call": 10,
+      "failed_receipts": 0,
+      "fingerprints": [],
+      "input_tokens": 932,
+      "progress_signals": 0
+    }
+  ],
+  "fixture": "plateaued-exploring",
+  "journal": {
+    "event_count": 55,
+    "format": "canonical-event-stream-gzip-jsonl",
+    "path": "events.jsonl.gz",
+    "sha256": "8b19079373a51bf231fed9251280b87f9ec333a90e7997230ec12f122116da1b",
+    "source_journal_sha256": "3af0505baaf211a6b8553e060cb60729d6627ce63d0832fcde8f50c55602aece",
+    "uncompressed_bytes": 483273,
+    "wal_sidecars": []
+  },
+  "onset_call": 1,
+  "operator_cues": [],
+  "policy": "P0",
+  "repeat": true,
+  "run_id": "plateaued-exploring/s3/P0-repeat",
+  "seed": 3,
+  "session_id": "exp0001-plateaued-exploring-s3-p0-repeat",
+  "steps": 10,
+  "supervisor_allocation_exceeded": false,
+  "supervisor_calls": 0,
+  "supervisor_tokens": 0,
+  "terminal": "accepted",
+  "triggers": []
+}

@@ -1,0 +1,49 @@
+{
+  "accepted": true,
+  "accepted_at_call": 5,
+  "actions_to_recovery": null,
+  "attempt_abandoned": 0,
+  "attempt_started": 1,
+  "condition": "unsupervised",
+  "counters": {
+    "actions": 4,
+    "attempts": 1,
+    "commits": 1,
+    "evaluations": 1,
+    "model_calls": 5,
+    "reconciliations": 0
+  },
+  "error": null,
+  "fixture": "productive",
+  "guidance": {
+    "accepted": 0,
+    "expired": 0,
+    "rejected": 0,
+    "response_rejected": 0
+  },
+  "guidance_decisions": {
+    "accept": 0,
+    "reject": 0,
+    "replan": 0
+  },
+  "journal": {
+    "event_count": 30,
+    "format": "canonical-event-stream-gzip-jsonl",
+    "path": "events.jsonl.gz",
+    "sha256": "1c75d988433d74513a86c55768bce9165c0ecc3def5f3838c87d5b4fc75b619d",
+    "uncompressed_bytes": 199197,
+    "wal_sidecars": []
+  },
+  "main_calls": 5,
+  "operator_escalated": 0,
+  "repeat": false,
+  "run_id": "productive/s3/unsupervised",
+  "seed": 3,
+  "session_id": "phase3-paired-productive-s3-unsupervised",
+  "steps": 5,
+  "supervisor_allocation_exceeded": false,
+  "supervisor_calls": 0,
+  "supervisor_tokens": 0,
+  "terminal": "accepted",
+  "triggers": []
+}

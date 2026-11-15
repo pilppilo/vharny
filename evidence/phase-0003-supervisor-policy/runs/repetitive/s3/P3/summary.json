@@ -1,0 +1,121 @@
+{
+  "accepted": true,
+  "accepted_at_call": 7,
+  "actions_to_recovery": 6,
+  "calls_to_recovery": 6,
+  "counters": {
+    "actions": 6,
+    "attempts": 1,
+    "commits": 1,
+    "evaluations": 1,
+    "model_calls": 7,
+    "reconciliations": 0
+  },
+  "error": null,
+  "facts": [
+    {
+      "actions": 1,
+      "call": 1,
+      "failed_receipts": 1,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}",
+        "receipt:failed:probe did not change the fixture state"
+      ],
+      "input_tokens": 576,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 2,
+      "failed_receipts": 1,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}",
+        "receipt:failed:probe did not change the fixture state"
+      ],
+      "input_tokens": 688,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 3,
+      "failed_receipts": 1,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}",
+        "receipt:failed:probe did not change the fixture state"
+      ],
+      "input_tokens": 720,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 4,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:focus:{}"
+      ],
+      "input_tokens": 752,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 5,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:repair:{}"
+      ],
+      "input_tokens": 772,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 6,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:verify:{}"
+      ],
+      "input_tokens": 804,
+      "progress_signals": 0
+    },
+    {
+      "actions": 0,
+      "call": 7,
+      "failed_receipts": 0,
+      "fingerprints": [],
+      "input_tokens": 836,
+      "progress_signals": 0
+    }
+  ],
+  "fixture": "repetitive",
+  "journal": {
+    "event_count": 40,
+    "format": "canonical-event-stream-gzip-jsonl",
+    "path": "events.jsonl.gz",
+    "sha256": "4826b8b8253b946def212fec48ee08a5eaf83d3941120847f8af986a01f66c5b",
+    "source_journal_sha256": "893d1c9515d72918d4aafe6584a93fb0bf35950c3d9141ace5b245568efcd4c8",
+    "uncompressed_bytes": 297055,
+    "wal_sidecars": []
+  },
+  "onset_call": 1,
+  "operator_cues": [],
+  "policy": "P3",
+  "repeat": false,
+  "run_id": "repetitive/s3/P3",
+  "seed": 3,
+  "session_id": "exp0001-repetitive-s3-p3",
+  "steps": 7,
+  "supervisor_allocation_exceeded": false,
+  "supervisor_calls": 1,
+  "supervisor_tokens": 512,
+  "terminal": "accepted",
+  "triggers": [
+    {
+      "actions_used": 3,
+      "call": 4,
+      "fingerprint": "action:probe:{\"target\":\"a\"}",
+      "policy": "P3",
+      "reason": "repetition",
+      "repeat_count": 3,
+      "tokens_used": 1984
+    }
+  ]
+}

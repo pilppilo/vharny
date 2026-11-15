@@ -1,0 +1,9 @@
+{
+  "operator_cues": [],
+  "policy_parameters": {
+    "kind": "operator-only",
+    "operator_cue_call": 10
+  },
+  "run_id": "plateaued-exploring/s1/P0",
+  "triggers": []
+}

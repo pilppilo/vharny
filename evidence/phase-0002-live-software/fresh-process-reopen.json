@@ -1,0 +1,166 @@
+{
+  "run": {
+    "accepted_lineage": [
+      {
+        "__type__": "CommittedNode",
+        "evaluation_receipt_id": null,
+        "node_id": "root-vharness-phase2-live-software-longcat",
+        "objective_version": 1,
+        "objectives": {},
+        "parent_id": null,
+        "state": {
+          "__type__": "StateRef",
+          "digest": "fbf0a67dc2ab3eb0862d2547f18487c7124ee0a589c79c9df1fe5bb5e0bec285",
+          "owner": "software-fixture",
+          "restorable": true,
+          "revision": "0",
+          "value": "rev-0"
+        }
+      },
+      {
+        "__type__": "CommittedNode",
+        "evaluation_receipt_id": "evaluation-evaluation-f4a274a47bbb4f4ba8b17b06c645ec84",
+        "node_id": "node-4c20e46508a047f5ba8a6ce33d642b96",
+        "objective_version": 1,
+        "objectives": {
+          "check_passed": true
+        },
+        "parent_id": "root-vharness-phase2-live-software-longcat",
+        "state": {
+          "__type__": "StateRef",
+          "digest": "2f142cfe76bfc0a598dd76bb02bca01485aac9376fe5aae6e345718850c6564e",
+          "owner": "software-fixture",
+          "restorable": true,
+          "revision": "2",
+          "value": "rev-2"
+        }
+      }
+    ],
+    "counters": {
+      "__type__": "RunCounters",
+      "abandoned_attempts": 0,
+      "actions": 2,
+      "attempts": 1,
+      "checkpoints": 0,
+      "commits": 1,
+      "conservative_supervisor_calls": 0,
+      "duration_ms": 88484,
+      "envelope": {
+        "__type__": "RecordEnvelope",
+        "causation_id": null,
+        "correlation_id": null,
+        "extensions": {},
+        "objective_version": 1,
+        "provenance": "vharness.replay",
+        "record_id": "event-ebbc0b8375d2460ebc5d7c02320c4a19",
+        "recorded_at": "2026-09-15T14:21:55.239253+00:00",
+        "schema_version": 1,
+        "session_id": "vharness-phase2-live-software-longcat"
+      },
+      "evaluations": 1,
+      "hard_constraint_failed_attempts": 0,
+      "incomparable_attempts": 0,
+      "input_tokens": 27312,
+      "invalid_attempts": 0,
+      "known_cost": "0",
+      "model_calls": 6,
+      "operator_commands": 0,
+      "output_tokens": 4154,
+      "reconciliations": 0,
+      "rejected_attempts": 0,
+      "runtime_receipts": 2,
+      "stale_attempts": 0,
+      "supervisor_calls": 0,
+      "supervisor_input_tokens": 0,
+      "supervisor_output_tokens": 0,
+      "unknown_cost_operations": 7
+    },
+    "counters_match": true,
+    "cursor": 24,
+    "manifest": {
+      "__type__": "RunManifest",
+      "configuration_digest": "5693504494f8d2714d8c91a2ba2e2677fbe0ff0b552b0849e80dfb4a2f297fb1",
+      "envelope": {
+        "__type__": "RecordEnvelope",
+        "causation_id": null,
+        "correlation_id": null,
+        "extensions": {},
+        "objective_version": 1,
+        "provenance": "vharness.session",
+        "record_id": "event-2e979f27d6c74eea9c7576d1067cc1b8",
+        "recorded_at": "2026-09-15T14:20:26.425165+00:00",
+        "schema_version": 1,
+        "session_id": "vharness-phase2-live-software-longcat"
+      },
+      "environment_id": "software-fixture",
+      "environment_version": "1",
+      "evaluator": {
+        "__type__": "ComponentIdentity",
+        "component_id": "software-fixture-evaluator",
+        "configuration_digest": null,
+        "version": "v1"
+      },
+      "evaluator_version": "software-fixture-evaluator-v1",
+      "package_version": "0.2.0",
+      "runtime": {
+        "__type__": "ComponentIdentity",
+        "component_id": "software-fixture-runtime",
+        "configuration_digest": null,
+        "version": "v1"
+      },
+      "schema_version": 1,
+      "session_id": "vharness-phase2-live-software-longcat",
+      "task_id": "vharness-phase2-live-software"
+    },
+    "manifest_match": true,
+    "opened_view": {
+      "__type__": "SessionView",
+      "active_attempt": null,
+      "cursor": 24,
+      "lineage_head": {
+        "__type__": "CommittedNode",
+        "evaluation_receipt_id": "evaluation-evaluation-f4a274a47bbb4f4ba8b17b06c645ec84",
+        "node_id": "node-4c20e46508a047f5ba8a6ce33d642b96",
+        "objective_version": 1,
+        "objectives": {
+          "check_passed": true
+        },
+        "parent_id": "root-vharness-phase2-live-software-longcat",
+        "state": {
+          "__type__": "StateRef",
+          "digest": "2f142cfe76bfc0a598dd76bb02bca01485aac9376fe5aae6e345718850c6564e",
+          "owner": "software-fixture",
+          "restorable": true,
+          "revision": "2",
+          "value": "rev-2"
+        }
+      },
+      "pending_proposal_id": null,
+      "session_id": "vharness-phase2-live-software-longcat",
+      "status": "completed",
+      "task": {
+        "__type__": "TaskSpec",
+        "budgets": {
+          "__type__": "BudgetLimits",
+          "actions": 6,
+          "cost": null,
+          "evaluations": 2,
+          "model_calls": 8
+        },
+        "completion_mode": "finite",
+        "constraints": [],
+        "environment_id": "software-fixture",
+        "evaluation_contract_id": "software-fixture-evaluator-v1",
+        "objective": "Set value to 1 in main.py and verify it with the fixture test.",
+        "objective_version": 1,
+        "success_evidence": "external software-fixture evaluator acceptance",
+        "task_id": "vharness-phase2-live-software"
+      },
+      "wait_reason": null
+    },
+    "opened_view_matches_replay": true,
+    "projection_sha256": "5b0ba0e4291ae5df0364ef308f6bd01af711b92b3333ffc8c058ff046f4f1cb5",
+    "session_id": "vharness-phase2-live-software-longcat",
+    "status": "completed"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "accepted": false,
+  "accepted_at_call": null,
+  "actions_to_recovery": null,
+  "attempt_abandoned": 0,
+  "attempt_started": 1,
+  "condition": "unsupervised",
+  "counters": {
+    "actions": 12,
+    "attempts": 1,
+    "commits": 0,
+    "evaluations": 0,
+    "model_calls": 12,
+    "reconciliations": 0
+  },
+  "error": null,
+  "fixture": "stalled",
+  "guidance": {
+    "accepted": 0,
+    "expired": 0,
+    "rejected": 0,
+    "response_rejected": 0
+  },
+  "guidance_decisions": {
+    "accept": 0,
+    "reject": 0,
+    "replan": 0
+  },
+  "journal": {
+    "event_count": 63,
+    "format": "canonical-event-stream-gzip-jsonl",
+    "path": "events.jsonl.gz",
+    "sha256": "9a0bd28bf869d9e9a06131feddb3bc22eafdf62d7084081f906527bec9631328",
+    "uncompressed_bytes": 612559,
+    "wal_sidecars": []
+  },
+  "main_calls": 12,
+  "operator_escalated": 0,
+  "repeat": false,
+  "run_id": "stalled/s3/unsupervised",
+  "seed": 3,
+  "session_id": "phase3-paired-stalled-s3-unsupervised",
+  "steps": 12,
+  "supervisor_allocation_exceeded": false,
+  "supervisor_calls": 0,
+  "supervisor_tokens": 0,
+  "terminal": "model_budget_exhausted",
+  "triggers": []
+}

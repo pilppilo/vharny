@@ -1,0 +1,128 @@
+{
+  "accepted": true,
+  "accepted_at_call": 8,
+  "actions_to_recovery": 7,
+  "calls_to_recovery": 7,
+  "counters": {
+    "actions": 7,
+    "attempts": 1,
+    "commits": 1,
+    "evaluations": 1,
+    "model_calls": 8,
+    "reconciliations": 0
+  },
+  "error": null,
+  "facts": [
+    {
+      "actions": 1,
+      "call": 1,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"t1\"}"
+      ],
+      "input_tokens": 576,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 2,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"t2\"}"
+      ],
+      "input_tokens": 676,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 3,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"t3\"}"
+      ],
+      "input_tokens": 708,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 4,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:focus:{}"
+      ],
+      "input_tokens": 740,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 5,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:focus:{}"
+      ],
+      "input_tokens": 772,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 6,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:repair:{}"
+      ],
+      "input_tokens": 804,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 7,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:verify:{}"
+      ],
+      "input_tokens": 836,
+      "progress_signals": 0
+    },
+    {
+      "actions": 0,
+      "call": 8,
+      "failed_receipts": 0,
+      "fingerprints": [],
+      "input_tokens": 868,
+      "progress_signals": 0
+    }
+  ],
+  "fixture": "plateaued-exploring",
+  "journal": {
+    "event_count": 45,
+    "format": "canonical-event-stream-gzip-jsonl",
+    "path": "events.jsonl.gz",
+    "sha256": "b43799649bebcb23b95f10e92dd6a31a14bc961c60abbae3ff3dd81aae087b52",
+    "source_journal_sha256": "17f9a3372355ddc2b8e877b06ccd5fb14d447de850d12c28fd9b3d23c21d662f",
+    "uncompressed_bytes": 358380,
+    "wal_sidecars": []
+  },
+  "onset_call": 1,
+  "operator_cues": [],
+  "policy": "P3",
+  "repeat": false,
+  "run_id": "plateaued-exploring/s2/P3",
+  "seed": 2,
+  "session_id": "exp0001-plateaued-exploring-s2-p3",
+  "steps": 8,
+  "supervisor_allocation_exceeded": false,
+  "supervisor_calls": 1,
+  "supervisor_tokens": 512,
+  "terminal": "accepted",
+  "triggers": [
+    {
+      "actions_used": 4,
+      "call": 5,
+      "fingerprint": null,
+      "policy": "P3",
+      "reason": "budget-burn",
+      "repeat_count": null,
+      "tokens_used": 2700
+    }
+  ]
+}

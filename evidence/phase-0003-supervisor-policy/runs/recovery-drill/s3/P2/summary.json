@@ -1,0 +1,129 @@
+{
+  "accepted": true,
+  "accepted_at_call": 8,
+  "actions_to_recovery": 6,
+  "calls_to_recovery": 6,
+  "counters": {
+    "actions": 7,
+    "attempts": 1,
+    "commits": 1,
+    "evaluations": 1,
+    "model_calls": 8,
+    "reconciliations": 1
+  },
+  "error": null,
+  "facts": [
+    {
+      "actions": 1,
+      "call": 1,
+      "failed_receipts": 1,
+      "fingerprints": [
+        "action:probe:{\"target\":\"interrupted\"}",
+        "receipt:running:"
+      ],
+      "input_tokens": 576,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 2,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}"
+      ],
+      "input_tokens": 684,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 3,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}"
+      ],
+      "input_tokens": 722,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 4,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:probe:{\"target\":\"a\"}"
+      ],
+      "input_tokens": 754,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 5,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:focus:{}"
+      ],
+      "input_tokens": 786,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 6,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:repair:{}"
+      ],
+      "input_tokens": 818,
+      "progress_signals": 0
+    },
+    {
+      "actions": 1,
+      "call": 7,
+      "failed_receipts": 0,
+      "fingerprints": [
+        "action:verify:{}"
+      ],
+      "input_tokens": 850,
+      "progress_signals": 0
+    },
+    {
+      "actions": 0,
+      "call": 8,
+      "failed_receipts": 0,
+      "fingerprints": [],
+      "input_tokens": 882,
+      "progress_signals": 0
+    }
+  ],
+  "fixture": "recovery-drill",
+  "journal": {
+    "event_count": 47,
+    "format": "canonical-event-stream-gzip-jsonl",
+    "path": "events.jsonl.gz",
+    "sha256": "1821d0eb7e757959a04906be41ee83299397af1a2e4950d494997ee4696fdde7",
+    "source_journal_sha256": "3def6b1b7a1ed80ca19458764d2a5502186ec9ddb014d494bc355aac725a0635",
+    "uncompressed_bytes": 368642,
+    "wal_sidecars": []
+  },
+  "onset_call": 2,
+  "operator_cues": [],
+  "policy": "P2",
+  "repeat": false,
+  "run_id": "recovery-drill/s3/P2",
+  "seed": 3,
+  "session_id": "exp0001-recovery-drill-s3-p2",
+  "steps": 8,
+  "supervisor_allocation_exceeded": false,
+  "supervisor_calls": 1,
+  "supervisor_tokens": 512,
+  "terminal": "accepted",
+  "triggers": [
+    {
+      "actions_used": 4,
+      "call": 5,
+      "fingerprint": null,
+      "policy": "P2",
+      "reason": "budget-burn",
+      "repeat_count": null,
+      "tokens_used": 2736
+    }
+  ]
+}

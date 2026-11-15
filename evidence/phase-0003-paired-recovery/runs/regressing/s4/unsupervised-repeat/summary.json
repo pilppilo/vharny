@@ -1,0 +1,49 @@
+{
+  "accepted": false,
+  "accepted_at_call": null,
+  "actions_to_recovery": null,
+  "attempt_abandoned": 0,
+  "attempt_started": 3,
+  "condition": "unsupervised",
+  "counters": {
+    "actions": 10,
+    "attempts": 3,
+    "commits": 0,
+    "evaluations": 2,
+    "model_calls": 12,
+    "reconciliations": 0
+  },
+  "error": null,
+  "fixture": "regressing",
+  "guidance": {
+    "accepted": 0,
+    "expired": 0,
+    "rejected": 0,
+    "response_rejected": 0
+  },
+  "guidance_decisions": {
+    "accept": 0,
+    "reject": 0,
+    "replan": 0
+  },
+  "journal": {
+    "event_count": 67,
+    "format": "canonical-event-stream-gzip-jsonl",
+    "path": "events.jsonl.gz",
+    "sha256": "917e8d87862a9e85bb8abfc3389923284212d01aa4098a2048c8555495ab4f4f",
+    "uncompressed_bytes": 642451,
+    "wal_sidecars": []
+  },
+  "main_calls": 12,
+  "operator_escalated": 0,
+  "repeat": true,
+  "run_id": "regressing/s4/unsupervised-repeat",
+  "seed": 4,
+  "session_id": "phase3-paired-regressing-s4-unsupervised-repeat",
+  "steps": 12,
+  "supervisor_allocation_exceeded": false,
+  "supervisor_calls": 0,
+  "supervisor_tokens": 0,
+  "terminal": "model_budget_exhausted",
+  "triggers": []
+}

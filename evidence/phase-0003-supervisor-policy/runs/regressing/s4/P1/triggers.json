@@ -1,0 +1,21 @@
+{
+  "operator_cues": [],
+  "policy_parameters": {
+    "cooldown_calls": 4,
+    "kind": "repetition",
+    "repeat_threshold": 3,
+    "window_calls": 8
+  },
+  "run_id": "regressing/s4/P1",
+  "triggers": [
+    {
+      "actions_used": 5,
+      "call": 7,
+      "fingerprint": "action:focus:{}",
+      "policy": "P1",
+      "reason": "repetition",
+      "repeat_count": 3,
+      "tokens_used": 4327
+    }
+  ]
+}

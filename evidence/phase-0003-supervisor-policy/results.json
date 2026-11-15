@@ -1,0 +1,193 @@
+{
+  "baseline_reproducible": true,
+  "bundle": "evidence/phase-0003-supervisor-policy",
+  "candidates": {
+    "P1": {
+      "acceptance_harm_runs": [],
+      "class_improvements": {
+        "recovery-drill": 5,
+        "regressing": 5,
+        "repetitive": 5,
+        "stalled": 5
+      },
+      "false_triggers_exploring": {},
+      "false_triggers_productive": 0,
+      "meets_acceptance_tolerance": true,
+      "rejected": false,
+      "rejection_reasons": [],
+      "stagnation_pairs_improved": 20,
+      "supervisor_calls": 20,
+      "supervisor_tokens": 10240,
+      "trigger_latencies": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        6,
+        6,
+        6,
+        6,
+        6,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ]
+    },
+    "P2": {
+      "acceptance_harm_runs": [],
+      "class_improvements": {
+        "recovery-drill": 5,
+        "regressing": 5,
+        "repetitive": 5,
+        "stalled": 5
+      },
+      "false_triggers_exploring": {
+        "plateaued-exploring": 5
+      },
+      "false_triggers_productive": 0,
+      "meets_acceptance_tolerance": true,
+      "rejected": false,
+      "rejection_reasons": [],
+      "stagnation_pairs_improved": 20,
+      "supervisor_calls": 25,
+      "supervisor_tokens": 12800,
+      "trigger_latencies": [
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        3,
+        3,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    "P3": {
+      "acceptance_harm_runs": [],
+      "class_improvements": {
+        "recovery-drill": 5,
+        "regressing": 5,
+        "repetitive": 5,
+        "stalled": 5
+      },
+      "false_triggers_exploring": {
+        "plateaued-exploring": 5
+      },
+      "false_triggers_productive": 0,
+      "meets_acceptance_tolerance": true,
+      "rejected": false,
+      "rejection_reasons": [],
+      "stagnation_pairs_improved": 20,
+      "supervisor_calls": 25,
+      "supervisor_tokens": 12800,
+      "trigger_latencies": [
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        3,
+        3,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ]
+    }
+  },
+  "censored_runs": [],
+  "executions": 150,
+  "experiment": "EXP-0001",
+  "fixtures": [
+    "productive",
+    "plateaued-exploring",
+    "stalled",
+    "repetitive",
+    "regressing",
+    "recovery-drill"
+  ],
+  "passing_candidates": [
+    "P1",
+    "P2",
+    "P3"
+  ],
+  "policies": [
+    "P0",
+    "P1",
+    "P2",
+    "P3"
+  ],
+  "runs": 150,
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "selected_policy": "P1",
+  "tolerance_interpretation": {
+    "censored": "a run is censored only when it terminates on an unexpected error; ending at the predeclared decision budget without acceptance is a valid negative observation",
+    "stagnation_pairs": [
+      "stalled/s0",
+      "stalled/s1",
+      "stalled/s2",
+      "stalled/s3",
+      "stalled/s4",
+      "repetitive/s0",
+      "repetitive/s1",
+      "repetitive/s2",
+      "repetitive/s3",
+      "repetitive/s4",
+      "regressing/s0",
+      "regressing/s1",
+      "regressing/s2",
+      "regressing/s3",
+      "regressing/s4",
+      "recovery-drill/s0",
+      "recovery-drill/s1",
+      "recovery-drill/s2",
+      "recovery-drill/s3",
+      "recovery-drill/s4"
+    ]
+  }
+}

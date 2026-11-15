@@ -1,0 +1,52 @@
+{
+  "accepted": true,
+  "accepted_at_call": 9,
+  "actions_to_recovery": 3,
+  "attempt_abandoned": 2,
+  "attempt_started": 3,
+  "condition": "supervised",
+  "counters": {
+    "actions": 7,
+    "attempts": 3,
+    "commits": 1,
+    "evaluations": 1,
+    "model_calls": 10,
+    "reconciliations": 1
+  },
+  "error": null,
+  "fixture": "recovery-drill",
+  "guidance": {
+    "accepted": 1,
+    "expired": 0,
+    "rejected": 0,
+    "response_rejected": 0
+  },
+  "guidance_decisions": {
+    "accept": 0,
+    "reject": 0,
+    "replan": 1
+  },
+  "journal": {
+    "event_count": 60,
+    "format": "canonical-event-stream-gzip-jsonl",
+    "path": "events.jsonl.gz",
+    "sha256": "a39589ac5a18ccc3129911d1fa72bd538630ad70e886ed3bb794fe8f27f5b688",
+    "uncompressed_bytes": 460921,
+    "wal_sidecars": []
+  },
+  "main_calls": 9,
+  "operator_escalated": 0,
+  "repeat": false,
+  "run_id": "recovery-drill/s2/supervised",
+  "seed": 2,
+  "session_id": "phase3-paired-recovery-drill-s2-supervised",
+  "steps": 9,
+  "supervisor_allocation_exceeded": false,
+  "supervisor_calls": 1,
+  "supervisor_tokens": 512,
+  "terminal": "accepted",
+  "triggers": [
+    5,
+    9
+  ]
+}

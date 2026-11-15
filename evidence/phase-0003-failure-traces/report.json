@@ -1,0 +1,81 @@
+{
+  "acceptance_claims": {
+    "hidden_validator_data_supplied": false,
+    "provider_rejected": false,
+    "scripted_action_sequence_supplied": false
+  },
+  "accepted": false,
+  "configuration": {
+    "budgets": {
+      "actions": 12,
+      "evaluations": 2,
+      "model_calls": 12,
+      "output_tokens": 2048,
+      "per_decision_context_window_tokens": 8192,
+      "repair_budget": 1
+    },
+    "evidence": "phase-0003-failure-traces",
+    "fixture": {
+      "environment_id": "phase3-visible-software-fixture",
+      "hidden_validator_data": false,
+      "initial_files": {
+        "main.py": "VALUE = 0\n",
+        "test_fixture.py": "from main import VALUE\n\n\ndef test_fixture():\n    assert VALUE == 1, f\"VALUE is {VALUE}, expected 1\"\n    print(\"fixture test passed\")\n"
+      },
+      "test": "from main import VALUE\n\n\ndef test_fixture():\n    assert VALUE == 1, f\"VALUE is {VALUE}, expected 1\"\n    print(\"fixture test passed\")\n"
+    },
+    "mode": "unscripted-compatible-model-failure-capture",
+    "model": {
+      "length_retries": 0,
+      "max_retries": 0,
+      "model_id": "LongCat-2.0",
+      "per_decision_context_window_tokens": 8192,
+      "repair_budget": 1,
+      "reserved_output_tokens": 2048,
+      "temperature": 0.0,
+      "timeout_seconds": 120.0
+    },
+    "provider": {
+      "base_url": "https://api.longcat.ai/openai/v1/",
+      "credential_env": "LONGCAT_API_KEY",
+      "name": "LongCat"
+    },
+    "task": {
+      "completion_mode": "finite",
+      "objective": "Make the fixture test pass. The workspace holds main.py (declares VALUE) and test_fixture.py (requires VALUE == 1). First run the visible fixture test to capture the current failure, then fix main.py, and re-run the test until it passes.",
+      "success_evidence": "external fixture-test evaluator acceptance",
+      "task_id": "vharness-phase3-failure-traces"
+    }
+  },
+  "configuration_digest": "f409ca7ad64f1022dbfa1b34adb5cb33224a91af16ae15d4a3a4a0b7392312cc",
+  "counters": {
+    "actions": 9,
+    "commits": 0,
+    "evaluations": 0,
+    "model_calls": 12,
+    "reconciliations": 0
+  },
+  "evidence_id": "phase-0003-failure-traces",
+  "failure_traces": {
+    "completion_rejected_sequences": [],
+    "failed_receipts": [
+      {
+        "error": "VALUE is 0, expected 1 (test_fixture.py)",
+        "sequence": 8,
+        "status": "failed"
+      }
+    ],
+    "model_malformed_sequences": [],
+    "present": true,
+    "rejected_evaluation_sequences": []
+  },
+  "generated_at": "2026-09-27T21:01:15.994264+00:00",
+  "projection_sha256": "9661c55b81d19c66772d2d01a2cd4681e339357d9b13e7116bbfc98e91df82d3",
+  "source": {
+    "git_dirty": false,
+    "git_revision": "218b27277fdeb30ba74aa4937ffcc25c63b3f205",
+    "tool": "tools/phase3_failure_traces.py",
+    "tool_sha256": "b25e63d2a17c0280dad1b61c8525a0c6130d86998ad94621202f7b873b21c379"
+  },
+  "terminal": "budget_exhausted"
+}

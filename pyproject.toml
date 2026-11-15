@@ -1,0 +1,49 @@
+[project]
+name = "vharness"
+version = "0.2.0"
+description = "Pluggable LLM security harness: probe → generator → detector → evaluator"
+requires-python = ">=3.10"
+dependencies = [
+    "openai>=1.40",
+    "tomli>=2.0; python_version < '3.11'",
+]
+
+[project.optional-dependencies]
+inspect = ["inspect-ai>=0.3"]
+gymnasium = ["gymnasium>=0.29"]
+
+[project.scripts]
+vharness = "vharness.cli:main"
+vharness-agent = "vharness.agent.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vharness"]
+
+[dependency-groups]
+dev = [
+    "black>=24",
+    "gymnasium>=0.29",
+    "pylint>=3",
+    "pyright>=1.1.400",
+    "pytest>=8",
+    "pytest-xdist>=3",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+
+[tool.pylint.main]
+py-version = "3.10"
+source-roots = ["src"]
+
+[tool.pylint.format]
+max-line-length = 88

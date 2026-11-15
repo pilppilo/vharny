@@ -1,0 +1,2126 @@
+{
+  "primary": [
+    {
+      "manifest": {
+        "__type__": "ContextManifest",
+        "allocation": {
+          "mandatory": 49,
+          "overhead": 468,
+          "recent": 9,
+          "reserved_output": 256,
+          "retrieved": 8,
+          "unused": 3267
+        },
+        "coefficients": {
+          "causal_proximity": 1.0,
+          "mmr": 8.0,
+          "overlap": 1.0,
+          "recency": 1.0,
+          "salience": 1.0,
+          "unresolved": 2.0
+        },
+        "included": [
+          [
+            "objective",
+            "mandatory"
+          ],
+          [
+            "environment",
+            "mandatory"
+          ],
+          [
+            "operator",
+            "mandatory"
+          ],
+          [
+            "evaluation",
+            "mandatory"
+          ],
+          [
+            "lineage_head",
+            "mandatory"
+          ],
+          [
+            "attempt",
+            "mandatory"
+          ],
+          [
+            "plan",
+            "mandatory"
+          ],
+          [
+            "budgets",
+            "mandatory"
+          ],
+          [
+            "receipt",
+            "mandatory"
+          ],
+          [
+            "observation",
+            "mandatory"
+          ],
+          [
+            "node:root-phase2-operator-steering-resume",
+            "retrieved"
+          ],
+          [
+            "attempt:attempt-63200fee68634c7d9c8658c3de0f9659",
+            "retrieved"
+          ],
+          [
+            "event:event-75aeaec7f80e4612bdd599cdbc5be0c5",
+            "recent"
+          ],
+          [
+            "event:event-f8b964599f864133ae15dc4e3970483d",
+            "recent"
+          ],
+          [
+            "event:event-de670793de094456af24f7477f035dc0",
+            "recent"
+          ]
+        ],
+        "item_tokens": [
+          [
+            "objective",
+            12
+          ],
+          [
+            "environment",
+            12
+          ],
+          [
+            "operator",
+            2
+          ],
+          [
+            "evaluation",
+            2
+          ],
+          [
+            "lineage_head",
+            3
+          ],
+          [
+            "attempt",
+            4
+          ],
+          [
+            "plan",
+            2
+          ],
+          [
+            "budgets",
+            8
+          ],
+          [
+            "receipt",
+            2
+          ],
+          [
+            "observation",
+            2
+          ],
+          [
+            "node:root-phase2-operator-steering-resume",
+            4
+          ],
+          [
+            "attempt:attempt-63200fee68634c7d9c8658c3de0f9659",
+            4
+          ],
+          [
+            "event:event-75aeaec7f80e4612bdd599cdbc5be0c5",
+            3
+          ],
+          [
+            "event:event-f8b964599f864133ae15dc4e3970483d",
+            3
+          ],
+          [
+            "event:event-de670793de094456af24f7477f035dc0",
+            3
+          ]
+        ],
+        "journal_cursor": 3,
+        "objective_version": 1,
+        "omitted": [],
+        "policy_version": 1,
+        "reserved_output_tokens": 256,
+        "serialization_overhead_tokens": 468,
+        "serialized_input_tokens": 534,
+        "system_prompt_tokens": 39,
+        "token_budget": 4096,
+        "token_counter": "whitespace-v1",
+        "tokens_used": 66
+      },
+      "sequence": 4
+    },
+    {
+      "manifest": {
+        "__type__": "ContextManifest",
+        "allocation": {
+          "mandatory": 67,
+          "overhead": 490,
+          "recent": 27,
+          "reserved_output": 256,
+          "retrieved": 26,
+          "unused": 3191
+        },
+        "coefficients": {
+          "causal_proximity": 1.0,
+          "mmr": 8.0,
+          "overlap": 1.0,
+          "recency": 1.0,
+          "salience": 1.0,
+          "unresolved": 2.0
+        },
+        "included": [
+          [
+            "objective",
+            "mandatory"
+          ],
+          [
+            "environment",
+            "mandatory"
+          ],
+          [
+            "operator",
+            "mandatory"
+          ],
+          [
+            "evaluation",
+            "mandatory"
+          ],
+          [
+            "lineage_head",
+            "mandatory"
+          ],
+          [
+            "attempt",
+            "mandatory"
+          ],
+          [
+            "plan",
+            "mandatory"
+          ],
+          [
+            "budgets",
+            "mandatory"
+          ],
+          [
+            "receipt",
+            "mandatory"
+          ],
+          [
+            "observation",
+            "mandatory"
+          ],
+          [
+            "fts:event-e940dd35959542a082b14adcf42a2420",
+            "retrieved"
+          ],
+          [
+            "node:root-phase2-operator-steering-resume",
+            "retrieved"
+          ],
+          [
+            "attempt:attempt-63200fee68634c7d9c8658c3de0f9659",
+            "retrieved"
+          ],
+          [
+            "event:event-75aeaec7f80e4612bdd599cdbc5be0c5",
+            "recent"
+          ],
+          [
+            "event:event-f8b964599f864133ae15dc4e3970483d",
+            "recent"
+          ],
+          [
+            "event:event-de670793de094456af24f7477f035dc0",
+            "recent"
+          ],
+          [
+            "event:event-4b639d190b2b441b9fae35c9babef7a4",
+            "recent"
+          ],
+          [
+            "event:event-377ef2d7a0ea4168a6e4a4b62ba5095d",
+            "recent"
+          ],
+          [
+            "event:event-3b5ea1d3df9f4ebd95c7a317da882bba",
+            "recent"
+          ],
+          [
+            "event:event-f93c75530e6f47cab72a16bc70744f10",
+            "recent"
+          ],
+          [
+            "event:event-245d9e0449af45eba15043d45faf3d06",
+            "recent"
+          ],
+          [
+            "event:event-8c617614e0e54d949fecb14e5ad248a8",
+            "recent"
+          ]
+        ],
+        "item_tokens": [
+          [
+            "objective",
+            12
+          ],
+          [
+            "environment",
+            12
+          ],
+          [
+            "operator",
+            12
+          ],
+          [
+            "evaluation",
+            2
+          ],
+          [
+            "lineage_head",
+            3
+          ],
+          [
+            "attempt",
+            4
+          ],
+          [
+            "plan",
+            10
+          ],
+          [
+            "budgets",
+            8
+          ],
+          [
+            "receipt",
+            2
+          ],
+          [
+            "observation",
+            2
+          ],
+          [
+            "fts:event-e940dd35959542a082b14adcf42a2420",
+            18
+          ],
+          [
+            "node:root-phase2-operator-steering-resume",
+            4
+          ],
+          [
+            "attempt:attempt-63200fee68634c7d9c8658c3de0f9659",
+            4
+          ],
+          [
+            "event:event-75aeaec7f80e4612bdd599cdbc5be0c5",
+            3
+          ],
+          [
+            "event:event-f8b964599f864133ae15dc4e3970483d",
+            3
+          ],
+          [
+            "event:event-de670793de094456af24f7477f035dc0",
+            3
+          ],
+          [
+            "event:event-4b639d190b2b441b9fae35c9babef7a4",
+            3
+          ],
+          [
+            "event:event-377ef2d7a0ea4168a6e4a4b62ba5095d",
+            3
+          ],
+          [
+            "event:event-3b5ea1d3df9f4ebd95c7a317da882bba",
+            3
+          ],
+          [
+            "event:event-f93c75530e6f47cab72a16bc70744f10",
+            3
+          ],
+          [
+            "event:event-245d9e0449af45eba15043d45faf3d06",
+            3
+          ],
+          [
+            "event:event-8c617614e0e54d949fecb14e5ad248a8",
+            3
+          ]
+        ],
+        "journal_cursor": 10,
+        "objective_version": 1,
+        "omitted": [
+          [
+            "event:event-e940dd35959542a082b14adcf42a2420",
+            "duplicate"
+          ]
+        ],
+        "policy_version": 1,
+        "reserved_output_tokens": 256,
+        "serialization_overhead_tokens": 490,
+        "serialized_input_tokens": 610,
+        "system_prompt_tokens": 39,
+        "token_budget": 4096,
+        "token_counter": "whitespace-v1",
+        "tokens_used": 120
+      },
+      "sequence": 11
+    },
+    {
+      "manifest": {
+        "__type__": "ContextManifest",
+        "allocation": {
+          "mandatory": 67,
+          "overhead": 568,
+          "recent": 39,
+          "reserved_output": 256,
+          "retrieved": 51,
+          "unused": 3076
+        },
+        "coefficients": {
+          "causal_proximity": 1.0,
+          "mmr": 8.0,
+          "overlap": 1.0,
+          "recency": 1.0,
+          "salience": 1.0,
+          "unresolved": 2.0
+        },
+        "included": [
+          [
+            "objective",
+            "mandatory"
+          ],
+          [
+            "environment",
+            "mandatory"
+          ],
+          [
+            "operator",
+            "mandatory"
+          ],
+          [
+            "evaluation",
+            "mandatory"
+          ],
+          [
+            "lineage_head",
+            "mandatory"
+          ],
+          [
+            "attempt",
+            "mandatory"
+          ],
+          [
+            "plan",
+            "mandatory"
+          ],
+          [
+            "budgets",
+            "mandatory"
+          ],
+          [
+            "receipt",
+            "mandatory"
+          ],
+          [
+            "observation",
+            "mandatory"
+          ],
+          [
+            "fts:event-e940dd35959542a082b14adcf42a2420",
+            "retrieved"
+          ],
+          [
+            "node:root-phase2-operator-steering-resume",
+            "retrieved"
+          ],
+          [
+            "fts:event-1ab65f6b655e44728ddb724988ad26f1",
+            "retrieved"
+          ],
+          [
+            "attempt:attempt-63200fee68634c7d9c8658c3de0f9659",
+            "retrieved"
+          ],
+          [
+            "event:event-75aeaec7f80e4612bdd599cdbc5be0c5",
+            "recent"
+          ],
+          [
+            "event:event-f8b964599f864133ae15dc4e3970483d",
+            "recent"
+          ],
+          [
+            "event:event-de670793de094456af24f7477f035dc0",
+            "recent"
+          ],
+          [
+            "event:event-4b639d190b2b441b9fae35c9babef7a4",
+            "recent"
+          ],
+          [
+            "event:event-377ef2d7a0ea4168a6e4a4b62ba5095d",
+            "recent"
+          ],
+          [
+            "event:event-3b5ea1d3df9f4ebd95c7a317da882bba",
+            "recent"
+          ],
+          [
+            "event:event-f93c75530e6f47cab72a16bc70744f10",
+            "recent"
+          ],
+          [
+            "event:event-245d9e0449af45eba15043d45faf3d06",
+            "recent"
+          ],
+          [
+            "event:event-8c617614e0e54d949fecb14e5ad248a8",
+            "recent"
+          ],
+          [
+            "event:event-afb740c939fd4cc2aa676f71b1e587e5",
+            "recent"
+          ],
+          [
+            "event:event-d62d7595f0314c188c03d78225ff0b07",
+            "recent"
+          ],
+          [
+            "event:event-180b6bce9343487580e349362d6fface",
+            "recent"
+          ],
+          [
+            "event:event-d1fc0d559d444f8fad9ae787567161bd",
+            "recent"
+          ]
+        ],
+        "item_tokens": [
+          [
+            "objective",
+            12
+          ],
+          [
+            "environment",
+            12
+          ],
+          [
+            "operator",
+            12
+          ],
+          [
+            "evaluation",
+            2
+          ],
+          [
+            "lineage_head",
+            3
+          ],
+          [
+            "attempt",
+            4
+          ],
+          [
+            "plan",
+            10
+          ],
+          [
+            "budgets",
+            8
+          ],
+          [
+            "receipt",
+            2
+          ],
+          [
+            "observation",
+            2
+          ],
+          [
+            "fts:event-e940dd35959542a082b14adcf42a2420",
+            18
+          ],
+          [
+            "node:root-phase2-operator-steering-resume",
+            4
+          ],
+          [
+            "fts:event-1ab65f6b655e44728ddb724988ad26f1",
+            25
+          ],
+          [
+            "attempt:attempt-63200fee68634c7d9c8658c3de0f9659",
+            4
+          ],
+          [
+            "event:event-75aeaec7f80e4612bdd599cdbc5be0c5",
+            3
+          ],
+          [
+            "event:event-f8b964599f864133ae15dc4e3970483d",
+            3
+          ],
+          [
+            "event:event-de670793de094456af24f7477f035dc0",
+            3
+          ],
+          [
+            "event:event-4b639d190b2b441b9fae35c9babef7a4",
+            3
+          ],
+          [
+            "event:event-377ef2d7a0ea4168a6e4a4b62ba5095d",
+            3
+          ],
+          [
+            "event:event-3b5ea1d3df9f4ebd95c7a317da882bba",
+            3
+          ],
+          [
+            "event:event-f93c75530e6f47cab72a16bc70744f10",
+            3
+          ],
+          [
+            "event:event-245d9e0449af45eba15043d45faf3d06",
+            3
+          ],
+          [
+            "event:event-8c617614e0e54d949fecb14e5ad248a8",
+            3
+          ],
+          [
+            "event:event-afb740c939fd4cc2aa676f71b1e587e5",
+            3
+          ],
+          [
+            "event:event-d62d7595f0314c188c03d78225ff0b07",
+            3
+          ],
+          [
+            "event:event-180b6bce9343487580e349362d6fface",
+            3
+          ],
+          [
+            "event:event-d1fc0d559d444f8fad9ae787567161bd",
+            3
+          ]
+        ],
+        "journal_cursor": 15,
+        "objective_version": 1,
+        "omitted": [
+          [
+            "event:event-1ab65f6b655e44728ddb724988ad26f1",
+            "duplicate"
+          ],
+          [
+            "event:event-e940dd35959542a082b14adcf42a2420",
+            "duplicate"
+          ]
+        ],
+        "policy_version": 1,
+        "reserved_output_tokens": 256,
+        "serialization_overhead_tokens": 568,
+        "serialized_input_tokens": 725,
+        "system_prompt_tokens": 39,
+        "token_budget": 4096,
+        "token_counter": "whitespace-v1",
+        "tokens_used": 157
+      },
+      "sequence": 16
+    },
+    {
+      "manifest": {
+        "__type__": "ContextManifest",
+        "allocation": {
+          "mandatory": 66,
+          "overhead": 620,
+          "recent": 87,
+          "reserved_output": 256,
+          "retrieved": 51,
+          "unused": 2977
+        },
+        "coefficients": {
+          "causal_proximity": 1.0,
+          "mmr": 8.0,
+          "overlap": 1.0,
+          "recency": 1.0,
+          "salience": 1.0,
+          "unresolved": 2.0
+        },
+        "included": [
+          [
+            "objective",
+            "mandatory"
+          ],
+          [
+            "environment",
+            "mandatory"
+          ],
+          [
+            "operator",
+            "mandatory"
+          ],
+          [
+            "evaluation",
+            "mandatory"
+          ],
+          [
+            "lineage_head",
+            "mandatory"
+          ],
+          [
+            "attempt",
+            "mandatory"
+          ],
+          [
+            "plan",
+            "mandatory"
+          ],
+          [
+            "budgets",
+            "mandatory"
+          ],
+          [
+            "receipt",
+            "mandatory"
+          ],
+          [
+            "observation",
+            "mandatory"
+          ],
+          [
+            "fts:event-e368190c30104880bb845004f7bb374e",
+            "retrieved"
+          ],
+          [
+            "node:root-phase2-operator-steering-resume",
+            "retrieved"
+          ],
+          [
+            "attempt:attempt-63200fee68634c7d9c8658c3de0f9659",
+            "retrieved"
+          ],
+          [
+            "fts:event-1ab65f6b655e44728ddb724988ad26f1",
+            "retrieved"
+          ],
+          [
+            "event:event-75aeaec7f80e4612bdd599cdbc5be0c5",
+            "recent"
+          ],
+          [
+            "event:event-f8b964599f864133ae15dc4e3970483d",
+            "recent"
+          ],
+          [
+            "event:event-de670793de094456af24f7477f035dc0",
+            "recent"
+          ],
+          [
+            "event:event-4b639d190b2b441b9fae35c9babef7a4",
+            "recent"
+          ],
+          [
+            "event:event-377ef2d7a0ea4168a6e4a4b62ba5095d",
+            "recent"
+          ],
+          [
+            "event:event-3b5ea1d3df9f4ebd95c7a317da882bba",
+            "recent"
+          ],
+          [
+            "event:event-f93c75530e6f47cab72a16bc70744f10",
+            "recent"
+          ],
+          [
+            "event:event-245d9e0449af45eba15043d45faf3d06",
+            "recent"
+          ],
+          [
+            "event:event-e940dd35959542a082b14adcf42a2420",
+            "recent"
+          ],
+          [
+            "event:event-8c617614e0e54d949fecb14e5ad248a8",
+            "recent"
+          ],
+          [
+            "event:event-afb740c939fd4cc2aa676f71b1e587e5",
+            "recent"
+          ],
+          [
+            "event:event-d62d7595f0314c188c03d78225ff0b07",
+            "recent"
+          ],
+          [
+            "event:event-180b6bce9343487580e349362d6fface",
+            "recent"
+          ],
+          [
+            "event:event-d1fc0d559d444f8fad9ae787567161bd",
+            "recent"
+          ],
+          [
+            "event:event-41b0976d226f441baeae03af64715dcc",
+            "recent"
+          ],
+          [
+            "event:event-40b628a517424f3e9151cdb431d3dce8",
+            "recent"
+          ],
+          [
+            "event:event-90478c80d54a4d6da3c593c56582fc26",
+            "recent"
+          ],
+          [
+            "event:event-b3886512a20c412d93b7bd6060b26a1b",
+            "recent"
+          ],
+          [
+            "event:event-a0f6a7051edc4f60b032550586de121e",
+            "recent"
+          ],
+          [
+            "event:event-79ba757834c44d64878aea3fe6a6f064",
+            "recent"
+          ],
+          [
+            "event:event-6670c51e64694ed8938c9da971aca7d8",
+            "recent"
+          ],
+          [
+            "event:event-db27d439bb7145c4adf3e38f4a011021",
+            "recent"
+          ],
+          [
+            "event:event-e9de81a98517498b8e087979b484ea77",
+            "recent"
+          ],
+          [
+            "event:event-1663062638084f7a99c2242a32e7c6c0",
+            "recent"
+          ],
+          [
+            "event:event-c106816d2ad542888eca1ae95d16c1c2",
+            "recent"
+          ],
+          [
+            "event:event-84f88713a1d14249afdecca30f39fafd",
+            "recent"
+          ],
+          [
+            "event:event-bd9805ff0f2f417b9e45bf364c2dcd8c",
+            "recent"
+          ],
+          [
+            "event:event-2cd7861e94274b4b8b28a3450696e772",
+            "recent"
+          ],
+          [
+            "event:event-fde22c2434224649be7d19291ff2bf42",
+            "recent"
+          ]
+        ],
+        "item_tokens": [
+          [
+            "objective",
+            12
+          ],
+          [
+            "environment",
+            12
+          ],
+          [
+            "operator",
+            11
+          ],
+          [
+            "evaluation",
+            2
+          ],
+          [
+            "lineage_head",
+            3
+          ],
+          [
+            "attempt",
+            4
+          ],
+          [
+            "plan",
+            10
+          ],
+          [
+            "budgets",
+            8
+          ],
+          [
+            "receipt",
+            2
+          ],
+          [
+            "observation",
+            2
+          ],
+          [
+            "fts:event-e368190c30104880bb845004f7bb374e",
+            18
+          ],
+          [
+            "node:root-phase2-operator-steering-resume",
+            4
+          ],
+          [
+            "attempt:attempt-63200fee68634c7d9c8658c3de0f9659",
+            4
+          ],
+          [
+            "fts:event-1ab65f6b655e44728ddb724988ad26f1",
+            25
+          ],
+          [
+            "event:event-75aeaec7f80e4612bdd599cdbc5be0c5",
+            3
+          ],
+          [
+            "event:event-f8b964599f864133ae15dc4e3970483d",
+            3
+          ],
+          [
+            "event:event-de670793de094456af24f7477f035dc0",
+            3
+          ],
+          [
+            "event:event-4b639d190b2b441b9fae35c9babef7a4",
+            3
+          ],
+          [
+            "event:event-377ef2d7a0ea4168a6e4a4b62ba5095d",
+            3
+          ],
+          [
+            "event:event-3b5ea1d3df9f4ebd95c7a317da882bba",
+            3
+          ],
+          [
+            "event:event-f93c75530e6f47cab72a16bc70744f10",
+            3
+          ],
+          [
+            "event:event-245d9e0449af45eba15043d45faf3d06",
+            3
+          ],
+          [
+            "event:event-e940dd35959542a082b14adcf42a2420",
+            3
+          ],
+          [
+            "event:event-8c617614e0e54d949fecb14e5ad248a8",
+            3
+          ],
+          [
+            "event:event-afb740c939fd4cc2aa676f71b1e587e5",
+            3
+          ],
+          [
+            "event:event-d62d7595f0314c188c03d78225ff0b07",
+            3
+          ],
+          [
+            "event:event-180b6bce9343487580e349362d6fface",
+            3
+          ],
+          [
+            "event:event-d1fc0d559d444f8fad9ae787567161bd",
+            3
+          ],
+          [
+            "event:event-41b0976d226f441baeae03af64715dcc",
+            3
+          ],
+          [
+            "event:event-40b628a517424f3e9151cdb431d3dce8",
+            3
+          ],
+          [
+            "event:event-90478c80d54a4d6da3c593c56582fc26",
+            3
+          ],
+          [
+            "event:event-b3886512a20c412d93b7bd6060b26a1b",
+            3
+          ],
+          [
+            "event:event-a0f6a7051edc4f60b032550586de121e",
+            3
+          ],
+          [
+            "event:event-79ba757834c44d64878aea3fe6a6f064",
+            3
+          ],
+          [
+            "event:event-6670c51e64694ed8938c9da971aca7d8",
+            3
+          ],
+          [
+            "event:event-db27d439bb7145c4adf3e38f4a011021",
+            3
+          ],
+          [
+            "event:event-e9de81a98517498b8e087979b484ea77",
+            3
+          ],
+          [
+            "event:event-1663062638084f7a99c2242a32e7c6c0",
+            3
+          ],
+          [
+            "event:event-c106816d2ad542888eca1ae95d16c1c2",
+            3
+          ],
+          [
+            "event:event-84f88713a1d14249afdecca30f39fafd",
+            3
+          ],
+          [
+            "event:event-bd9805ff0f2f417b9e45bf364c2dcd8c",
+            3
+          ],
+          [
+            "event:event-2cd7861e94274b4b8b28a3450696e772",
+            3
+          ],
+          [
+            "event:event-fde22c2434224649be7d19291ff2bf42",
+            3
+          ]
+        ],
+        "journal_cursor": 31,
+        "objective_version": 1,
+        "omitted": [
+          [
+            "fts:event-b3886512a20c412d93b7bd6060b26a1b",
+            "low_relevance"
+          ],
+          [
+            "fts:event-e940dd35959542a082b14adcf42a2420",
+            "low_relevance"
+          ],
+          [
+            "event:event-e368190c30104880bb845004f7bb374e",
+            "duplicate"
+          ],
+          [
+            "event:event-1ab65f6b655e44728ddb724988ad26f1",
+            "duplicate"
+          ]
+        ],
+        "policy_version": 1,
+        "reserved_output_tokens": 256,
+        "serialization_overhead_tokens": 620,
+        "serialized_input_tokens": 824,
+        "system_prompt_tokens": 39,
+        "token_budget": 4096,
+        "token_counter": "whitespace-v1",
+        "tokens_used": 204
+      },
+      "sequence": 32
+    },
+    {
+      "manifest": {
+        "__type__": "ContextManifest",
+        "allocation": {
+          "mandatory": 66,
+          "overhead": 638,
+          "recent": 102,
+          "reserved_output": 256,
+          "retrieved": 51,
+          "unused": 2944
+        },
+        "coefficients": {
+          "causal_proximity": 1.0,
+          "mmr": 8.0,
+          "overlap": 1.0,
+          "recency": 1.0,
+          "salience": 1.0,
+          "unresolved": 2.0
+        },
+        "included": [
+          [
+            "objective",
+            "mandatory"
+          ],
+          [
+            "environment",
+            "mandatory"
+          ],
+          [
+            "operator",
+            "mandatory"
+          ],
+          [
+            "evaluation",
+            "mandatory"
+          ],
+          [
+            "lineage_head",
+            "mandatory"
+          ],
+          [
+            "attempt",
+            "mandatory"
+          ],
+          [
+            "plan",
+            "mandatory"
+          ],
+          [
+            "budgets",
+            "mandatory"
+          ],
+          [
+            "receipt",
+            "mandatory"
+          ],
+          [
+            "observation",
+            "mandatory"
+          ],
+          [
+            "fts:event-e368190c30104880bb845004f7bb374e",
+            "retrieved"
+          ],
+          [
+            "node:root-phase2-operator-steering-resume",
+            "retrieved"
+          ],
+          [
+            "fts:event-d497d640b7fb4c2d81d1f5859b420849",
+            "retrieved"
+          ],
+          [
+            "attempt:attempt-63200fee68634c7d9c8658c3de0f9659",
+            "retrieved"
+          ],
+          [
+            "event:event-75aeaec7f80e4612bdd599cdbc5be0c5",
+            "recent"
+          ],
+          [
+            "event:event-f8b964599f864133ae15dc4e3970483d",
+            "recent"
+          ],
+          [
+            "event:event-de670793de094456af24f7477f035dc0",
+            "recent"
+          ],
+          [
+            "event:event-4b639d190b2b441b9fae35c9babef7a4",
+            "recent"
+          ],
+          [
+            "event:event-377ef2d7a0ea4168a6e4a4b62ba5095d",
+            "recent"
+          ],
+          [
+            "event:event-3b5ea1d3df9f4ebd95c7a317da882bba",
+            "recent"
+          ],
+          [
+            "event:event-f93c75530e6f47cab72a16bc70744f10",
+            "recent"
+          ],
+          [
+            "event:event-245d9e0449af45eba15043d45faf3d06",
+            "recent"
+          ],
+          [
+            "event:event-e940dd35959542a082b14adcf42a2420",
+            "recent"
+          ],
+          [
+            "event:event-8c617614e0e54d949fecb14e5ad248a8",
+            "recent"
+          ],
+          [
+            "event:event-afb740c939fd4cc2aa676f71b1e587e5",
+            "recent"
+          ],
+          [
+            "event:event-d62d7595f0314c188c03d78225ff0b07",
+            "recent"
+          ],
+          [
+            "event:event-180b6bce9343487580e349362d6fface",
+            "recent"
+          ],
+          [
+            "event:event-d1fc0d559d444f8fad9ae787567161bd",
+            "recent"
+          ],
+          [
+            "event:event-1ab65f6b655e44728ddb724988ad26f1",
+            "recent"
+          ],
+          [
+            "event:event-41b0976d226f441baeae03af64715dcc",
+            "recent"
+          ],
+          [
+            "event:event-40b628a517424f3e9151cdb431d3dce8",
+            "recent"
+          ],
+          [
+            "event:event-90478c80d54a4d6da3c593c56582fc26",
+            "recent"
+          ],
+          [
+            "event:event-b3886512a20c412d93b7bd6060b26a1b",
+            "recent"
+          ],
+          [
+            "event:event-a0f6a7051edc4f60b032550586de121e",
+            "recent"
+          ],
+          [
+            "event:event-79ba757834c44d64878aea3fe6a6f064",
+            "recent"
+          ],
+          [
+            "event:event-6670c51e64694ed8938c9da971aca7d8",
+            "recent"
+          ],
+          [
+            "event:event-db27d439bb7145c4adf3e38f4a011021",
+            "recent"
+          ],
+          [
+            "event:event-e9de81a98517498b8e087979b484ea77",
+            "recent"
+          ],
+          [
+            "event:event-1663062638084f7a99c2242a32e7c6c0",
+            "recent"
+          ],
+          [
+            "event:event-c106816d2ad542888eca1ae95d16c1c2",
+            "recent"
+          ],
+          [
+            "event:event-84f88713a1d14249afdecca30f39fafd",
+            "recent"
+          ],
+          [
+            "event:event-bd9805ff0f2f417b9e45bf364c2dcd8c",
+            "recent"
+          ],
+          [
+            "event:event-2cd7861e94274b4b8b28a3450696e772",
+            "recent"
+          ],
+          [
+            "event:event-fde22c2434224649be7d19291ff2bf42",
+            "recent"
+          ],
+          [
+            "event:event-40cb8ec44f4e46f48e5d65af34db464a",
+            "recent"
+          ],
+          [
+            "event:event-7c6e36b2ee8344beb761273889545f7a",
+            "recent"
+          ],
+          [
+            "event:event-203570e9cedb4c8ca7236504338dd784",
+            "recent"
+          ],
+          [
+            "event:event-f5084598b1504820b6e3b45382d1ca0d",
+            "recent"
+          ]
+        ],
+        "item_tokens": [
+          [
+            "objective",
+            12
+          ],
+          [
+            "environment",
+            12
+          ],
+          [
+            "operator",
+            11
+          ],
+          [
+            "evaluation",
+            2
+          ],
+          [
+            "lineage_head",
+            3
+          ],
+          [
+            "attempt",
+            4
+          ],
+          [
+            "plan",
+            10
+          ],
+          [
+            "budgets",
+            8
+          ],
+          [
+            "receipt",
+            2
+          ],
+          [
+            "observation",
+            2
+          ],
+          [
+            "fts:event-e368190c30104880bb845004f7bb374e",
+            18
+          ],
+          [
+            "node:root-phase2-operator-steering-resume",
+            4
+          ],
+          [
+            "fts:event-d497d640b7fb4c2d81d1f5859b420849",
+            25
+          ],
+          [
+            "attempt:attempt-63200fee68634c7d9c8658c3de0f9659",
+            4
+          ],
+          [
+            "event:event-75aeaec7f80e4612bdd599cdbc5be0c5",
+            3
+          ],
+          [
+            "event:event-f8b964599f864133ae15dc4e3970483d",
+            3
+          ],
+          [
+            "event:event-de670793de094456af24f7477f035dc0",
+            3
+          ],
+          [
+            "event:event-4b639d190b2b441b9fae35c9babef7a4",
+            3
+          ],
+          [
+            "event:event-377ef2d7a0ea4168a6e4a4b62ba5095d",
+            3
+          ],
+          [
+            "event:event-3b5ea1d3df9f4ebd95c7a317da882bba",
+            3
+          ],
+          [
+            "event:event-f93c75530e6f47cab72a16bc70744f10",
+            3
+          ],
+          [
+            "event:event-245d9e0449af45eba15043d45faf3d06",
+            3
+          ],
+          [
+            "event:event-e940dd35959542a082b14adcf42a2420",
+            3
+          ],
+          [
+            "event:event-8c617614e0e54d949fecb14e5ad248a8",
+            3
+          ],
+          [
+            "event:event-afb740c939fd4cc2aa676f71b1e587e5",
+            3
+          ],
+          [
+            "event:event-d62d7595f0314c188c03d78225ff0b07",
+            3
+          ],
+          [
+            "event:event-180b6bce9343487580e349362d6fface",
+            3
+          ],
+          [
+            "event:event-d1fc0d559d444f8fad9ae787567161bd",
+            3
+          ],
+          [
+            "event:event-1ab65f6b655e44728ddb724988ad26f1",
+            3
+          ],
+          [
+            "event:event-41b0976d226f441baeae03af64715dcc",
+            3
+          ],
+          [
+            "event:event-40b628a517424f3e9151cdb431d3dce8",
+            3
+          ],
+          [
+            "event:event-90478c80d54a4d6da3c593c56582fc26",
+            3
+          ],
+          [
+            "event:event-b3886512a20c412d93b7bd6060b26a1b",
+            3
+          ],
+          [
+            "event:event-a0f6a7051edc4f60b032550586de121e",
+            3
+          ],
+          [
+            "event:event-79ba757834c44d64878aea3fe6a6f064",
+            3
+          ],
+          [
+            "event:event-6670c51e64694ed8938c9da971aca7d8",
+            3
+          ],
+          [
+            "event:event-db27d439bb7145c4adf3e38f4a011021",
+            3
+          ],
+          [
+            "event:event-e9de81a98517498b8e087979b484ea77",
+            3
+          ],
+          [
+            "event:event-1663062638084f7a99c2242a32e7c6c0",
+            3
+          ],
+          [
+            "event:event-c106816d2ad542888eca1ae95d16c1c2",
+            3
+          ],
+          [
+            "event:event-84f88713a1d14249afdecca30f39fafd",
+            3
+          ],
+          [
+            "event:event-bd9805ff0f2f417b9e45bf364c2dcd8c",
+            3
+          ],
+          [
+            "event:event-2cd7861e94274b4b8b28a3450696e772",
+            3
+          ],
+          [
+            "event:event-fde22c2434224649be7d19291ff2bf42",
+            3
+          ],
+          [
+            "event:event-40cb8ec44f4e46f48e5d65af34db464a",
+            3
+          ],
+          [
+            "event:event-7c6e36b2ee8344beb761273889545f7a",
+            3
+          ],
+          [
+            "event:event-203570e9cedb4c8ca7236504338dd784",
+            3
+          ],
+          [
+            "event:event-f5084598b1504820b6e3b45382d1ca0d",
+            3
+          ]
+        ],
+        "journal_cursor": 36,
+        "objective_version": 1,
+        "omitted": [
+          [
+            "fts:event-b3886512a20c412d93b7bd6060b26a1b",
+            "low_relevance"
+          ],
+          [
+            "fts:event-e940dd35959542a082b14adcf42a2420",
+            "low_relevance"
+          ],
+          [
+            "fts:event-1ab65f6b655e44728ddb724988ad26f1",
+            "low_relevance"
+          ],
+          [
+            "event:event-d497d640b7fb4c2d81d1f5859b420849",
+            "duplicate"
+          ],
+          [
+            "event:event-e368190c30104880bb845004f7bb374e",
+            "duplicate"
+          ]
+        ],
+        "policy_version": 1,
+        "reserved_output_tokens": 256,
+        "serialization_overhead_tokens": 638,
+        "serialized_input_tokens": 857,
+        "system_prompt_tokens": 39,
+        "token_budget": 4096,
+        "token_counter": "whitespace-v1",
+        "tokens_used": 219
+      },
+      "sequence": 37
+    },
+    {
+      "manifest": {
+        "__type__": "ContextManifest",
+        "allocation": {
+          "mandatory": 66,
+          "overhead": 650,
+          "recent": 117,
+          "reserved_output": 256,
+          "retrieved": 51,
+          "unused": 2917
+        },
+        "coefficients": {
+          "causal_proximity": 1.0,
+          "mmr": 8.0,
+          "overlap": 1.0,
+          "recency": 1.0,
+          "salience": 1.0,
+          "unresolved": 2.0
+        },
+        "included": [
+          [
+            "objective",
+            "mandatory"
+          ],
+          [
+            "environment",
+            "mandatory"
+          ],
+          [
+            "operator",
+            "mandatory"
+          ],
+          [
+            "evaluation",
+            "mandatory"
+          ],
+          [
+            "lineage_head",
+            "mandatory"
+          ],
+          [
+            "attempt",
+            "mandatory"
+          ],
+          [
+            "plan",
+            "mandatory"
+          ],
+          [
+            "budgets",
+            "mandatory"
+          ],
+          [
+            "receipt",
+            "mandatory"
+          ],
+          [
+            "observation",
+            "mandatory"
+          ],
+          [
+            "fts:event-e368190c30104880bb845004f7bb374e",
+            "retrieved"
+          ],
+          [
+            "node:root-phase2-operator-steering-resume",
+            "retrieved"
+          ],
+          [
+            "fts:event-847905c97643426fbc3cd41c22375585",
+            "retrieved"
+          ],
+          [
+            "attempt:attempt-63200fee68634c7d9c8658c3de0f9659",
+            "retrieved"
+          ],
+          [
+            "event:event-75aeaec7f80e4612bdd599cdbc5be0c5",
+            "recent"
+          ],
+          [
+            "event:event-f8b964599f864133ae15dc4e3970483d",
+            "recent"
+          ],
+          [
+            "event:event-de670793de094456af24f7477f035dc0",
+            "recent"
+          ],
+          [
+            "event:event-4b639d190b2b441b9fae35c9babef7a4",
+            "recent"
+          ],
+          [
+            "event:event-377ef2d7a0ea4168a6e4a4b62ba5095d",
+            "recent"
+          ],
+          [
+            "event:event-3b5ea1d3df9f4ebd95c7a317da882bba",
+            "recent"
+          ],
+          [
+            "event:event-f93c75530e6f47cab72a16bc70744f10",
+            "recent"
+          ],
+          [
+            "event:event-245d9e0449af45eba15043d45faf3d06",
+            "recent"
+          ],
+          [
+            "event:event-e940dd35959542a082b14adcf42a2420",
+            "recent"
+          ],
+          [
+            "event:event-8c617614e0e54d949fecb14e5ad248a8",
+            "recent"
+          ],
+          [
+            "event:event-afb740c939fd4cc2aa676f71b1e587e5",
+            "recent"
+          ],
+          [
+            "event:event-d62d7595f0314c188c03d78225ff0b07",
+            "recent"
+          ],
+          [
+            "event:event-180b6bce9343487580e349362d6fface",
+            "recent"
+          ],
+          [
+            "event:event-d1fc0d559d444f8fad9ae787567161bd",
+            "recent"
+          ],
+          [
+            "event:event-1ab65f6b655e44728ddb724988ad26f1",
+            "recent"
+          ],
+          [
+            "event:event-41b0976d226f441baeae03af64715dcc",
+            "recent"
+          ],
+          [
+            "event:event-40b628a517424f3e9151cdb431d3dce8",
+            "recent"
+          ],
+          [
+            "event:event-90478c80d54a4d6da3c593c56582fc26",
+            "recent"
+          ],
+          [
+            "event:event-b3886512a20c412d93b7bd6060b26a1b",
+            "recent"
+          ],
+          [
+            "event:event-a0f6a7051edc4f60b032550586de121e",
+            "recent"
+          ],
+          [
+            "event:event-79ba757834c44d64878aea3fe6a6f064",
+            "recent"
+          ],
+          [
+            "event:event-6670c51e64694ed8938c9da971aca7d8",
+            "recent"
+          ],
+          [
+            "event:event-db27d439bb7145c4adf3e38f4a011021",
+            "recent"
+          ],
+          [
+            "event:event-e9de81a98517498b8e087979b484ea77",
+            "recent"
+          ],
+          [
+            "event:event-1663062638084f7a99c2242a32e7c6c0",
+            "recent"
+          ],
+          [
+            "event:event-c106816d2ad542888eca1ae95d16c1c2",
+            "recent"
+          ],
+          [
+            "event:event-84f88713a1d14249afdecca30f39fafd",
+            "recent"
+          ],
+          [
+            "event:event-bd9805ff0f2f417b9e45bf364c2dcd8c",
+            "recent"
+          ],
+          [
+            "event:event-2cd7861e94274b4b8b28a3450696e772",
+            "recent"
+          ],
+          [
+            "event:event-fde22c2434224649be7d19291ff2bf42",
+            "recent"
+          ],
+          [
+            "event:event-40cb8ec44f4e46f48e5d65af34db464a",
+            "recent"
+          ],
+          [
+            "event:event-7c6e36b2ee8344beb761273889545f7a",
+            "recent"
+          ],
+          [
+            "event:event-203570e9cedb4c8ca7236504338dd784",
+            "recent"
+          ],
+          [
+            "event:event-f5084598b1504820b6e3b45382d1ca0d",
+            "recent"
+          ],
+          [
+            "event:event-d497d640b7fb4c2d81d1f5859b420849",
+            "recent"
+          ],
+          [
+            "event:event-0818cc26cca1458ab3ce02276fdb9310",
+            "recent"
+          ],
+          [
+            "event:event-9a19c18c05cf431fa039450f2090a311",
+            "recent"
+          ],
+          [
+            "event:event-98385311823b4a61ab9c03ca26585ef2",
+            "recent"
+          ],
+          [
+            "event:event-0ee47be4d6e243d8a2ead39053a5bb14",
+            "recent"
+          ]
+        ],
+        "item_tokens": [
+          [
+            "objective",
+            12
+          ],
+          [
+            "environment",
+            12
+          ],
+          [
+            "operator",
+            11
+          ],
+          [
+            "evaluation",
+            2
+          ],
+          [
+            "lineage_head",
+            3
+          ],
+          [
+            "attempt",
+            4
+          ],
+          [
+            "plan",
+            10
+          ],
+          [
+            "budgets",
+            8
+          ],
+          [
+            "receipt",
+            2
+          ],
+          [
+            "observation",
+            2
+          ],
+          [
+            "fts:event-e368190c30104880bb845004f7bb374e",
+            18
+          ],
+          [
+            "node:root-phase2-operator-steering-resume",
+            4
+          ],
+          [
+            "fts:event-847905c97643426fbc3cd41c22375585",
+            25
+          ],
+          [
+            "attempt:attempt-63200fee68634c7d9c8658c3de0f9659",
+            4
+          ],
+          [
+            "event:event-75aeaec7f80e4612bdd599cdbc5be0c5",
+            3
+          ],
+          [
+            "event:event-f8b964599f864133ae15dc4e3970483d",
+            3
+          ],
+          [
+            "event:event-de670793de094456af24f7477f035dc0",
+            3
+          ],
+          [
+            "event:event-4b639d190b2b441b9fae35c9babef7a4",
+            3
+          ],
+          [
+            "event:event-377ef2d7a0ea4168a6e4a4b62ba5095d",
+            3
+          ],
+          [
+            "event:event-3b5ea1d3df9f4ebd95c7a317da882bba",
+            3
+          ],
+          [
+            "event:event-f93c75530e6f47cab72a16bc70744f10",
+            3
+          ],
+          [
+            "event:event-245d9e0449af45eba15043d45faf3d06",
+            3
+          ],
+          [
+            "event:event-e940dd35959542a082b14adcf42a2420",
+            3
+          ],
+          [
+            "event:event-8c617614e0e54d949fecb14e5ad248a8",
+            3
+          ],
+          [
+            "event:event-afb740c939fd4cc2aa676f71b1e587e5",
+            3
+          ],
+          [
+            "event:event-d62d7595f0314c188c03d78225ff0b07",
+            3
+          ],
+          [
+            "event:event-180b6bce9343487580e349362d6fface",
+            3
+          ],
+          [
+            "event:event-d1fc0d559d444f8fad9ae787567161bd",
+            3
+          ],
+          [
+            "event:event-1ab65f6b655e44728ddb724988ad26f1",
+            3
+          ],
+          [
+            "event:event-41b0976d226f441baeae03af64715dcc",
+            3
+          ],
+          [
+            "event:event-40b628a517424f3e9151cdb431d3dce8",
+            3
+          ],
+          [
+            "event:event-90478c80d54a4d6da3c593c56582fc26",
+            3
+          ],
+          [
+            "event:event-b3886512a20c412d93b7bd6060b26a1b",
+            3
+          ],
+          [
+            "event:event-a0f6a7051edc4f60b032550586de121e",
+            3
+          ],
+          [
+            "event:event-79ba757834c44d64878aea3fe6a6f064",
+            3
+          ],
+          [
+            "event:event-6670c51e64694ed8938c9da971aca7d8",
+            3
+          ],
+          [
+            "event:event-db27d439bb7145c4adf3e38f4a011021",
+            3
+          ],
+          [
+            "event:event-e9de81a98517498b8e087979b484ea77",
+            3
+          ],
+          [
+            "event:event-1663062638084f7a99c2242a32e7c6c0",
+            3
+          ],
+          [
+            "event:event-c106816d2ad542888eca1ae95d16c1c2",
+            3
+          ],
+          [
+            "event:event-84f88713a1d14249afdecca30f39fafd",
+            3
+          ],
+          [
+            "event:event-bd9805ff0f2f417b9e45bf364c2dcd8c",
+            3
+          ],
+          [
+            "event:event-2cd7861e94274b4b8b28a3450696e772",
+            3
+          ],
+          [
+            "event:event-fde22c2434224649be7d19291ff2bf42",
+            3
+          ],
+          [
+            "event:event-40cb8ec44f4e46f48e5d65af34db464a",
+            3
+          ],
+          [
+            "event:event-7c6e36b2ee8344beb761273889545f7a",
+            3
+          ],
+          [
+            "event:event-203570e9cedb4c8ca7236504338dd784",
+            3
+          ],
+          [
+            "event:event-f5084598b1504820b6e3b45382d1ca0d",
+            3
+          ],
+          [
+            "event:event-d497d640b7fb4c2d81d1f5859b420849",
+            3
+          ],
+          [
+            "event:event-0818cc26cca1458ab3ce02276fdb9310",
+            3
+          ],
+          [
+            "event:event-9a19c18c05cf431fa039450f2090a311",
+            3
+          ],
+          [
+            "event:event-98385311823b4a61ab9c03ca26585ef2",
+            3
+          ],
+          [
+            "event:event-0ee47be4d6e243d8a2ead39053a5bb14",
+            3
+          ]
+        ],
+        "journal_cursor": 41,
+        "objective_version": 1,
+        "omitted": [
+          [
+            "fts:event-b3886512a20c412d93b7bd6060b26a1b",
+            "low_relevance"
+          ],
+          [
+            "fts:event-e940dd35959542a082b14adcf42a2420",
+            "low_relevance"
+          ],
+          [
+            "fts:event-1ab65f6b655e44728ddb724988ad26f1",
+            "low_relevance"
+          ],
+          [
+            "fts:event-d497d640b7fb4c2d81d1f5859b420849",
+            "low_relevance"
+          ],
+          [
+            "event:event-847905c97643426fbc3cd41c22375585",
+            "duplicate"
+          ],
+          [
+            "event:event-e368190c30104880bb845004f7bb374e",
+            "duplicate"
+          ]
+        ],
+        "policy_version": 1,
+        "reserved_output_tokens": 256,
+        "serialization_overhead_tokens": 650,
+        "serialized_input_tokens": 884,
+        "system_prompt_tokens": 39,
+        "token_budget": 4096,
+        "token_counter": "whitespace-v1",
+        "tokens_used": 234
+      },
+      "sequence": 42
+    }
+  ],
+  "stopped": [
+    {
+      "manifest": {
+        "__type__": "ContextManifest",
+        "allocation": {
+          "mandatory": 49,
+          "overhead": 468,
+          "recent": 9,
+          "reserved_output": 256,
+          "retrieved": 8,
+          "unused": 3267
+        },
+        "coefficients": {
+          "causal_proximity": 1.0,
+          "mmr": 8.0,
+          "overlap": 1.0,
+          "recency": 1.0,
+          "salience": 1.0,
+          "unresolved": 2.0
+        },
+        "included": [
+          [
+            "objective",
+            "mandatory"
+          ],
+          [
+            "environment",
+            "mandatory"
+          ],
+          [
+            "operator",
+            "mandatory"
+          ],
+          [
+            "evaluation",
+            "mandatory"
+          ],
+          [
+            "lineage_head",
+            "mandatory"
+          ],
+          [
+            "attempt",
+            "mandatory"
+          ],
+          [
+            "plan",
+            "mandatory"
+          ],
+          [
+            "budgets",
+            "mandatory"
+          ],
+          [
+            "receipt",
+            "mandatory"
+          ],
+          [
+            "observation",
+            "mandatory"
+          ],
+          [
+            "node:root-phase2-stopped-question",
+            "retrieved"
+          ],
+          [
+            "attempt:attempt-c57e6bd53e474b02bdd5f73493d3cd9e",
+            "retrieved"
+          ],
+          [
+            "event:event-feda247316ae489c96ba253beb7bd926",
+            "recent"
+          ],
+          [
+            "event:event-c65116037e3b453cb911017faf74a175",
+            "recent"
+          ],
+          [
+            "event:event-5f33f7e2bd8846709772cff79786e5cd",
+            "recent"
+          ]
+        ],
+        "item_tokens": [
+          [
+            "objective",
+            12
+          ],
+          [
+            "environment",
+            12
+          ],
+          [
+            "operator",
+            2
+          ],
+          [
+            "evaluation",
+            2
+          ],
+          [
+            "lineage_head",
+            3
+          ],
+          [
+            "attempt",
+            4
+          ],
+          [
+            "plan",
+            2
+          ],
+          [
+            "budgets",
+            8
+          ],
+          [
+            "receipt",
+            2
+          ],
+          [
+            "observation",
+            2
+          ],
+          [
+            "node:root-phase2-stopped-question",
+            4
+          ],
+          [
+            "attempt:attempt-c57e6bd53e474b02bdd5f73493d3cd9e",
+            4
+          ],
+          [
+            "event:event-feda247316ae489c96ba253beb7bd926",
+            3
+          ],
+          [
+            "event:event-c65116037e3b453cb911017faf74a175",
+            3
+          ],
+          [
+            "event:event-5f33f7e2bd8846709772cff79786e5cd",
+            3
+          ]
+        ],
+        "journal_cursor": 3,
+        "objective_version": 1,
+        "omitted": [],
+        "policy_version": 1,
+        "reserved_output_tokens": 256,
+        "serialization_overhead_tokens": 468,
+        "serialized_input_tokens": 534,
+        "system_prompt_tokens": 39,
+        "token_budget": 4096,
+        "token_counter": "whitespace-v1",
+        "tokens_used": 66
+      },
+      "sequence": 4
+    }
+  ]
+}
