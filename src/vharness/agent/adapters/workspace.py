@@ -18,6 +18,7 @@ from ..models import (
     RuntimeCapabilities,
     StateRef,
 )
+from .process_jobs import MAX_WRITE_BYTES
 
 _STRING = {"type": "string"}
 _NONNEGATIVE_INTEGER = {"type": "integer", "minimum": 0}
@@ -78,8 +79,12 @@ class WorkspaceEnvironment:
             ),
             _action(
                 "job_write",
-                "Send input or EOF to a command",
-                {"job_id": _STRING, "input": _STRING, "eof": {"type": "boolean"}},
+                f"Send up to {MAX_WRITE_BYTES} bytes of input, or EOF, to a command",
+                {
+                    "job_id": _STRING,
+                    "input": {"type": "string", "maxLength": MAX_WRITE_BYTES},
+                    "eof": {"type": "boolean"},
+                },
                 ("job_id", "input"),
             ),
             _action(

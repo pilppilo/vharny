@@ -50,6 +50,12 @@ class _Job:
     timed_out: bool = False
 
 
+#: Largest input one ``job_write`` may send, in bytes (declared in the action schema).
+MAX_WRITE_BYTES = 65_536
+#: How long one ``job_write`` may wait for the process to accept its input.
+WRITE_TIMEOUT_SECONDS = 2.0
+
+
 class ProcessJobs:
     """Own only live handles; persisted PIDs are diagnostics, never recovery handles."""
 
@@ -122,7 +128,7 @@ class ProcessJobs:
                     bufsize=0,
                     env=child_env,
                 )
-                for stream in (process.stdout, process.stderr):
+                for stream in (process.stdin, process.stdout, process.stderr):
                     if stream is not None:
                         os.set_blocking(stream.fileno(), False)
             job = _Job(
@@ -191,23 +197,39 @@ class ProcessJobs:
         }
 
     def write(self, job_id: str, data: bytes, *, eof: bool) -> dict[str, object]:
-        """Write input to an owned pipe/terminal and optionally send EOF."""
+        """Write input to an owned pipe/terminal and optionally send EOF.
+
+        The write is bounded by ``WRITE_TIMEOUT_SECONDS``: when the process does
+        not take all of the input in time, ``TimeoutError`` reports how many
+        bytes it accepted, and EOF is not sent.
+        """
         job = self._owned_job(job_id)
         if job.process.poll() is not None:
             raise ContractError("cannot write to an exited job")
+        if len(data) > MAX_WRITE_BYTES:
+            raise ContractError(
+                f"job_write input is {len(data)} bytes; the limit is {MAX_WRITE_BYTES}"
+            )
         if job.pty_mode:
-            if eof:
-                data += b"\x04"
-            _write_fd(job.master_fd, data)
+            if job.master_fd is None:
+                raise ContractError("job has no interactive terminal")
+            fd = job.master_fd
+            payload = data + b"\x04" if eof else data
         else:
             stream = job.process.stdin
             if stream is None or stream.closed:
                 raise ContractError("job input is already closed")
-            if data:
-                stream.write(data)
-                stream.flush()
-            if eof:
-                stream.close()
+            fd = stream.fileno()
+            payload = data
+        written = _write_bounded(fd, payload, WRITE_TIMEOUT_SECONDS)
+        if written < len(payload):
+            raise TimeoutError(
+                f"job_write timed out after {WRITE_TIMEOUT_SECONDS:g}s: the process "
+                f"accepted {min(written, len(data))} of {len(data)} bytes and is not "
+                "reading its input; EOF was not sent"
+            )
+        if eof and not job.pty_mode and job.process.stdin is not None:
+            job.process.stdin.close()
         return {"job_id": job_id, "bytes_written": len(data), "eof": eof}
 
     def stop(self, job_id: str) -> dict[str, object]:
@@ -331,13 +353,23 @@ def _read_spool(stream: BinaryIO, offset: int, limit: int) -> bytes:
     return stream.read(limit)
 
 
-def _write_fd(fd: int | None, data: bytes) -> None:
-    if fd is None:
-        raise ContractError("job has no interactive terminal")
+def _write_bounded(fd: int, data: bytes, timeout_seconds: float) -> int:
+    """Write to a non-blocking fd until done or the timeout; return bytes written."""
+    deadline = time.monotonic() + timeout_seconds
     view = memoryview(data)
-    while view:
-        written = os.write(fd, view)
-        view = view[written:]
+    written = 0
+    with selectors.DefaultSelector() as selector:
+        selector.register(fd, selectors.EVENT_WRITE)
+        while written < len(data):
+            try:
+                written += os.write(fd, view[written:])
+                continue
+            except BlockingIOError:
+                pass
+            remaining = deadline - time.monotonic()
+            if remaining <= 0 or not selector.select(remaining):
+                break
+    return written
 
 
 def terminate_process_group(process: subprocess.Popen[bytes], grace: float) -> str:
