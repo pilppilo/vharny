@@ -234,7 +234,8 @@ def test_stdout_fingerprints_extract_stdout_stream_artifacts() -> None:
 def test_stdout_fingerprints_read_inline_result_envelopes() -> None:
     envelope = json.dumps({"job_id": "job-1", "stdout": "probe\n"}).encode("utf-8")
     strict, _ = stdout_fingerprints(envelope, _Store({}))
-    assert strict == f"stdout-strict:{hashlib.sha256(b'probe\n').hexdigest()}"
+    expected = hashlib.sha256(b"probe\n").hexdigest()
+    assert strict == f"stdout-strict:{expected}"
 
 
 def test_evidence_repetition_fires_through_journaled_fingerprints() -> None:
