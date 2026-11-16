@@ -7,8 +7,13 @@ Resolution order (first wins):
     4. TOML config [default] section
 
 Config files (first found wins):
-    $VHARNESS_CONFIG, ~/.config/vharness/config.toml,
+    --config, $VHARNESS_CONFIG, ~/.config/vharness/config.toml,
     ./vharness.toml (project-local), ./vharness.config.toml
+
+A project-local file found by searching the current directory may set `model`
+only. Its `base_url` and `api_key` are ignored, because a repository you scan
+must not choose where your API key and code are sent. To use such a file in
+full, name it with --config or $VHARNESS_CONFIG.
 
 Config file shape:
 
@@ -60,6 +65,8 @@ PROJECT_CONFIGS = ("vharness.toml", "vharness.config.toml")
 
 # Keys accepted in each profile section.
 _SECTION_KEYS = ("base_url", "api_key", "model")
+# Keys that decide where requests and the API key go.
+_ENDPOINT_KEYS = ("base_url", "api_key")
 
 
 @dataclass
@@ -73,6 +80,16 @@ class EndpointConfig:
         return f"{self.base_url} model={self.model} key={key}"
 
 
+@dataclass(frozen=True)
+class ConfigFile:
+    """A located config file and how it was found."""
+
+    path: Path
+    #: True when found by searching the current directory rather than named
+    #: by the user (flag, $VHARNESS_CONFIG) or at the user-level location.
+    discovered_in_project: bool
+
+
 def _load_toml(path: str | Path) -> dict:
     if tomllib is None:
         return {}
@@ -81,27 +98,61 @@ def _load_toml(path: str | Path) -> dict:
             return tomllib.load(fh)
     except FileNotFoundError:
         return {}
-    except OSError:
-        return {}
-    except Exception as e:  # malformed TOML — visible, not fatal
+    except OSError as e:  # e.g. permission denied — visible, not fatal
         log.warning("ignoring unreadable config %s: %s", path, e)
         return {}
+    except ValueError as e:  # malformed TOML or bad encoding — visible, not fatal
+        log.warning("ignoring malformed config %s: %s", path, e)
+        return {}
+
+
+def locate_config(explicit: str | None = None) -> ConfigFile | None:
+    """First existing config: explicit, $VHARNESS_CONFIG, user, project-local."""
+    named: list[Path] = []
+    if explicit:
+        named.append(Path(explicit))
+    env_path = os.environ.get("VHARNESS_CONFIG")
+    if env_path and Path(env_path) not in named:
+        named.append(Path(env_path))
+    named.append(Path(USER_CONFIG))
+    for candidate in named:
+        if candidate.is_file():
+            return ConfigFile(path=candidate, discovered_in_project=False)
+    for name in PROJECT_CONFIGS:
+        candidate = Path(name)
+        if candidate.is_file():
+            return ConfigFile(path=candidate, discovered_in_project=True)
+    return None
 
 
 def find_config_file(explicit: str | None = None) -> Path | None:
-    """First existing config: $VHARNESS_CONFIG / explicit, user, project-local."""
-    candidates: list[Path] = []
-    if explicit:
-        candidates.append(Path(explicit))
-    env_path = os.environ.get("VHARNESS_CONFIG")
-    if env_path and Path(env_path) not in candidates:
-        candidates.append(Path(env_path))
-    candidates.append(Path(USER_CONFIG))
-    candidates.extend(Path(p) for p in PROJECT_CONFIGS)
-    for c in candidates:
-        if c.is_file():
-            return c
-    return None
+    """Path of the config file `locate_config` would use, if any."""
+    found = locate_config(explicit)
+    return found.path if found else None
+
+
+def _restrict_project_section(cfg: ConfigFile, section: dict) -> dict:
+    """Drop endpoint keys from a config discovered in the current directory."""
+    if not cfg.discovered_in_project:
+        return section
+    blocked = [k for k in _ENDPOINT_KEYS if k in section]
+    if blocked:
+        log.warning(
+            "ignoring %s from project-local config %s: a scanned repository may not "
+            "choose the endpoint or key; name the file with --config or "
+            "VHARNESS_CONFIG to trust it",
+            ", ".join(blocked),
+            cfg.path,
+        )
+    return {k: v for k, v in section.items() if k not in _ENDPOINT_KEYS}
+
+
+def _is_project_local(path: Path) -> bool:
+    """True for a file under the current directory other than the user config."""
+    resolved = path.resolve()
+    if resolved == Path(USER_CONFIG).resolve():
+        return False
+    return resolved.is_relative_to(Path.cwd().resolve())
 
 
 def load_profile(data: dict, profile: str | None) -> dict:
@@ -140,19 +191,29 @@ def resolve_endpoint(
     # 3/4) config file profile (only fills gaps left by flags/env).
     config_src = "flags/env"
     if not (base_url and api_key is not None and model):
-        cfg_path = find_config_file(config_file)
-        if cfg_path is not None:
+        found = locate_config(config_file)
+        if found is not None:
+            cfg_path = found.path
             data = _load_toml(cfg_path)
-            section = load_profile(data, profile)
-            if not base_url:
-                base_url = section.get("base_url")
+            section = _restrict_project_section(found, load_profile(data, profile))
+            from_file: list[str] = []
+            if not base_url and "base_url" in section:
+                base_url = section["base_url"]
                 config_src = f"config:{cfg_path}"
+                from_file.append("base_url")
             if not api_key and "api_key" in section:
-                api_key = section.get("api_key")
+                api_key = section["api_key"]
+                from_file.append("api_key")
             if not model:
                 model = section.get("model")
             if profile and not any(k in section for k in _SECTION_KEYS):
                 config_src = f"config:{cfg_path}[{profile}]"
+            if from_file and _is_project_local(cfg_path):
+                log.warning(
+                    "using %s from project-local config %s",
+                    ", ".join(from_file),
+                    cfg_path,
+                )
 
     if not model:
         raise ConfigError(
