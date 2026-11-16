@@ -50,6 +50,8 @@ class _Job:
     timed_out: bool = False
 
 
+#: Default and maximum lifetime of an ``exec`` job, in seconds.
+DEFAULT_EXEC_TIMEOUT_SECONDS = 300
 #: Largest input one ``job_write`` may send, in bytes (declared in the action schema).
 MAX_WRITE_BYTES = 65_536
 #: How long one ``job_write`` may wait for the process to accept its input.

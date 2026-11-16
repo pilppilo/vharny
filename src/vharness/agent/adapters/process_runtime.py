@@ -29,7 +29,7 @@ from ..models import (
 )
 from ..ports import ReconciliationKind, ReconciliationResult
 from .child_environment import ChildEnvironment
-from .process_jobs import ProcessJobs
+from .process_jobs import DEFAULT_EXEC_TIMEOUT_SECONDS, ProcessJobs
 from .runtime_store import RuntimeStore, proposal_fingerprint
 
 _OUTPUT_CHUNK = 64 * 1024
@@ -52,7 +52,7 @@ class ProcessRuntime:
         artifacts: ArtifactStore,
         store_path: str | Path,
         *,
-        timeout_seconds: float = 300.0,
+        timeout_seconds: float = DEFAULT_EXEC_TIMEOUT_SECONDS,
         excerpt_bytes: int = _DEFAULT_EXCERPT,
         shell: str | None = None,
         child_environment: ChildEnvironment | None = None,
@@ -254,14 +254,16 @@ class ProcessRuntime:
         if not cwd.is_dir():
             raise ContractError("exec cwd must be a directory")
         timeout_value = arguments.get("timeout_seconds")
-        timeout = (
+        requested = (
             self.timeout_seconds
             if timeout_value is None
             else float(_integer(arguments, "timeout_seconds", default=1))
         )
-        if timeout <= 0:
+        if requested <= 0:
             raise ContractError("timeout_seconds must be positive")
-        return self.jobs.start(
+        # The operator's runtime timeout is the ceiling; the model may only lower it.
+        timeout = min(requested, self.timeout_seconds)
+        started = self.jobs.start(
             proposal.proposal_id,
             _job_id(proposal),
             command,
@@ -269,6 +271,10 @@ class ProcessRuntime:
             pty_mode=_boolean(arguments, "pty", default=False),
             timeout_seconds=timeout,
         )
+        started["timeout_seconds"] = timeout
+        if timeout < requested:
+            started["timeout_requested"] = requested
+        return started
 
     def _resolve_path(self, value: str) -> Path:
         candidate = (self.workspace / value).resolve(strict=False)
