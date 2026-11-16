@@ -31,8 +31,8 @@ own chat-format dataset to compare model quality.
 
 The opt-in `vharness-agent` preview provides a durable session kernel for
 model-chosen actions, runtime receipts, external evaluation, and replayable
-evidence. It currently includes a bounded software fixture and an official
-Gymnasium/FrozenLake diagnostic adapter.
+evidence. It currently includes a bounded software fixture, an official
+Gymnasium/FrozenLake diagnostic adapter and an ARC-AGI-3 game adapter.
 
 ## Install
 
@@ -46,6 +46,12 @@ For the optional Gymnasium diagnostic adapter:
 
 ```bash
 uv sync --extra gymnasium
+```
+
+For the optional ARC-AGI-3 adapter (Python 3.12 or newer):
+
+```bash
+uv sync --extra arc
 ```
 
 Harny requires Python 3.10 or newer. Model-backed workflows require an
@@ -242,6 +248,42 @@ uv run vharness-agent run \
 This checkpoint validates the mechanical adapter and evidence path; it is not
 a claim of general model reasoning or general Gymnasium capability.
 
+### ARC-AGI-3 games
+
+A run can play one public ARC-AGI-3 game through the official ARC-AGI Toolkit
+instead of working in a workspace. It needs `uv sync --extra arc`, a provider,
+and a run directory:
+
+```bash
+# POSIX shell: export ARC_API_KEY="<arc-key>"  (optional; the toolkit
+# fetches an anonymous key without it)
+uv run vharness-agent run \
+  --objective "complete the game" \
+  --arc-game dc22-fdcac232 \
+  --run-dir .vharness/runs/arc-dc22 \
+  --base-url https://provider.example/v1 \
+  --model <model-id> \
+  --api-key-env OPENAI_API_KEY \
+  --max-actions 200 --max-model-calls 220 --max-evaluations 2
+```
+
+- The model sees two actions, `reset` and `step`, and the current frame: the
+  final 64x64 grid, the game state, the levels completed and the legal action
+  ids. Nothing about the game itself is added to the prompt.
+- `--max-actions` limits the game actions sent over the whole run, across
+  resumes; resets don't count toward it.
+- Completion and score come only from the toolkit's official scorecard. A
+  missing or malformed scorecard is "not evaluated", never a pass.
+- `--arc-seed` (default 0), `--arc-mode` (`normal` runs the game locally and
+  keeps the scorecard on the ARC API; also `online` and `offline`) and
+  `--arc-timeout` (seconds per toolkit call, default 30) are recorded in the
+  run manifest.
+- The toolkit downloads the game into the run directory's `arc-games` folder.
+  It reads `ARC_API_KEY` from your environment itself; Harny never reads or
+  stores the key.
+- `pause`, `stop` and `resume` work mid-game. A resumed run does not know the
+  current frame, so its first game action must be `reset`.
+
 Sessions can be inspected and guided by an operator:
 
 ```bash
@@ -321,6 +363,8 @@ files bundled beside a skill.
   control.
 - The FrozenLake route is scripted diagnostic evidence, not a benchmark of
   general agent capability.
+- ARC-AGI-3 support plays one game per run. The scorecard is read but never
+  closed, so a run is not submitted as an official result.
 - OpenAI-compatible providers may expose different models, limits, usage
   telemetry, and error behavior.
 

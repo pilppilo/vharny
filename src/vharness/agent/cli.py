@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import re
 import shlex
@@ -41,6 +42,11 @@ from .application import (
 )
 from .artifacts import ArtifactStore
 from .codec import MAX_JSON_BYTES
+from .run_settings import (
+    ARC_OPERATION_MODES,
+    DEFAULT_ARC_CALL_TIMEOUT_SECONDS,
+    ArcRunSettings,
+)
 from .context import COEFFICIENTS, POLICY_VERSION, TOKEN_COUNTER
 from .control import (
     ACCEPTED,
@@ -142,8 +148,13 @@ def main(
 
 def _handle_run(arguments: argparse.Namespace, *, output: TextIO, error: TextIO) -> int:
     """Dispatch a ``run`` to the workspace application or the legacy fixture."""
-    if arguments.workspace is not None:
+    if arguments.workspace is not None or arguments.arc_game is not None:
         return _run_workspace(arguments, output=output, error=error)
+    if _arc_options_given(arguments):
+        _write_error(
+            error, "run", "--arc-seed/--arc-mode/--arc-timeout need --arc-game"
+        )
+        return 2
     if arguments.run_dir is not None:
         _write_error(error, "run", "--run-dir requires --workspace")
         return 2
@@ -652,10 +663,18 @@ def run(options: RunOptions, *, output: TextIO, error: TextIO) -> int:
 
 
 def _workspace_settings(arguments: argparse.Namespace) -> RunSettings:
-    """Build non-secret run settings from the workspace run arguments."""
+    """Build non-secret run settings from the workspace run arguments.
+
+    An ARC run has no workspace: the toolkit downloads its game into the run
+    directory's ``arc-games`` folder, recorded as the workspace.
+    """
+    arc = _arc_settings(arguments)
+    workspace = arguments.workspace
+    if arc is not None:
+        workspace = str(Path(arguments.run_dir).resolve() / "arc-games")
     return RunSettings(
         objective=arguments.objective,
-        workspace=arguments.workspace,
+        workspace=workspace,
         base_url=arguments.base_url,
         model=arguments.model,
         response_format=arguments.response_format,
@@ -671,6 +690,7 @@ def _workspace_settings(arguments: argparse.Namespace) -> RunSettings:
         target=arguments.target,
         check_command=_check_command(arguments.check_command),
         child_env_allow=_child_env_allow(arguments),
+        arc=arc,
     )
 
 
@@ -705,6 +725,34 @@ def _reject_ambiguous_workspace_options(arguments: argparse.Namespace) -> None:
         raise ConfigError("--workspace cannot be combined with --scripted-checkpoint")
     if arguments.environment is not None:
         raise ConfigError("--workspace cannot be combined with --environment")
+    if arguments.arc_game is not None and arguments.workspace is not None:
+        raise ConfigError("--arc-game cannot be combined with --workspace")
+    if arguments.arc_game is None and _arc_options_given(arguments):
+        raise ConfigError("--arc-seed/--arc-mode/--arc-timeout need --arc-game")
+
+
+def _arc_options_given(arguments: argparse.Namespace) -> bool:
+    return any(
+        getattr(arguments, name, None) is not None
+        for name in ("arc_seed", "arc_mode", "arc_timeout")
+    )
+
+
+def _arc_settings(arguments: argparse.Namespace) -> ArcRunSettings | None:
+    """The ARC game selected on the command line, if any."""
+    game = getattr(arguments, "arc_game", None)
+    if game is None:
+        return None
+    return ArcRunSettings(
+        game_id=game,
+        seed=0 if arguments.arc_seed is None else arguments.arc_seed,
+        operation_mode=arguments.arc_mode or "normal",
+        call_timeout_seconds=(
+            DEFAULT_ARC_CALL_TIMEOUT_SECONDS
+            if arguments.arc_timeout is None
+            else arguments.arc_timeout
+        ),
+    )
 
 
 def _run_workspace(
@@ -750,6 +798,16 @@ def _print_workspace_header(
     settings: RunSettings, app: Application, output: TextIO
 ) -> None:
     print(f"OBJECTIVE {settings.objective}", file=output)
+    if settings.arc is not None:
+        arc = settings.arc
+        print(f"SESSION {app.session.session_id} mode=arc-agi-3", file=output)
+        print(
+            f"GAME {arc.game_id} seed={arc.seed} mode={arc.operation_mode}",
+            file=output,
+        )
+        print(f"RUN-DIR {app.run_directory.root}", file=output)
+        print("CHECK official ARC-AGI-3 scorecard", file=output)
+        return
     print(f"SESSION {app.session.session_id} mode=workspace", file=output)
     if settings.target is not None:
         print(f"TARGET {settings.target}", file=output)
@@ -1552,6 +1610,26 @@ def _add_run_arguments(parser: argparse.ArgumentParser) -> None:
             "key variable and VHARNESS_*/OPENAI_* variables"
         ),
     )
+    parser.add_argument(
+        "--arc-game",
+        default=None,
+        metavar="GAME_ID",
+        help="play this ARC-AGI-3 game instead of a workspace (needs --run-dir)",
+    )
+    parser.add_argument("--arc-seed", type=_nonnegative, default=None)
+    parser.add_argument(
+        "--arc-mode",
+        choices=ARC_OPERATION_MODES,
+        default=None,
+        help="ARC toolkit mode: normal (local game, API scorecard), online, offline",
+    )
+    parser.add_argument(
+        "--arc-timeout",
+        type=_positive_seconds,
+        default=None,
+        metavar="SECONDS",
+        help="bound on each ARC toolkit call (default 30)",
+    )
     _add_run_dir_argument(parser, required=False)
     parser.add_argument(
         "--local-smoke",
@@ -2281,6 +2359,13 @@ def _positive(value: str) -> int:
     parsed = int(value)
     if parsed < 1:
         raise argparse.ArgumentTypeError("must be positive")
+    return parsed
+
+
+def _positive_seconds(value: str) -> float:
+    parsed = float(value)
+    if not math.isfinite(parsed) or parsed <= 0:
+        raise argparse.ArgumentTypeError("must be a positive number of seconds")
     return parsed
 
 
