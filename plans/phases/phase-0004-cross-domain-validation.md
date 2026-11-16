@@ -1,32 +1,33 @@
 ---
 id: PHASE-0004
-title: Deliver the operator runtime, then validate the capability ladder
+title: Deliver the operator runtime and validate the capability ladder
 type: phase
 status: implementing
 owners: []
 created: 2026-09-04
-updated: 2026-10-16
-depends_on: [ARCH-0001, ROAD-0001, BENCH-0001, PHASE-0003, ADR-0007]
+updated: 2026-11-16
+depends_on: [ARCH-0001, ROAD-0001, BENCH-0001, PHASE-0003, ADR-0019]
 supersedes: []
-related: [ARCH-0001, ROAD-0001, BENCH-0001, ADR-0007, WORK-0001]
+related: [ARCH-0001, ROAD-0001, BENCH-0001, ADR-0019, WORK-0001]
 ---
 
-# Deliver the operator runtime, then validate the capability ladder
+# Deliver the operator runtime and validate the capability ladder
 
 ## Observable outcome
 
-PHASE-0004 first delivers an operator-usable local runtime for real workspace
-and HTB work through the existing kernel, memory/context policy, supervision,
-journal, and proposal/receipt path. Runtime delivery can be used before
-benchmark campaigns are prepared. The phase then validates the unchanged agent
+PHASE-0004 delivers an operator-usable local runtime for real workspace and
+HTB work through the existing kernel, memory/context policy, supervision,
+journal, and proposal/receipt path, and validates the unchanged agent
 machinery through software, Gymnasium, ARC-AGI-3, and operator-authorized Hack
-The Box campaigns. All four campaign families remain required for full phase
-verification.
+The Box campaigns. Under ADR-0019 these are independent gates: runtime
+delivery can be used before benchmark campaigns are prepared, and campaign
+work may proceed before the runtime delivery gate has passed. All four
+campaign families remain required for full phase verification.
 
 ## Entrance criteria
 
-PHASE-0003 is verified and ADR-0007 is accepted. These conditions permit
-PHASE-0004 implementation. A prepared host, provider credentials, tool setup,
+PHASE-0003 is verified and ADR-0019 is accepted; it supersedes ADR-0007, under
+which implementation began. These conditions permit PHASE-0004 implementation. A prepared host, provider credentials, tool setup,
 and selected HTB task are prerequisites only for their corresponding live
 acceptance runs. Before each scored campaign run, its BENCH-0001 manifest must
 freeze suite and versions, settings, budgets, seeds, repetitions, targets,
@@ -62,12 +63,12 @@ specific prompts, model fine-tuning, and deletion of the previous execution path
 
 ## Contracts added or changed
 
-PHASE-0004 adds the runtime/application/operator contracts governed by ADR-0007
+PHASE-0004 adds the runtime/application/operator contracts governed by ADR-0019
 and specified in `specs/proto/06-workspace-runtime.md`. Only the coordinator
 writes session events, projections, or session state. Workers may write their
 separate runtime execution store and return results, but have no independent
 scheduling or dispatch authority and cannot mutate session state. If an
-external environment cannot be expressed through ARCH-0001 and ADR-0007, stop
+external environment cannot be expressed through ARCH-0001 and ADR-0019, stop
 and propose an architecture/decision amendment rather than smuggling behavior
 through an adapter. Pin each external protocol/version in its run manifest.
 
@@ -97,6 +98,17 @@ through an adapter. Pin each external protocol/version in its run manifest.
    tuning hidden per-environment policy.
 8. Independently review raw evidence and reproducible aggregates, and publish
    achieved and remaining campaign rungs.
+
+Each campaign family's thin environment integration is built and
+conformance-tested against recorded external fixtures before that family's
+step 6 smoke tests. It may precede or follow the family's step 5 manifest
+freeze, but no scored run precedes that freeze. The repository has Gymnasium
+and workspace integrations; ARC-AGI-3 is the current integration.
+
+Under ADR-0019, steps 5 through 8 for a family may proceed while step 4 is
+open. The Timing Task 2 and Omarchy Task 1 acceptance runs in step 4 are
+deferred by the operator (2026-11-16), not dropped, and remain required for the
+runtime delivery gate.
 
 Passing the runtime delivery gate makes the runtime available for operator use
 while PHASE-0004 remains `implementing`. It does not mark the phase implemented

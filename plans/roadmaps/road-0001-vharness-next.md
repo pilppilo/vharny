@@ -5,8 +5,8 @@ type: roadmap
 status: accepted
 owners: []
 created: 2026-09-04
-updated: 2026-10-16
-depends_on: [ARCH-0001, ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0007, BENCH-0001]
+updated: 2026-11-16
+depends_on: [ARCH-0001, ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0019, BENCH-0001]
 supersedes: []
 related: [PHASE-0001, PHASE-0002, PHASE-0003, PHASE-0004]
 ---
@@ -53,7 +53,7 @@ component is presumed reusable until PHASE-0001 maps it to an accepted contract.
 | 1 | PHASE-0001 | Accepted architecture, decisions, roadmap, benchmark | A session preserves multi-action attempts and advances a single committed lineage only from external acceptance while remaining resumable |
 | 2 | PHASE-0002 | PHASE-0001 verified | The agent autonomously consults lineage and knowledge, acts, debugs, and evaluates within bounded attempts using deterministic context and live operator steering |
 | 3 | PHASE-0003 | PHASE-0002 verified | The system distinguishes productive plateaus from stagnation, obtains advisory supervision, and recovers through attributable new attempts |
-| 4 | PHASE-0004 | PHASE-0003 verified, ADR-0007 accepted | Deliver useful operator runtime, then validate the unchanged core across all target environment families |
+| 4 | PHASE-0004 | PHASE-0003 verified, ADR-0019 accepted | Deliver useful operator runtime and validate the unchanged core across all target environment families; the two gates are independent |
 
 ## Cross-phase invariants
 

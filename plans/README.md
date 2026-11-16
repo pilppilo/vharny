@@ -1,9 +1,6 @@
-> This copy does not include the Plant CLI (`tools/plant.py`) or the
-> coordination tooling. Instructions below that say to run
-> `python tools/plant.py` or `python tools/coord.py` do not apply here.
-> `plans/.plant-lock.json` still records the Plant snapshot this text was
-> written against. Evidence bundles kept under `evidence/` are the ones the
-> test suite loads. Other evidence paths named in these documents (the
+> This copy does not include the coordination tooling or the `coordination/`
+> records that earlier workstream entries cite. Evidence bundles kept under
+> `evidence/` are the ones the test suite loads. Other evidence paths named in these documents (the
 > EXP-0002 and EXP-0003 bundles, CartPole, the P0 diagnostic, and
 > orchestration-monitor runs) were not copied.
 
@@ -13,29 +10,27 @@ Protocol: Plant v1.2 (`plans/PROTOCOL.md`)
 
 Plant source revision: c4f886e71f96b0b15a226be241155a8573579e01
 
-The protocol, schema, templates, and local CLI are a pinned snapshot from
-the independent Plant source project. The versioned lock records hashes for
-the 11 managed files and the installed local CLI. Run
-`python tools/plant.py context plans` and use its Required packet as the
-complete initial task context. The packet
-includes the current WORK-0001 handoff and exact required excerpts; printed
-line ranges and hashes define supplied spans. Stop after the packet. Treat Now
-and Read IDs as authoritative references, not mandatory initial reads. Before
-expanding, name the specific gap or task condition, unresolved question, and
-one exact file and heading or line range.
+The protocol, schema, and templates were taken from that revision of the
+independent Plant source project. Under ADR-0018 the Plant CLI is not used:
+apply `plans/PROTOCOL.md` by hand. For current direction, read Current focus
+below, the WORK-0001 Current handoff, and each Required heading in the Read
+manifest. Treat Now and Read IDs as authoritative references, not mandatory
+initial reads. Before expanding, name the specific gap or task condition,
+unresolved question, and one exact file and heading.
 
 ## Current focus
 
 - **Now:** PHASE-0004.
-- **Read:** ADR-0007, ADR-0008, ADR-0009, ARCH-0001, ROAD-0001, BENCH-0001, PHASE-0004, PHASE-0003.
+- **Read:** ADR-0019, ADR-0018, ADR-0008, ADR-0009, ARCH-0001, ROAD-0001, BENCH-0001, PHASE-0004, PHASE-0003.
 - **Workstream:** WORK-0001.
-- **Execution direction:** PHASE-0002 and PHASE-0003 are `verified`. PHASE-0004 is `implementing` under ADR-0007: deliver the operator runtime first, then complete BENCH-0001 campaign validation. Runtime delivery can be used before campaigns are prepared; all four campaign families remain required for full PHASE-0004 verification. A prepared host, provider credentials, tool setup, and selected HTB task are prerequisites only for their corresponding live acceptance runs. No merge into `next` is planned for the foreseeable future; any later merge and any default-entrypoint switch require separate future operator decisions.
+- **Execution direction:** PHASE-0002 and PHASE-0003 are `verified`. PHASE-0004 is `implementing` under ADR-0019: its runtime delivery and campaign verification gates are both required for verification and are not sequential. Current work is the ARC-AGI-3 environment integration, then its BENCH-0001 campaign; a scored run needs its frozen campaign manifest first. The Timing Task 2 and Omarchy Task 1 acceptance runs for the runtime delivery gate are deferred by the operator (2026-11-16), not dropped: no run is staged, and resuming either needs the operator's word and fresh staging. All four campaign families remain required for full PHASE-0004 verification. A prepared host, provider credentials, tool setup, and selected HTB task are prerequisites only for their corresponding live acceptance runs. No merge into `next` is planned for the foreseeable future; any later merge and any default-entrypoint switch require separate future operator decisions.
 - **Next:** None.
 - **Blocked:** None.
 
 ### Read manifest
 
-- **Required:** ADR-0007#Decision
+- **Required:** ADR-0019#Decision
+- **Required:** ADR-0018#Decision
 - **Required:** ADR-0008#Decision
 - **Required:** ADR-0009#Decision
 - **Required:** PHASE-0004#Entrance criteria
@@ -64,8 +59,8 @@ None.
 | ADR-0003 | accepted | Use environment contracts, not benchmark-specific behavioral profiles | — |
 | ADR-0004 | accepted | Make the human operator a durable, first-class participant | — |
 | ADR-0005 | accepted | Use benchmark families as a capability engineering ladder | — |
-| ADR-0006 | accepted | Use the Plant packet for current planning direction | — |
-| ADR-0007 | accepted | Deliver the operator runtime before PHASE-0004 campaigns | — |
+| ADR-0006 | superseded | Use the Plant packet for current planning direction | — |
+| ADR-0007 | superseded | Deliver the operator runtime before PHASE-0004 campaigns | — |
 | ADR-0008 | accepted | Supervisor negative-signal families are a mandatory candidate menu; evidence fingerprint defined | — |
 | ADR-0009 | accepted | The operator-built Timing recreation is the PHASE-0004 HTB acceptance target | — |
 | ADR-0010 | accepted | Governed `completed` flips are verification-gated; committed oracles carry their computation recipe | — |
@@ -76,6 +71,8 @@ None.
 | ADR-0015 | accepted | Decision decode repair ladder: observational-field recovery in place and operator-resumable malformed-output waits; compact pinned re-ask proposed for a later change | — |
 | ADR-0016 | accepted | Provider token accounting: recorded counters keep their selection roles; provider-reported usage calibrates admission; over-budget projections are refused and breaches journaled | — |
 | ADR-0017 | accepted | An empty, length-limited decode spends one repair-budget re-ask at the reserved ceiling, journaled as a repair note; a second exhaustion stays terminal | — |
+| ADR-0018 | accepted | Apply the planning protocol by hand; the Plant CLI is retired and Current focus is the starting point for direction | ADR-0006 |
+| ADR-0019 | accepted | PHASE-0004 gates are independent; ARC-AGI-3 work proceeds before the deferred Timing and Omarchy acceptance runs | ADR-0007 |
 
 ## Delivery order
 
@@ -84,7 +81,7 @@ None.
 | 1 | PHASE-0001 | verified | ARCH-0001, ROAD-0001, BENCH-0001, ADR-0001..0005 | Resumable session kernel, attempt history, committed lineage, and external contracts |
 | 2 | PHASE-0002 | verified | PHASE-0001 | Autonomous variation loop, memory, context, and live human interaction |
 | 3 | PHASE-0003 | verified | PHASE-0002 | Evidence-selected supervision and recovery |
-| 4 | PHASE-0004 | implementing | ARCH-0001, ROAD-0001, BENCH-0001, PHASE-0003, ADR-0007 | Operator runtime delivery followed by cross-domain campaign evidence |
+| 4 | PHASE-0004 | implementing | ARCH-0001, ROAD-0001, BENCH-0001, PHASE-0003, ADR-0019 | Operator runtime delivery and cross-domain campaign evidence |
 
 ## Benchmark contracts
 
@@ -135,8 +132,8 @@ work must not impede the AVO-inspired redesign.
 
 ## Protocol maintenance
 
-The vendored `PROTOCOL.md`, `schema/metadata.schema.json`, `templates/`, and
-`tools/plant.py` are a pinned snapshot, not a dependency or submodule. Adopt
-only a reviewed revision of the independent Plant source project in an explicit
-change. Use the local CLI for `context` and `check`; do not use its `init` or
-`update` commands in Harny.
+`PROTOCOL.md`, `schema/metadata.schema.json`, and `templates/` came from the
+Plant source revision named above and are ordinary repository files
+(ADR-0018). Change them only in an explicit, reviewed planning change. There
+is no local CLI: review each planning change against PROTOCOL §3, §5, §8, §12,
+and §13 before it is merged.
