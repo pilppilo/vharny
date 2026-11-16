@@ -30,8 +30,16 @@ from .child_environment import ChildEnvironment
 from .runtime_store import RuntimeStore
 
 _OUTPUT_CHUNK = 64 * 1024
-_PUMP_BYTE_BUDGET = 256 * 1024
-_PUMP_TIME_BUDGET = 0.05
+#: One drain of one job stops at whichever comes first: the pipes are empty,
+#: this many bytes were read, or this much time passed (so `yes` can't hang it).
+_PUMP_BYTE_BUDGET = 8 * 1024 * 1024
+_PUMP_TIME_BUDGET = 0.5
+_PUMP_QUIET_SECONDS = 0.01
+#: Output kept per stream: the first KEEP_HEAD_BYTES as it arrives, then only
+#: the last KEEP_TAIL_BYTES, appended after a marker when the job ends.
+KEEP_HEAD_BYTES = 4 * 1024 * 1024
+KEEP_TAIL_BYTES = 1024 * 1024
+_STREAMS = ("stdout", "stderr")
 
 
 @dataclass
@@ -48,6 +56,13 @@ class _Job:
     master_fd: int | None = None
     output_artifacts: list[dict[str, object]] = field(default_factory=list)
     timed_out: bool = False
+    # Output beyond KEEP_HEAD_BYTES: a bounded tail and a count of dropped bytes.
+    tails: dict[str, bytearray] = field(
+        default_factory=lambda: {name: bytearray() for name in _STREAMS}
+    )
+    dropped: dict[str, int] = field(default_factory=lambda: dict.fromkeys(_STREAMS, 0))
+    tails_flushed: bool = False
+    drain_error: str | None = None
 
 
 #: Default and maximum lifetime of an ``exec`` job, in seconds.
@@ -196,7 +211,25 @@ class ProcessJobs:
             "artifact_next_offset": artifact_offset + len(artifact_page),
             "artifact_total": len(job.output_artifacts),
             "timed_out": job.timed_out,
+            "stdout_dropped_bytes": job.dropped["stdout"],
+            "stderr_dropped_bytes": job.dropped["stderr"],
+            "drain_error": job.drain_error,
         }
+
+    def drain_all(self) -> None:
+        """Collect pending output from every owned job (called on every action).
+
+        This lets a noisy command keep running without the model reading it.
+        An error draining one job is recorded on that job, not raised here, so
+        it can't fail an unrelated action.
+        """
+        for job in self._jobs.values():
+            if job.tails_flushed:
+                continue
+            try:
+                self._pump(job)
+            except OSError as exc:
+                job.drain_error = f"{type(exc).__name__}: {exc}"
 
     def write(self, job_id: str, data: bytes, *, eof: bool) -> dict[str, object]:
         """Write input to an owned pipe/terminal and optionally send EOF.
@@ -281,6 +314,7 @@ class ProcessJobs:
         selector = selectors.DefaultSelector()
         deadline = time.monotonic() + _PUMP_TIME_BUDGET
         total_read = 0
+        drained = False
         try:
             for fd, name in streams:
                 try:
@@ -288,7 +322,15 @@ class ProcessJobs:
                 except (OSError, ValueError):
                     continue
             while time.monotonic() < deadline and total_read < _PUMP_BYTE_BUDGET:
-                events = selector.select(timeout=0)
+                if not selector.get_map():
+                    drained = True  # every stream reached EOF
+                    break
+                # A pipe counts as empty after _PUMP_QUIET_SECONDS without data,
+                # so a producer refilling the pipe is not cut off mid-stream.
+                remaining = deadline - time.monotonic()
+                events = selector.select(
+                    timeout=max(0.0, min(_PUMP_QUIET_SECONDS, remaining))
+                )
                 if not events:
                     break
                 for key, _ in events:
@@ -303,34 +345,74 @@ class ProcessJobs:
                         selector.unregister(key.fd)
                         continue
                     total_read += len(chunk)
-                    spool = job.stdout_file if key.data == "stdout" else job.stderr_file
-                    spool.seek(0, os.SEEK_END)
-                    spool.write(chunk)
-                    spool.flush()
-                    reference = self.artifacts.put(
-                        chunk,
-                        media_type="application/octet-stream",
-                        provenance=f"process-output-{key.data}",
-                    )
-                    job.output_artifacts.append(
-                        {
-                            "artifact": {
-                                "digest": reference.digest,
-                                "size": reference.size,
-                                "media_type": reference.media_type,
-                                "provenance": reference.provenance,
-                            },
-                            "stream": key.data,
-                            "offset": spool.tell() - len(chunk),
-                            "length": len(chunk),
-                        }
-                    )
+                    self._keep(job, key.data, chunk)
         finally:
             selector.close()
+        if (drained or not streams) and job.process.poll() is not None:
+            self._flush_tails(job)
         return {
             "status": "running" if job.process.poll() is None else "exited",
             "exit_code": job.process.poll(),
         }
+
+    def _keep(self, job: _Job, stream: str, chunk: bytes) -> None:
+        """Spool output up to KEEP_HEAD_BYTES; keep only a bounded tail after."""
+        spool = job.stdout_file if stream == "stdout" else job.stderr_file
+        spool.seek(0, os.SEEK_END)
+        room = max(0, KEEP_HEAD_BYTES - spool.tell())
+        if room:
+            self._append(job, stream, chunk[:room])
+        rest = chunk[room:]
+        if rest:
+            tail = job.tails[stream]
+            tail += rest
+            excess = len(tail) - KEEP_TAIL_BYTES
+            if excess > 0:
+                del tail[:excess]
+                job.dropped[stream] += excess
+
+    def _flush_tails(self, job: _Job) -> None:
+        """Once a job has ended, append each kept tail after a truncation marker."""
+        if job.tails_flushed:
+            return
+        job.tails_flushed = True
+        for stream in _STREAMS:
+            tail = job.tails[stream]
+            if not tail and not job.dropped[stream]:
+                continue
+            marker = (
+                f"\n[vharness: {job.dropped[stream]} bytes of {stream} were dropped; "
+                f"the last {len(tail)} bytes follow]\n"
+            ).encode("utf-8")
+            self._append(job, stream, marker + bytes(tail))
+            tail.clear()
+
+    def _append(self, job: _Job, stream: str, data: bytes) -> None:
+        """Write data to a stream's spool, recording artifacts of _OUTPUT_CHUNK each."""
+        spool = job.stdout_file if stream == "stdout" else job.stderr_file
+        for start in range(0, len(data), _OUTPUT_CHUNK):
+            piece = data[start : start + _OUTPUT_CHUNK]
+            spool.seek(0, os.SEEK_END)
+            spool.write(piece)
+            spool.flush()
+            reference = self.artifacts.put(
+                piece,
+                media_type="application/octet-stream",
+                provenance=f"process-output-{stream}",
+            )
+            job.output_artifacts.append(
+                {
+                    "artifact": {
+                        "digest": reference.digest,
+                        "size": reference.size,
+                        "media_type": reference.media_type,
+                        "provenance": reference.provenance,
+                    },
+                    "stream": stream,
+                    "offset": spool.tell() - len(piece),
+                    "length": len(piece),
+                }
+            )
 
     def _owned_job(self, job_id: str) -> _Job:
         job = self._jobs.get(job_id)
