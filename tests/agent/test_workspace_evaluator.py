@@ -48,7 +48,7 @@ def _evaluator(tmp_path: Path, outcome: CheckOutcome) -> CheckCommandEvaluator:
         command=("true",),
         workspace=tmp_path,
         artifacts=artifacts,
-        runner=lambda command, cwd, timeout: outcome,
+        runner=lambda command, cwd, timeout, env=None: outcome,
     )
 
 

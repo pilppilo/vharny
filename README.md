@@ -210,6 +210,12 @@ uv run vharness-agent run \
   --max-actions 6 --max-model-calls 8 --max-evaluations 2
 ```
 
+Commands the model runs in a workspace, and the `--check-command`, never see
+the provider key: they get your environment without the `--api-key-env`
+variable or any `VHARNESS_*` or `OPENAI_*` variable. To pass only specific
+variables instead, repeat `--child-env NAME` (for example `--child-env PATH
+--child-env HOME`). The key variable can't be on that list.
+
 The preview also supports a scripted FrozenLake diagnostic checkpoint:
 
 ```bash

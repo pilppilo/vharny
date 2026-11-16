@@ -8,10 +8,11 @@ receipt derivation for those lives in the session, which owns promotion.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable
+from typing import Mapping, Protocol
 import hashlib
+import os
 import subprocess
 
 from ..artifacts import ArtifactStore
@@ -24,6 +25,7 @@ from ..models import (
     EvaluationRequest,
 )
 from ..ports import EvaluationReconciliationResult, ReconciliationKind
+from .child_environment import ChildEnvironment
 from .process_jobs import terminate_process_group
 
 CHECK_EXIT_ZERO = "exit-zero"
@@ -48,8 +50,26 @@ class CheckOutcome:
     survivors: str = SURVIVORS_NONE
 
 
+class CheckRunner(Protocol):
+    """Runs one check command; the shape of ``run_check_command``."""
+
+    # A single-call protocol has exactly one method by design.
+    # pylint: disable=too-few-public-methods
+
+    def __call__(
+        self,
+        command: tuple[str, ...],
+        cwd: Path,
+        timeout_seconds: float,
+        env: Mapping[str, str] | None = None,
+    ) -> CheckOutcome: ...
+
+
 def run_check_command(
-    command: tuple[str, ...], cwd: Path, timeout_seconds: float
+    command: tuple[str, ...],
+    cwd: Path,
+    timeout_seconds: float,
+    env: Mapping[str, str] | None = None,
 ) -> CheckOutcome:
     """Run one check command in its own process group, bounded by the timeout.
 
@@ -63,6 +83,7 @@ def run_check_command(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             start_new_session=True,
+            env=env,
         )
     except OSError as exc:
         return CheckOutcome(CHECK_UNAVAILABLE, None, b"", str(exc).encode("utf-8"))
@@ -103,7 +124,8 @@ class CheckCommandEvaluator:
     workspace: Path
     artifacts: ArtifactStore
     timeout_seconds: float = 600.0
-    runner: Callable[[tuple[str, ...], Path, float], CheckOutcome] = run_check_command
+    runner: CheckRunner = run_check_command
+    environment: ChildEnvironment = field(default_factory=ChildEnvironment)
 
     def __post_init__(self) -> None:
         if not self.command or not all(
@@ -120,7 +142,12 @@ class CheckCommandEvaluator:
 
     def evaluate(self, request: EvaluationRequest) -> EvaluationReceipt:
         """Run the check once and retain its native result as evidence."""
-        outcome = self.runner(self.command, self.workspace, self.timeout_seconds)
+        outcome = self.runner(
+            self.command,
+            self.workspace,
+            self.timeout_seconds,
+            env=self.environment.build(os.environ),
+        )
         stdout_ref = self.artifacts.put(
             outcome.stdout, media_type="text/plain", provenance="check stdout"
         )

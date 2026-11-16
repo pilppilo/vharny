@@ -92,6 +92,21 @@ class TransportRecoverySettings:
         )
 
 
+def _validate_child_env_allow(allow: tuple[str, ...] | None, api_key_env: str) -> None:
+    """Fail closed on a malformed allow-list or one exposing the provider key."""
+    if allow is None:
+        return
+    for name in allow:
+        if not _ENV_NAME.match(name):
+            raise ContractError(
+                f"child_env_allow entry {name!r} is not a variable name"
+            )
+    if api_key_env in allow:
+        raise ContractError(
+            "child_env_allow must not include the provider key variable"
+        )
+
+
 def _required_delay(value: object, index: int) -> float:
     """Decode one positive retry delay, failing closed on bad input."""
     if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
@@ -130,6 +145,8 @@ class RunSettings:
     response_format: str | None = None
     provider_timeout: float = DEFAULT_PROVIDER_TIMEOUT_SECONDS
     transport_recovery: TransportRecoverySettings = TransportRecoverySettings()
+    #: Variables child processes may see; ``None`` passes all but provider secrets.
+    child_env_allow: tuple[str, ...] | None = None
 
     def __post_init__(self) -> None:
         if not self.objective.strip():
@@ -166,6 +183,7 @@ class RunSettings:
             raise ContractError("response_format must be 'json_object' or None")
         if not isinstance(self.transport_recovery, TransportRecoverySettings):
             raise ContractError("transport_recovery must be TransportRecoverySettings")
+        _validate_child_env_allow(self.child_env_allow, self.api_key_env)
 
     @property
     def max_recovery_seconds(self) -> float:
@@ -219,6 +237,9 @@ class RunSettings:
             "max_output_tokens": self.max_output_tokens,
             "repair_budget": self.repair_budget,
             "transport_recovery": self.transport_recovery.to_payload(),
+            "child_env_allow": (
+                None if self.child_env_allow is None else list(self.child_env_allow)
+            ),
         }
 
     @classmethod
@@ -264,6 +285,7 @@ class RunSettings:
             transport_recovery=TransportRecoverySettings.from_payload(
                 value.get("transport_recovery")
             ),
+            child_env_allow=_optional_str_tuple(value, "child_env_allow"),
         )
 
 

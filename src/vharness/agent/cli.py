@@ -670,7 +670,14 @@ def _workspace_settings(arguments: argparse.Namespace) -> RunSettings:
         repair_budget=arguments.repair_budget,
         target=arguments.target,
         check_command=_check_command(arguments.check_command),
+        child_env_allow=_child_env_allow(arguments),
     )
+
+
+def _child_env_allow(arguments: argparse.Namespace) -> tuple[str, ...] | None:
+    """Return the operator's child-environment allow-list, if one was given."""
+    names = getattr(arguments, "child_env", None)
+    return None if names is None else tuple(names)
 
 
 def _check_command(value: str | None) -> tuple[str, ...] | None:
@@ -707,7 +714,7 @@ def _run_workspace(
     try:
         _reject_ambiguous_workspace_options(arguments)
         settings = _workspace_settings(arguments)
-    except ConfigError as exc:
+    except (ConfigError, ContractError) as exc:
         _write_error(error, "run", str(exc))
         return 2
     try:
@@ -1533,6 +1540,17 @@ def _add_run_arguments(parser: argparse.ArgumentParser) -> None:
         default=None,
         metavar="COMMAND",
         help="external check command (shell-split); omit for operator evaluation",
+    )
+    parser.add_argument(
+        "--child-env",
+        action="append",
+        default=None,
+        metavar="NAME",
+        help=(
+            "pass only these environment variables to commands and checks "
+            "(repeatable); by default they get everything except the provider "
+            "key variable and VHARNESS_*/OPENAI_* variables"
+        ),
     )
     _add_run_dir_argument(parser, required=False)
     parser.add_argument(
