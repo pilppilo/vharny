@@ -26,6 +26,7 @@ except ImportError:  # POSIX-only module; pipe mode is unavailable on Windows to
 
 from ..artifacts import ArtifactStore
 from ..errors import ContractError
+from .child_environment import ChildEnvironment
 from .runtime_store import RuntimeStore
 
 _OUTPUT_CHUNK = 64 * 1024
@@ -61,8 +62,10 @@ class ProcessJobs:
         shell: str,
         timeout_seconds: float,
         excerpt_bytes: int,
+        environment: ChildEnvironment,
     ) -> None:
         self.workspace = workspace
+        self.environment = environment
         self.artifacts = artifacts
         self.store = store
         self.shell = shell
@@ -87,6 +90,7 @@ class ProcessJobs:
         stdout_file = tempfile.TemporaryFile()  # pylint: disable=consider-using-with
         stderr_file = tempfile.TemporaryFile()  # pylint: disable=consider-using-with
         master_fd: int | None = None
+        child_env = self.environment.build(os.environ)
         try:
             if pty_mode:
                 if pty is None:
@@ -100,6 +104,7 @@ class ProcessJobs:
                     stderr=slave_fd,
                     start_new_session=True,
                     close_fds=True,
+                    env=child_env,
                 )
                 os.close(slave_fd)
                 os.set_blocking(master_fd, False)
@@ -115,6 +120,7 @@ class ProcessJobs:
                     stderr=subprocess.PIPE,
                     start_new_session=True,
                     bufsize=0,
+                    env=child_env,
                 )
                 for stream in (process.stdout, process.stderr):
                     if stream is not None:

@@ -34,6 +34,7 @@ from ..core import (
     ModelFailureClass,
 )
 from ..generators.openai_compat import OpenAICompatible
+from .adapters.child_environment import ChildEnvironment
 from .adapters.process_runtime import ProcessRuntime
 from .adapters.workspace import WorkspaceEnvironment
 from .adapters.workspace_evaluator import CheckCommandEvaluator
@@ -228,11 +229,13 @@ def build_workspace_dependencies(
 ) -> WorkspaceDependencies:
     """Build the real workspace environment, runtime, and evaluator."""
     environment = WorkspaceEnvironment(settings.workspace, artifacts)
+    child_environment = ChildEnvironment(settings.api_key_env, settings.child_env_allow)
     runtime = ProcessRuntime(
         settings.workspace,
         artifacts,
         runtime_store_path,
         shell=settings.shell,
+        child_environment=child_environment,
     )
     if settings.check_command is not None:
         evaluator: Evaluator = CheckCommandEvaluator(
@@ -240,6 +243,7 @@ def build_workspace_dependencies(
             Path(settings.workspace),
             artifacts,
             timeout_seconds=settings.check_timeout_seconds,
+            environment=child_environment,
         )
         return WorkspaceDependencies(
             environment,

@@ -28,6 +28,7 @@ from ..models import (
     UsageMeasurement,
 )
 from ..ports import ReconciliationKind, ReconciliationResult
+from .child_environment import ChildEnvironment
 from .process_jobs import ProcessJobs
 from .runtime_store import RuntimeStore, proposal_fingerprint
 
@@ -54,6 +55,7 @@ class ProcessRuntime:
         timeout_seconds: float = 300.0,
         excerpt_bytes: int = _DEFAULT_EXCERPT,
         shell: str | None = None,
+        child_environment: ChildEnvironment | None = None,
     ) -> None:
         if not math.isfinite(timeout_seconds) or timeout_seconds <= 0:
             raise ContractError("timeout_seconds must be finite and positive")
@@ -76,6 +78,7 @@ class ProcessRuntime:
             shell=self.shell,
             timeout_seconds=timeout_seconds,
             excerpt_bytes=excerpt_bytes,
+            environment=child_environment or ChildEnvironment(),
         )
 
     def identity(self) -> ComponentIdentity:
@@ -86,6 +89,7 @@ class ProcessRuntime:
                 "shell": self.shell,
                 "timeout_seconds": self.timeout_seconds,
                 "excerpt_bytes": self.excerpt_bytes,
+                "child_environment": self.jobs.environment.describe(),
             }
         ).encode("utf-8")
         return ComponentIdentity(
