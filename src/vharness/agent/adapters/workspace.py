@@ -18,7 +18,7 @@ from ..models import (
     RuntimeCapabilities,
     StateRef,
 )
-from .process_jobs import MAX_WRITE_BYTES
+from .process_jobs import DEFAULT_EXEC_TIMEOUT_SECONDS, MAX_WRITE_BYTES
 
 _STRING = {"type": "string"}
 _NONNEGATIVE_INTEGER = {"type": "integer", "minimum": 0}
@@ -28,12 +28,20 @@ class WorkspaceEnvironment:
     """Describe file and process mechanics without imposing an agent workflow."""
 
     def __init__(
-        self, workspace: str | Path, artifacts: ArtifactStore | None = None
+        self,
+        workspace: str | Path,
+        artifacts: ArtifactStore | None = None,
+        *,
+        max_exec_timeout_seconds: int = DEFAULT_EXEC_TIMEOUT_SECONDS,
     ) -> None:
         self.workspace = Path(workspace).resolve(strict=True)
         if not self.workspace.is_dir():
             raise ContractError("workspace must be a directory")
+        if max_exec_timeout_seconds < 1:
+            raise ContractError("max_exec_timeout_seconds must be at least 1")
         self.artifacts = artifacts
+        #: Declared in the exec schema; must match the runtime's timeout.
+        self.max_exec_timeout_seconds = max_exec_timeout_seconds
 
     def describe(self) -> EnvironmentContract:
         """Return the typed actions and irreversible trajectory semantics."""
@@ -61,7 +69,11 @@ class WorkspaceEnvironment:
                     "command": _STRING,
                     "cwd": _STRING,
                     "pty": {"type": "boolean"},
-                    "timeout_seconds": {"type": "integer", "minimum": 1},
+                    "timeout_seconds": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": self.max_exec_timeout_seconds,
+                    },
                 },
                 ("command",),
             ),
