@@ -15,6 +15,7 @@ environment itself; this module neither reads nor stores its value.
 
 from __future__ import annotations
 
+import importlib
 import importlib.metadata
 import math
 import threading
@@ -216,7 +217,7 @@ def open_toolkit_game(  # pylint: disable=too-many-arguments
     if not isinstance(game_id, str) or not game_id:
         raise ContractError("ARC game_id must be a non-empty string")
     arc_agi = require_arc_toolkit()
-    from arcengine import GameAction  # pylint: disable=import-outside-toplevel
+    game_action = importlib.import_module("arcengine").GameAction
 
     def make() -> tuple[Any, Any]:
         arcade = arc_agi.Arcade(
@@ -237,7 +238,7 @@ def open_toolkit_game(  # pylint: disable=too-many-arguments
         operation_mode=str(arcade.operation_mode.value),
         base_url=str(arcade.arc_base_url),
     )
-    return ToolkitGameConnection(env, GameAction, info)
+    return ToolkitGameConnection(env, game_action, info)
 
 
 def require_arc_toolkit() -> Any:
@@ -246,9 +247,8 @@ def require_arc_toolkit() -> Any:
     Typed as Any because the optional extra has no in-repo stubs.
     """
     try:
-        import arc_agi  # pylint: disable=import-outside-toplevel
+        return importlib.import_module("arc_agi")
     except ImportError as exc:
         raise ContractError(
             "ARC-AGI toolkit is missing; install vharness[arc] (Python 3.12+)"
         ) from exc
-    return arc_agi
