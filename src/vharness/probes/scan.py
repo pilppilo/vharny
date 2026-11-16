@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 
 from ..core import Attempt
 from ..coverage import (
     SKIP_EXCLUDED,
+    SKIP_OUTSIDE_ROOT,
     SKIP_OVERSIZE_CHUNK,
     SKIP_OVERSIZE_FILE,
     SKIP_UNREADABLE,
@@ -50,6 +52,32 @@ Do NOT include markdown fences or conversational text."""
 
 def build_system_prompt(role: str) -> str:
     return f"You are an automated security analysis engine. {role}\n{_JSON_SCHEMA_HINT}\n{INJECTION_GUARD}"
+
+
+@dataclass(frozen=True)
+class Discovery:
+    """What a filesystem walk found, and what it left out."""
+
+    files: list[str]
+    excluded: list[str]
+    outside: list[str]
+
+
+def _within(path: str, root: str) -> bool:
+    """True when resolved ``path`` is ``root`` or below it."""
+    return path == root or path.startswith(root.rstrip(os.sep) + os.sep)
+
+
+def _unique_by_target(paths: list[str], root: str, root_real: str) -> list[str]:
+    """Keep one path per resolved file, preferring its real path over symlinks."""
+
+    def via_symlink(path: str) -> bool:
+        return os.path.realpath(path) != os.path.join(root_real, os.path.relpath(path, root))
+
+    chosen: dict[str, str] = {}
+    for path in sorted(paths, key=lambda p: (via_symlink(p), p)):
+        chosen.setdefault(os.path.realpath(path), path)
+    return list(chosen.values())
 
 
 class FileProbe(Probe):
@@ -109,10 +137,22 @@ class FileProbe(Probe):
         def display(path: str) -> str:
             return os.path.relpath(path, root) if root else path
 
-        files, excluded_dirs = self._discover(targets, excludes)
+        discovery = self._discover(
+            targets, excludes, follow_symlinks=bool(kwargs.get("follow_symlinks"))
+        )
+        files = discovery.files
         out: list[Attempt] = [
             self._skipped(display(d), SKIP_EXCLUDED, "directory excluded from the scan")
-            for d in excluded_dirs
+            for d in discovery.excluded
+        ]
+        out += [
+            self._skipped(
+                display(link),
+                SKIP_OUTSIDE_ROOT,
+                "symbolic link resolves outside the scan root; not read "
+                "(use --follow-symlinks to read it)",
+            )
+            for link in discovery.outside
         ]
         for path in files:
             try:
@@ -193,26 +233,50 @@ class FileProbe(Probe):
         )
 
     def _discover(
-        self, targets: list[str], excludes: set[str]
-    ) -> tuple[list[str], list[str]]:
-        """Return (files to consider, directories pruned by the exclude rules)."""
+        self, targets: list[str], excludes: set[str], *, follow_symlinks: bool = False
+    ) -> Discovery:
+        """Walk the targets, keeping every file read inside its resolved target.
+
+        A target named directly as a file is always read. Inside a directory
+        target, a symlink (file or directory) that resolves outside the target
+        is reported in ``outside`` instead of being read. A symlinked directory
+        inside the target is not descended, because the walk already reaches
+        its real path; this also makes link loops impossible. A file reachable
+        through several paths is read once, under its real path.
+        ``follow_symlinks`` restores the old behavior: file symlinks are read
+        wherever they point.
+        """
         found: list[str] = []
         excluded: list[str] = []
+        outside: list[str] = []
         for root in targets:
             if os.path.isfile(root):
                 found.append(root)
                 continue
+            root_real = os.path.realpath(root)
+            in_root: list[str] = []
             for dirpath, dirnames, filenames in os.walk(root):
                 kept = []
                 for d in dirnames:
+                    full = os.path.join(dirpath, d)
                     if d == GIT_DIR or d in excludes:
-                        excluded.append(os.path.join(dirpath, d))
-                    else:
-                        kept.append(d)
+                        excluded.append(full)
+                        continue
+                    if not follow_symlinks and os.path.islink(full):
+                        if not _within(os.path.realpath(full), root_real):
+                            outside.append(full)
+                        # os.walk does not descend links; the real path is walked.
+                        continue
+                    kept.append(d)
                 dirnames[:] = kept
                 for fn in filenames:
-                    found.append(os.path.join(dirpath, fn))
-        return sorted(found), sorted(excluded)
+                    full = os.path.join(dirpath, fn)
+                    if not follow_symlinks and not _within(os.path.realpath(full), root_real):
+                        outside.append(full)
+                        continue
+                    in_root.append(full)
+            found += in_root if follow_symlinks else _unique_by_target(in_root, root, root_real)
+        return Discovery(sorted(found), sorted(excluded), sorted(outside))
 
     def route(self, path: str, head: bytes) -> bool:
         """Routing predicate used by the multi-probe 'scan' preset."""

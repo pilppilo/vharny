@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 
 from ..core import Attempt
 from ..coverage import RunCoverage
 from ..log import log
+from ..outputs import open_output
 from ..sarif import build_sarif
 from .base import Evaluator, register_builtin
 
@@ -20,19 +20,20 @@ def _all_findings(attempts: list[Attempt]):
         yield from a.findings
 
 
-def _out_path(run_info: dict, default: str, requested: str | None, ext: str) -> str:
-    """Resolve output path: explicit per-format arg > base 'out' + ext > default."""
+def _out_path(run_info: dict, default: str, field: str, ext: str) -> tuple[str, bool]:
+    """Resolve (path, explicit): per-format arg > base 'out' + ext > default.
+
+    ``explicit`` is True only when the operator named the path or its base, so
+    it may be written through a symlink.
+    """
+    explicit = set(run_info.get("explicit_outputs") or ())
+    requested = run_info.get(field)
     if requested:
-        return requested
+        return requested, field in explicit
     base = run_info.get("out")
     if base:
-        return base if base.endswith(f".{ext}") else f"{base}.{ext}"
-    return default
-
-
-def _write_parent(path: str) -> None:
-    parent = os.path.dirname(os.path.abspath(path))
-    os.makedirs(parent, exist_ok=True)
+        return (base if base.endswith(f".{ext}") else f"{base}.{ext}"), "out" in explicit
+    return default, False
 
 
 @register_builtin
@@ -41,12 +42,11 @@ class SarifReport(Evaluator):
     help = "write a SARIF 2.1.0 report (GitHub code-scanning compatible)"
 
     def evaluate(self, attempts: list[Attempt], run_info: dict) -> None:
-        path = _out_path(run_info, "report.sarif", run_info.get("sarif_out"), "sarif")
+        path, explicit = _out_path(run_info, "report.sarif", "sarif_out", "sarif")
         sarif = build_sarif(
             list(_all_findings(attempts)), coverage=RunCoverage.from_attempts(attempts)
         )
-        _write_parent(path)
-        with open(path, "w", encoding="utf-8") as fh:
+        with open_output(path, "w", follow_symlinks=explicit) as fh:
             json.dump(sarif, fh, indent=2)
         log.info("wrote SARIF: %s", path)
 
@@ -57,7 +57,7 @@ class MarkdownReport(Evaluator):
     help = "write a human-readable Markdown issue report"
 
     def evaluate(self, attempts: list[Attempt], run_info: dict) -> None:
-        path = _out_path(run_info, "report.md", run_info.get("markdown_out"), "md")
+        path, explicit = _out_path(run_info, "report.md", "markdown_out", "md")
         findings = sorted(_all_findings(attempts), key=lambda f: (_SEV_ORDER.get(f.severity, 3), f.file, f.line))
         coverage = RunCoverage.from_attempts(attempts)
         out: list[str] = [
@@ -125,8 +125,7 @@ class MarkdownReport(Evaluator):
                 for item in coverage.skips
             ]
             out.append("")
-        _write_parent(path)
-        with open(path, "w", encoding="utf-8") as fh:
+        with open_output(path, "w", follow_symlinks=explicit) as fh:
             fh.write("\n".join(out))
         log.info("wrote markdown: %s", path)
 
@@ -137,7 +136,7 @@ class JsonReport(Evaluator):
     help = "write findings and attempt coverage as JSON"
 
     def evaluate(self, attempts: list[Attempt], run_info: dict) -> None:
-        path = _out_path(run_info, "report.json", run_info.get("json_out"), "json")
+        path, explicit = _out_path(run_info, "report.json", "json_out", "json")
         data = [
             {
                 "file": f.file, "line": f.line, "function": f.function, "cwe": f.cwe,
@@ -154,8 +153,7 @@ class JsonReport(Evaluator):
                 for item in coverage.skips
             ],
         }
-        _write_parent(path)
-        with open(path, "w", encoding="utf-8") as fh:
+        with open_output(path, "w", follow_symlinks=explicit) as fh:
             json.dump(report, fh, indent=2)
         log.info("wrote JSON: %s", path)
 

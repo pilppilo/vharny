@@ -27,6 +27,7 @@ from .core import (
 )
 from .coverage import EXIT_EMPTY, EXIT_INCOMPLETE, RunCoverage
 from .log import log, setup as log_setup
+from .outputs import OUTPUT_FIELDS, OutputPathError, refusal as output_refusal
 from .runner import Runner
 from .skills import SkillError, load_skills
 from .workspace import (
@@ -133,6 +134,7 @@ def _runner(args) -> Runner:
         skills=skills,
         verbose=getattr(args, "verbose", 0),
         show_findings=getattr(args, "show_findings", False),
+        log_file_explicit="log_file" in _explicit_outputs(args),
     )
 
 
@@ -142,6 +144,12 @@ def _probe_kwargs(args, probe_names: list[str]) -> dict:
         kw["targets"] = list(args.targets)
     if getattr(args, "exclude", None):
         kw["exclude"] = list(args.exclude)
+    if getattr(args, "follow_symlinks", False):
+        log.warning(
+            "--follow-symlinks: files are read wherever their symlinks point, "
+            "including outside the scan targets, and sent to the model"
+        )
+        kw["follow_symlinks"] = True
     if getattr(args, "corpus_dir", None):
         kw["corpus_dir"] = args.corpus_dir
     if getattr(args, "dataset", None):
@@ -261,11 +269,17 @@ def _finish_project_run(run, code: int, *, stop_reason: str | None = None) -> No
 
 def cmd_run(args) -> int:
     workflow = getattr(args, "command", "run")
+    _remember_explicit_outputs(args)
     _check_targets(args)
     _normalize_workflow(args)
     if workflow == "run" and not getattr(args, "project", None):
         args.log_file = args.log_file or "scan_log.jsonl"
     project_run = _begin_project_run(args, workflow) if workflow in {"run", "scan", "eval"} else None
+    try:
+        _refuse_planted_outputs(args)
+    except CLIError:
+        _finish_project_run(project_run, 2, stop_reason="error")
+        raise
     try:
         code = _cmd_run(args)
     except KeyboardInterrupt:
@@ -325,6 +339,7 @@ def _cmd_run(args) -> int:
         "markdown_out": getattr(args, "markdown_out", None),
         "json_out": getattr(args, "json_out", None),
         "metrics_out": getattr(args, "metrics_out", None),
+        "explicit_outputs": _explicit_outputs(args),
         "generator_summary": "",
     }
 
@@ -396,7 +411,38 @@ def _check_targets(args) -> None:
             raise CLIError(f"scan target does not exist: {target}")
 
 
+def _remember_explicit_outputs(args) -> None:
+    """Record which output paths the operator named, before defaults are filled."""
+    if getattr(args, "_explicit_outputs", None) is None:
+        args._explicit_outputs = [f for f in OUTPUT_FIELDS if getattr(args, f, None)]
+
+
+def _explicit_outputs(args) -> list[str]:
+    return list(getattr(args, "_explicit_outputs", None) or [])
+
+
+def _refuse_planted_outputs(args) -> None:
+    """Fail before any work if a defaulted output path is already a symlink."""
+    explicit = set(_explicit_outputs(args))
+    candidates: list[str] = []
+    log_file = getattr(args, "log_file", None)
+    if log_file and "log_file" not in explicit and not getattr(args, "no_log", False):
+        candidates.append(log_file)
+    out = getattr(args, "out", None)
+    if out and "out" not in explicit:
+        for field, ext in (("sarif_out", "sarif"), ("markdown_out", "md"), ("json_out", "json")):
+            if not getattr(args, field, None):
+                candidates.append(out if out.endswith(f".{ext}") else f"{out}.{ext}")
+    metrics_out = getattr(args, "metrics_out", None)
+    if metrics_out and "metrics_out" not in explicit:
+        candidates.append(metrics_out)
+    for path in candidates:
+        if os.path.islink(path):
+            raise CLIError(output_refusal(path))
+
+
 def cmd_scan(args) -> int:
+    _remember_explicit_outputs(args)
     args.probes = ",".join(SCAN_PROBES)
     if getattr(args, "analyzers", None):
         args.probes = args.analyzers
@@ -408,6 +454,7 @@ def cmd_scan(args) -> int:
 
 
 def cmd_eval(args) -> int:
+    _remember_explicit_outputs(args)
     args.probes = "corpus"
     if getattr(args, "dataset", None):
         args.probes = "corpus,chat-dataset"
@@ -581,6 +628,9 @@ def cmd_replay(args) -> int:
     for re-detection: requires a log written with --log-raw). Attempts whose
     log record lacks `generation_text` are reported as skipped.
     """
+    _remember_explicit_outputs(args)
+    args.out = args.out or "replay_report"
+    _refuse_planted_outputs(args)
     from .core import Attempt, Finding, Generation
     from .runner import RunInfo
     from vharness.detectors.json_verdict import JSONVerdict
@@ -663,6 +713,7 @@ def cmd_replay(args) -> int:
     import dataclasses
     run_info = dataclasses.asdict(run_info_obj) | {
         "run_info": run_info_obj,
+        "explicit_outputs": _explicit_outputs(args),
         "out": args.out,
         "sarif_out": getattr(args, "sarif_out", None),
         "markdown_out": getattr(args, "markdown_out", None),
@@ -727,6 +778,15 @@ def _generator_args(p: argparse.ArgumentParser, include_model: bool = True) -> N
     _common_args(p)
 
 
+def _follow_symlinks_arg(p: argparse.ArgumentParser) -> None:
+    p.add_argument(
+        "--follow-symlinks",
+        action="store_true",
+        help="read files through symlinks that point outside the scan targets (unsafe "
+        "for untrusted repositories: their targets are sent to the model)",
+    )
+
+
 def _allow_incomplete_arg(p: argparse.ArgumentParser) -> None:
     p.add_argument(
         "--allow-incomplete",
@@ -752,6 +812,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_p.add_argument("--corpus-dir", default=None, help="labeled corpus dir (default: built-in)")
     run_p.add_argument("--limit", type=int, default=None)
     run_p.add_argument("--exclude", action="append", default=[], help="dir name to skip (repeatable)")
+    _follow_symlinks_arg(run_p)
     run_p.add_argument("--dry-run", action="store_true")
     run_p.add_argument("--out", default=None, help="base path for report outputs")
     run_p.add_argument("--sarif-out", default=None)
@@ -769,6 +830,7 @@ def build_parser() -> argparse.ArgumentParser:
     scan_p.add_argument("--out", default=None)
     scan_p.add_argument("--dry-run", action="store_true")
     scan_p.add_argument("--exclude", action="append", default=[], help="dir name to skip (repeatable)")
+    _follow_symlinks_arg(scan_p)
     _allow_incomplete_arg(scan_p)
     scan_p.add_argument(
         "--allow-empty",
@@ -814,7 +876,9 @@ def build_parser() -> argparse.ArgumentParser:
     replay_p.add_argument("log_path", help="JSONL run log (must have been written with --log-raw to re-detect)")
     replay_p.add_argument("--run-id", default=None, help="only replay attempts from this run")
     replay_p.add_argument("--evaluators", default="metrics,summary")
-    replay_p.add_argument("--out", default="replay_report")
+    replay_p.add_argument(
+        "--out", default=None, help="base path for reports (default: replay_report)"
+    )
     replay_p.add_argument("--sarif-out", default=None)
     replay_p.add_argument("--markdown-out", default=None)
     replay_p.add_argument("--json-out", default=None)
@@ -850,6 +914,6 @@ def main(argv: list[str] | None = None) -> int:
     log_setup(getattr(args, "verbose", 0), getattr(args, "quiet", False))
     try:
         return args.func(args)
-    except (CLIError, ConfigError) as e:
+    except (CLIError, ConfigError, OutputPathError) as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
