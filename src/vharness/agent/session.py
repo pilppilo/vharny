@@ -4112,11 +4112,13 @@ def _validate_action_arguments(  # pylint: disable=too-many-statements
         allowed = {"type"}
         if declared_type == "integer":
             allowed = {"type", "minimum", "maximum"}
+        if declared_type == "string":
+            allowed = {"type", "maxLength"}
         if set(property_schema) - allowed:
             raise ContractError(
                 f"action schema property {name!r} uses unsupported constructs"
             )
-        for bound_name in ("minimum", "maximum"):
+        for bound_name in ("minimum", "maximum", "maxLength"):
             if bound_name not in property_schema:
                 continue
             bound = property_schema[bound_name]
@@ -4137,6 +4139,15 @@ def _validate_action_arguments(  # pylint: disable=too-many-statements
             raise ContractError(f"action argument {name!r} must be an integer")
         if declared_type == "boolean" and not isinstance(value, bool):
             raise ContractError(f"action argument {name!r} must be a boolean")
+        max_length = property_schema.get("maxLength")
+        if (
+            isinstance(value, str)
+            and isinstance(max_length, int)
+            and len(value) > max_length
+        ):
+            raise ContractError(
+                f"action argument {name!r} must be at most {max_length} characters"
+            )
         if declared_type != "integer":
             continue
         if isinstance(value, bool) or not isinstance(value, int):
