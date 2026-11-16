@@ -1,4 +1,4 @@
-"""ARC-AGI-3 environment contract and typed models (COD-35).
+"""ARC-AGI-3 environment contract and typed models (COD-35, hardened in COD-70).
 
 What the agent sees in an ARC-AGI-3 game and what it may do there, settled
 before the runtime adapter (COD-36) and evaluator (COD-37) exist. The kernel
@@ -16,18 +16,33 @@ Toolkit interface, verified against the pinned ``arc-agi`` 0.9.10 and
   mode) and returns an environment; ``reset()`` and
   ``step(action, data=None, reasoning=None)`` return ``FrameDataRaw | None``.
 * ``FrameDataRaw`` fields: ``game_id``, ``state``, ``levels_completed``,
-  ``win_levels``, ``action_input``, ``guid``, ``full_reset``,
+  ``win_levels``, ``action_input`` (``id``: a ``GameAction`` whose ``value``
+  is the int id, ``data``, ``reasoning``), ``guid``, ``full_reset``,
   ``available_actions``. The grid is the private attribute ``frame``: a list
-  of 64x64 numpy arrays that ``model_dump`` leaves out.
+  of 64x64 numpy arrays (animation layers) that ``model_dump`` leaves out.
 * ``GameAction``: ``RESET`` = 0 and ``ACTION1``-``ACTION7``. Only ``ACTION6``
   takes data, ``{"x": 0-63, "y": 0-63}``.
 * ``GameState``: ``NOT_PLAYED``, ``NOT_FINISHED``, ``WIN``, ``GAME_OVER``.
 * Scorecards: ``open_scorecard()``, ``get_scorecard(id)``,
   ``close_scorecard(id)``; the dump carries an ``api_key`` to drop.
 
-Episode meaning used by this contract:
+Design:
 
-* **Terminated:** the game reports ``WIN`` or ``GAME_OVER``.
+* **One fixed contract.** The session pins its environment contract at
+  creation and refuses a resume whose contract differs, so the contract never
+  depends on a frame: ``step`` always takes ids 1-7 and optional ``x``/``y``.
+  Legality is checked per frame at the boundary (``ArcAction.from_arguments``).
+* **Observation vs evidence.** A frame may hold many animation layers. The
+  observation the model sees (``ArcFrame.to_json``) carries only the final
+  layer and a layer count; ``evidence_json`` keeps every layer, the run
+  ``guid`` and the ``action_input`` echo for storage.
+* **Strict boundary.** No coercion: a field of the wrong type is refused, and
+  every toolkit conversion failure is a ``ContractError``.
+
+Episode meaning:
+
+* **Terminated:** the game reports ``WIN`` or ``GAME_OVER``; a terminated frame
+  offers no legal action, and only ``reset`` is possible.
 * **Truncated:** the runtime's action limit was reached first. Some games never
   end on their own (``ft09`` ran 400 random clicks without ending), so the
   runtime always runs with a limit.
@@ -64,9 +79,41 @@ CLICK_ACTION = 6
 #: Largest x or y a click may use.
 MAX_COORDINATE = GRID_SIZE - 1
 
-ENVIRONMENT_VERSION = "1"
+ENVIRONMENT_VERSION = "2"
 
-#: JSON shape of one published frame (``ArcFrame.to_json``).
+STEP_DESCRIPTION = (
+    "Take one game action, id 1-7. The current observation lists the legal "
+    "ids; any other id is refused. Action 6 acts on one cell and needs x "
+    "(column) and y (row), each 0-63; other actions take no x or y. When the "
+    "game is over, only reset is possible."
+)
+RESET_DESCRIPTION = "Restart the game from its first frame"
+
+_COORDINATE: Mapping[str, JsonValue] = {
+    "type": "integer",
+    "minimum": 0,
+    "maximum": MAX_COORDINATE,
+}
+
+#: Arguments schema for ``step``; the same for every game and every frame.
+ARC_STEP_SCHEMA: Mapping[str, JsonValue] = frozen_mapping(
+    {
+        "type": "object",
+        "properties": {
+            "action": {
+                "type": "integer",
+                "minimum": min(GAME_ACTIONS),
+                "maximum": max(GAME_ACTIONS),
+            },
+            "x": _COORDINATE,
+            "y": _COORDINATE,
+        },
+        "required": ("action",),
+        "additionalProperties": False,
+    }
+)
+
+#: JSON shape of the observation the model sees (``ArcFrame.to_json``).
 ARC_OBSERVATION_SCHEMA: Mapping[str, JsonValue] = frozen_mapping(
     {
         "type": "object",
@@ -75,16 +122,27 @@ ARC_OBSERVATION_SCHEMA: Mapping[str, JsonValue] = frozen_mapping(
             "state": {"enum": ("NOT_PLAYED", "NOT_FINISHED", "WIN", "GAME_OVER")},
             "levels_completed": {"type": "integer", "minimum": 0},
             "win_levels": {"type": "integer", "minimum": 0},
-            "available_actions": {"type": "array", "items": {"type": "integer"}},
-            "full_reset": {"type": "boolean"},
-            "grids": {
+            "legal_actions": {
                 "type": "array",
+                "items": {"type": "integer"},
+                "description": "Empty once the game is over.",
+            },
+            "full_reset": {"type": "boolean"},
+            "grid": {
+                "type": "array",
+                "items": {"type": "string"},
                 "description": (
-                    "Grid layers, each 64 rows; a row is 64 hex digits, one per "
-                    "cell, giving its colour 0-15. Row 0 is the top; x indexes "
-                    "columns and y indexes rows."
+                    "The final grid layer: 64 rows, each 64 hex digits, one "
+                    "per cell, giving its colour 0-15. Row 0 is the top; x "
+                    "indexes columns and y indexes rows."
                 ),
-                "items": {"type": "array", "items": {"type": "string"}},
+            },
+            "layer_count": {
+                "type": "integer",
+                "minimum": 1,
+                "description": (
+                    "Animation layers in this frame; only the last is shown."
+                ),
             },
         },
         "required": (
@@ -92,9 +150,10 @@ ARC_OBSERVATION_SCHEMA: Mapping[str, JsonValue] = frozen_mapping(
             "state",
             "levels_completed",
             "win_levels",
-            "available_actions",
+            "legal_actions",
             "full_reset",
-            "grids",
+            "grid",
+            "layer_count",
         ),
     }
 )
@@ -125,12 +184,26 @@ class _ToolkitGrid(Protocol):  # pylint: disable=too-few-public-methods
         raise NotImplementedError
 
 
-class _ToolkitState(Protocol):  # pylint: disable=too-few-public-methods
-    """``arcengine.GameState``: an enum with a string value."""
+class _ToolkitEnum(Protocol):  # pylint: disable=too-few-public-methods
+    """An ``arcengine`` enum member: ``GameState`` or ``GameAction``."""
 
     @property
-    def value(self) -> str:
-        """The state's name, such as ``NOT_FINISHED``."""
+    def value(self) -> object:
+        """The member's value: a state name or an action id."""
+        raise NotImplementedError
+
+
+class _ToolkitActionInput(Protocol):
+    """``arcengine.ActionInput``: the action a frame answers."""
+
+    @property
+    def id(self) -> _ToolkitEnum:
+        """The ``GameAction`` sent."""
+        raise NotImplementedError
+
+    @property
+    def data(self) -> Mapping[str, object]:
+        """Its data, ``{"x": ..., "y": ...}`` for a click."""
         raise NotImplementedError
 
 
@@ -138,39 +211,70 @@ class ToolkitFrame(Protocol):
     """The parts of ``arcengine.FrameDataRaw`` this module reads (read-only)."""
 
     @property
-    def game_id(self) -> str:
+    def game_id(self) -> object:
         """Versioned game id, such as ``dc22-fdcac232``."""
         raise NotImplementedError
 
     @property
-    def state(self) -> _ToolkitState:
-        """The game state enum."""
+    def state(self) -> _ToolkitEnum:
+        """The ``GameState`` member."""
         raise NotImplementedError
 
     @property
-    def levels_completed(self) -> int:
+    def levels_completed(self) -> object:
         """Levels completed so far."""
         raise NotImplementedError
 
     @property
-    def win_levels(self) -> int:
+    def win_levels(self) -> object:
         """Levels needed to win."""
         raise NotImplementedError
 
     @property
-    def available_actions(self) -> Sequence[int]:
-        """Legal action ids for the next step."""
+    def available_actions(self) -> Sequence[object]:
+        """Action ids the game lists for the next step."""
         raise NotImplementedError
 
     @property
-    def full_reset(self) -> bool:
+    def full_reset(self) -> object:
         """Whether the last action reset the whole game."""
+        raise NotImplementedError
+
+    @property
+    def guid(self) -> object:
+        """The run id the scorecard uses, or ``None``."""
+        raise NotImplementedError
+
+    @property
+    def action_input(self) -> _ToolkitActionInput | None:
+        """Echo of the action this frame answers."""
         raise NotImplementedError
 
     @property
     def frame(self) -> Sequence[_ToolkitGrid]:
         """Grid layers as numpy arrays."""
         raise NotImplementedError
+
+
+@dataclass(frozen=True, slots=True)
+class ArcActionEcho:
+    """The action a frame says it answers: an id 0-7 and, for a click, a cell."""
+
+    action_id: int
+    x: int | None = None
+    y: int | None = None
+
+    def __post_init__(self) -> None:
+        _strict_int(self.action_id, "action_input id", 0, max(GAME_ACTIONS))
+        if (self.x is None) != (self.y is None):
+            raise ContractError("ARC action_input needs both x and y, or neither")
+        if self.x is not None and self.y is not None:
+            _strict_int(self.x, "action_input x", 0, MAX_COORDINATE)
+            _strict_int(self.y, "action_input y", 0, MAX_COORDINATE)
+
+    def to_json(self) -> Mapping[str, JsonValue]:
+        """JSON form for evidence."""
+        return frozen_mapping({"action": self.action_id, "x": self.x, "y": self.y})
 
 
 @dataclass(frozen=True, slots=True)
@@ -184,46 +288,101 @@ class ArcFrame:  # pylint: disable=too-many-instance-attributes
     available_actions: tuple[int, ...]
     full_reset: bool
     grids: tuple[Grid, ...]
+    guid: str | None = None
+    action_input: ArcActionEcho | None = None
 
     def __post_init__(self) -> None:
-        if not self.game_id:
-            raise ContractError("ARC frame needs a game_id")
-        if not 0 <= self.levels_completed <= max(self.win_levels, 0):
-            raise ContractError(
-                f"ARC frame reports {self.levels_completed} of "
-                f"{self.win_levels} levels completed"
+        if not isinstance(self.game_id, str) or not self.game_id:
+            raise ContractError("ARC frame needs a non-empty game_id string")
+        if not isinstance(self.state, ArcGameState):
+            raise ContractError("ARC frame state must be an ArcGameState")
+        _strict_int(self.win_levels, "win_levels", 0)
+        _strict_int(self.levels_completed, "levels_completed", 0, self.win_levels)
+        if not isinstance(self.full_reset, bool):
+            raise ContractError("ARC frame full_reset must be a boolean")
+        if not isinstance(self.available_actions, tuple):
+            raise ContractError("ARC frame available_actions must be a tuple")
+        for action in self.available_actions:
+            _strict_int(
+                action, "available action", min(GAME_ACTIONS), max(GAME_ACTIONS)
             )
-        unknown = sorted(set(self.available_actions) - set(GAME_ACTIONS))
-        if unknown:
-            raise ContractError(f"ARC frame lists unknown actions {unknown}")
         if len(set(self.available_actions)) != len(self.available_actions):
             raise ContractError("ARC frame lists an action twice")
+        if not self.grids:
+            raise ContractError("ARC frame has no grid layers")
         for grid in self.grids:
             _check_grid(grid)
+        if self.guid is not None and (not isinstance(self.guid, str) or not self.guid):
+            raise ContractError("ARC frame guid must be a non-empty string or None")
+        if self.action_input is not None and not isinstance(
+            self.action_input, ArcActionEcho
+        ):
+            raise ContractError("ARC frame action_input must be an ArcActionEcho")
 
     @property
     def terminated(self) -> bool:
         """True when the game reports WIN or GAME_OVER."""
         return self.state.terminal
 
+    @property
+    def legal_actions(self) -> tuple[int, ...]:
+        """Actions ``step`` may take now: none once the game is over."""
+        return () if self.terminated else self.available_actions
+
+    @property
+    def final_grid(self) -> Grid:
+        """The last animation layer: what the game shows after this frame."""
+        return self.grids[-1]
+
     @classmethod
     def from_toolkit(cls, frame: ToolkitFrame) -> ArcFrame:
-        """Convert a toolkit ``FrameDataRaw`` explicitly, field by field."""
-        return cls(
-            game_id=str(frame.game_id),
-            state=ArcGameState(str(frame.state.value)),
-            levels_completed=int(frame.levels_completed),
-            win_levels=int(frame.win_levels),
-            available_actions=tuple(int(a) for a in frame.available_actions),
-            full_reset=bool(frame.full_reset),
-            grids=tuple(
-                tuple(tuple(int(cell) for cell in row) for row in layer.tolist())
-                for layer in frame.frame
-            ),
-        )
+        """Convert a toolkit ``FrameDataRaw`` field by field, without coercion.
+
+        Any malformed field, missing attribute or unknown value raises
+        ``ContractError`` naming the problem.
+        """
+        try:
+            guid = frame.guid
+            return cls(
+                game_id=_strict_str(frame.game_id, "game_id"),
+                state=ArcGameState(_strict_str(frame.state.value, "state")),
+                levels_completed=_strict_int(
+                    frame.levels_completed, "levels_completed"
+                ),
+                win_levels=_strict_int(frame.win_levels, "win_levels"),
+                available_actions=tuple(
+                    _strict_int(action, "available action")
+                    for action in frame.available_actions
+                ),
+                full_reset=_strict_bool(frame.full_reset, "full_reset"),
+                grids=tuple(_toolkit_grid(layer.tolist()) for layer in frame.frame),
+                guid=None if guid is None else _strict_str(guid, "guid"),
+                action_input=_toolkit_echo(frame.action_input),
+            )
+        except ContractError as exc:
+            raise ContractError(f"ARC toolkit frame is malformed: {exc}") from exc
+        except (AttributeError, TypeError, ValueError) as exc:
+            raise ContractError(
+                f"ARC toolkit frame is malformed: {type(exc).__name__}: {exc}"
+            ) from exc
 
     def to_json(self) -> Mapping[str, JsonValue]:
-        """Publish the frame in the ``ARC_OBSERVATION_SCHEMA`` shape."""
+        """The observation the model sees, in the ``ARC_OBSERVATION_SCHEMA`` shape."""
+        return frozen_mapping(
+            {
+                "game_id": self.game_id,
+                "state": self.state.value,
+                "levels_completed": self.levels_completed,
+                "win_levels": self.win_levels,
+                "legal_actions": self.legal_actions,
+                "full_reset": self.full_reset,
+                "grid": encode_grid(self.final_grid),
+                "layer_count": len(self.grids),
+            }
+        )
+
+    def evidence_json(self) -> Mapping[str, JsonValue]:
+        """Everything the frame holds, for stored evidence: every layer, guid, echo."""
         return frozen_mapping(
             {
                 "game_id": self.game_id,
@@ -233,6 +392,10 @@ class ArcFrame:  # pylint: disable=too-many-instance-attributes
                 "available_actions": self.available_actions,
                 "full_reset": self.full_reset,
                 "grids": tuple(encode_grid(grid) for grid in self.grids),
+                "guid": self.guid,
+                "action_input": (
+                    None if self.action_input is None else self.action_input.to_json()
+                ),
             }
         )
 
@@ -246,19 +409,12 @@ class ArcAction:
     y: int | None = None
 
     def __post_init__(self) -> None:
-        if self.action_id not in GAME_ACTIONS:
-            raise ContractError(
-                f"ARC action {self.action_id} is not one of {list(GAME_ACTIONS)}"
-            )
+        _strict_int(self.action_id, "action", min(GAME_ACTIONS), max(GAME_ACTIONS))
         if self.action_id == CLICK_ACTION:
             for name, value in (("x", self.x), ("y", self.y)):
                 if value is None:
                     raise ContractError(f"ARC action {CLICK_ACTION} needs {name}")
-                if not 0 <= value <= MAX_COORDINATE:
-                    raise ContractError(
-                        f"ARC action {CLICK_ACTION} {name}={value} is outside "
-                        f"0-{MAX_COORDINATE}"
-                    )
+                _strict_int(value, f"action {CLICK_ACTION} {name}", 0, MAX_COORDINATE)
         elif self.x is not None or self.y is not None:
             raise ContractError(
                 f"ARC action {self.action_id} takes no x or y; only "
@@ -267,13 +423,18 @@ class ArcAction:
 
     @classmethod
     def from_arguments(
-        cls, arguments: Mapping[str, JsonValue], legal: Sequence[int]
+        cls, arguments: Mapping[str, JsonValue], frame: ArcFrame
     ) -> ArcAction:
-        """Validate a ``step`` action's arguments against the current legal set."""
+        """Validate a ``step`` action's arguments against the current frame."""
+        if frame.terminated:
+            raise ContractError(
+                f"the game is over ({frame.state.value}); only reset is possible"
+            )
         unexpected = sorted(set(arguments) - {"action", "x", "y"})
         if unexpected:
             raise ContractError(f"ARC step got unexpected arguments {unexpected}")
-        action_id = _integer(arguments.get("action"), "action")
+        action_id = _strict_int(arguments.get("action"), "action")
+        legal = frame.legal_actions
         if action_id not in legal:
             raise ContractError(
                 f"ARC action {action_id} is not legal now; legal: {list(legal)}"
@@ -282,8 +443,8 @@ class ArcAction:
         y = arguments.get("y")
         return cls(
             action_id,
-            None if x is None else _integer(x, "x"),
-            None if y is None else _integer(y, "y"),
+            None if x is None else _strict_int(x, "x"),
+            None if y is None else _strict_int(y, "y"),
         )
 
     def toolkit_data(self) -> dict[str, int] | None:
@@ -304,10 +465,8 @@ class ArcStepOutcome:
     max_actions: int
 
     def __post_init__(self) -> None:
-        if self.max_actions < 1:
-            raise ContractError("ARC max_actions must be at least 1")
-        if not 0 <= self.actions_taken <= self.max_actions:
-            raise ContractError("ARC actions_taken must be within max_actions")
+        _strict_int(self.max_actions, "max_actions", 1)
+        _strict_int(self.actions_taken, "actions_taken", 0, self.max_actions)
 
     @property
     def terminated(self) -> bool:
@@ -340,55 +499,19 @@ class ArcGoal:
         )
 
 
-def arc_step_schema(legal: Sequence[int]) -> Mapping[str, JsonValue]:
-    """Arguments schema for ``step``, generated from the current legal actions.
-
-    The kernel's schema subset has integer bounds but no enum, so the range
-    spans the legal ids and ``ArcAction.from_arguments`` rejects the gaps.
-    """
-    if not legal:
-        raise ContractError("ARC frame offers no legal actions")
-    properties: dict[str, JsonValue] = {
-        "action": {"type": "integer", "minimum": min(legal), "maximum": max(legal)}
-    }
-    if CLICK_ACTION in legal:
-        coordinate: Mapping[str, JsonValue] = {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": MAX_COORDINATE,
-        }
-        properties["x"] = coordinate
-        properties["y"] = coordinate
-    return frozen_mapping(
-        {
-            "type": "object",
-            "properties": properties,
-            "required": ("action",),
-            "additionalProperties": False,
-        }
-    )
-
-
 def arc_environment_contract(
-    frame: ArcFrame, initial_state: StateRef
+    game_id: str, initial_state: StateRef
 ) -> EnvironmentContract:
-    """Declare ``reset`` and ``step`` for the game in ``frame``."""
-    legal = frame.available_actions
-    step_description = (
-        f"Take one game action. Legal action ids now: {', '.join(map(str, legal))}."
-    )
-    if CLICK_ACTION in legal:
-        step_description += (
-            f" Action {CLICK_ACTION} acts on one cell and needs x (column) and "
-            f"y (row), each 0-{MAX_COORDINATE}."
-        )
+    """Declare ``reset`` and ``step``; the same for every frame of a game."""
+    if not isinstance(game_id, str) or not game_id:
+        raise ContractError("ARC contract needs a non-empty game_id string")
     return EnvironmentContract(
-        environment_id=f"arc-agi-3:{frame.game_id}",
+        environment_id=f"arc-agi-3:{game_id}",
         version=ENVIRONMENT_VERSION,
         initial_state=initial_state,
         actions=(
-            ActionDefinition("reset", "Restart the game from its first frame"),
-            ActionDefinition("step", step_description, arc_step_schema(legal)),
+            ActionDefinition("reset", RESET_DESCRIPTION),
+            ActionDefinition("step", STEP_DESCRIPTION, ARC_STEP_SCHEMA),
         ),
         capabilities=RuntimeCapabilities(idempotency=False, reconciliation=False),
     )
@@ -404,22 +527,66 @@ def decode_grid(rows: Sequence[str]) -> Grid:
     """Inverse of ``encode_grid``."""
     try:
         grid = tuple(tuple(int(cell, 16) for cell in row) for row in rows)
-    except ValueError as exc:
+    except (TypeError, ValueError) as exc:
         raise ContractError(f"ARC grid row is not hex: {exc}") from exc
     _check_grid(grid)
     return grid
 
 
-def _check_grid(grid: Grid) -> None:
-    if len(grid) != GRID_SIZE or any(len(row) != GRID_SIZE for row in grid):
+def _toolkit_grid(rows: object) -> Grid:
+    if not isinstance(rows, list) or not all(isinstance(row, list) for row in rows):
+        raise ContractError("ARC grid layer is not a list of rows")
+    return tuple(
+        tuple(_strict_int(cell, "grid cell", 0, MAX_COLOUR) for cell in row)
+        for row in rows
+    )
+
+
+def _toolkit_echo(action_input: _ToolkitActionInput | None) -> ArcActionEcho | None:
+    if action_input is None:
+        return None
+    data = action_input.data
+    x = data.get("x")
+    y = data.get("y")
+    return ArcActionEcho(
+        _strict_int(action_input.id.value, "action_input id"),
+        None if x is None else _strict_int(x, "action_input x"),
+        None if y is None else _strict_int(y, "action_input y"),
+    )
+
+
+def _check_grid(grid: object) -> None:
+    if (
+        not isinstance(grid, tuple)
+        or len(grid) != GRID_SIZE
+        or any(not isinstance(row, tuple) or len(row) != GRID_SIZE for row in grid)
+    ):
         raise ContractError(f"ARC grid must be {GRID_SIZE}x{GRID_SIZE}")
     for row in grid:
         for cell in row:
-            if not 0 <= cell <= MAX_COLOUR:
-                raise ContractError(f"ARC grid cell {cell} is outside 0-{MAX_COLOUR}")
+            _strict_int(cell, "grid cell", 0, MAX_COLOUR)
 
 
-def _integer(value: object, name: str) -> int:
+def _strict_str(value: object, name: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise ContractError(f"ARC {name} must be a non-empty string, not {value!r}")
+    return value
+
+
+def _strict_bool(value: object, name: str) -> bool:
+    if not isinstance(value, bool):
+        raise ContractError(f"ARC {name} must be a boolean, not {value!r}")
+    return value
+
+
+def _strict_int(
+    value: object, name: str, minimum: int | None = None, maximum: int | None = None
+) -> int:
+    """Return ``value`` if it is an int (not a bool) within the bounds."""
     if isinstance(value, bool) or not isinstance(value, int):
-        raise ContractError(f"ARC {name} must be an integer")
+        raise ContractError(f"ARC {name} must be an integer, not {value!r}")
+    if minimum is not None and value < minimum:
+        raise ContractError(f"ARC {name} {value} is below {minimum}")
+    if maximum is not None and value > maximum:
+        raise ContractError(f"ARC {name} {value} is above {maximum}")
     return value
