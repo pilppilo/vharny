@@ -25,7 +25,7 @@ from .core import (
     load_entry_points,
     normalize_names,
 )
-from .coverage import EXIT_INCOMPLETE, RunCoverage
+from .coverage import EXIT_EMPTY, EXIT_INCOMPLETE, RunCoverage
 from .log import log, setup as log_setup
 from .runner import Runner
 from .skills import SkillError, load_skills
@@ -261,6 +261,7 @@ def _finish_project_run(run, code: int, *, stop_reason: str | None = None) -> No
 
 def cmd_run(args) -> int:
     workflow = getattr(args, "command", "run")
+    _check_targets(args)
     _normalize_workflow(args)
     if workflow == "run" and not getattr(args, "project", None):
         args.log_file = args.log_file or "scan_log.jsonl"
@@ -290,6 +291,8 @@ def _stop_reason(args, code: int) -> str:
         return "dry_run"
     if code == EXIT_INCOMPLETE:
         return "incomplete"
+    if code == EXIT_EMPTY:
+        return "empty"
     return "fail_on_findings" if code else "complete"
 
 
@@ -346,28 +349,51 @@ def _cmd_run(args) -> int:
     import dataclasses
     run_info = dataclasses.asdict(info) | run_info_extra | {"run_info": info}
     runner.evaluate(attempts, run_info, evaluator_names)
-    if _incomplete(args, attempts):
-        return EXIT_INCOMPLETE
+    coverage_code = _coverage_exit(args, attempts)
+    if coverage_code is not None:
+        return coverage_code
     if getattr(args, "fail_on_findings", False) and any(a.findings for a in attempts):
         log.info("fail-on-findings: %d finding(s) present — exiting 1", sum(len(a.findings) for a in attempts))
         return 1
     return 0
 
 
-def _incomplete(args, attempts: list) -> bool:
-    """Warn about failed attempts; True when the command must exit incomplete."""
+def _coverage_exit(args, attempts: list) -> int | None:
+    """Warn about coverage problems; return an exit code when one must fail the run.
+
+    Precedence: nothing analyzed (4), then failed attempts or, with
+    --fail-on-skipped, unanalyzed files/chunks (3).
+    """
     coverage = RunCoverage.from_attempts(attempts)
-    if coverage.complete:
-        return False
-    log.warning("incomplete run: %s", coverage.summary())
-    if not getattr(args, "fail_on_incomplete", False):
-        return False
-    log.error(
-        "exiting %d because %d attempt(s) failed; pass --allow-incomplete to exit 0",
-        EXIT_INCOMPLETE,
-        coverage.failed,
-    )
-    return True
+    if coverage.analyzed == 0:
+        log.warning("nothing was analyzed: no file produced a chunk to send to the model")
+        if getattr(args, "fail_on_empty", False):
+            log.error("exiting %d because the scan was empty; pass --allow-empty to exit 0",
+                      EXIT_EMPTY)
+            return EXIT_EMPTY
+    if not coverage.complete:
+        log.warning("incomplete run: %s", coverage.summary())
+        if getattr(args, "fail_on_incomplete", False):
+            log.error(
+                "exiting %d because %d attempt(s) failed; pass --allow-incomplete to exit 0",
+                EXIT_INCOMPLETE,
+                coverage.failed,
+            )
+            return EXIT_INCOMPLETE
+    if coverage.gaps:
+        log.warning("partial coverage: %d file(s) or chunk(s) were not analyzed",
+                    len(coverage.gaps))
+        if getattr(args, "fail_on_skipped", False):
+            log.error("exiting %d because of --fail-on-skipped", EXIT_INCOMPLETE)
+            return EXIT_INCOMPLETE
+    return None
+
+
+def _check_targets(args) -> None:
+    """A target that does not exist is a usage error, not an empty scan."""
+    for target in getattr(args, "targets", None) or []:
+        if not os.path.exists(target):
+            raise CLIError(f"scan target does not exist: {target}")
 
 
 def cmd_scan(args) -> int:
@@ -648,8 +674,9 @@ def cmd_replay(args) -> int:
     evaluator_names = [e.strip() for e in (args.evaluators or "metrics,summary").split(",") if e.strip()]
     runner = Runner(_NeverGenerate(), log_file=None)
     runner.evaluate(attempts, run_info, evaluator_names)
-    if _incomplete(args, attempts):
-        return EXIT_INCOMPLETE
+    coverage_code = _coverage_exit(args, attempts)
+    if coverage_code is not None:
+        return coverage_code
     if getattr(args, "fail_on_findings", False) and any(a.findings for a in attempts):
         return 1
     return 0
@@ -743,6 +770,17 @@ def build_parser() -> argparse.ArgumentParser:
     scan_p.add_argument("--dry-run", action="store_true")
     scan_p.add_argument("--exclude", action="append", default=[], help="dir name to skip (repeatable)")
     _allow_incomplete_arg(scan_p)
+    scan_p.add_argument(
+        "--allow-empty",
+        dest="fail_on_empty",
+        action="store_false",
+        help=f"exit 0 even when no file produced anything to analyze (default: exit {EXIT_EMPTY})",
+    )
+    scan_p.add_argument(
+        "--fail-on-skipped",
+        action="store_true",
+        help=f"exit {EXIT_INCOMPLETE} when any file or chunk was skipped as oversize or unreadable",
+    )
     _generator_args(scan_p)
     scan_p.set_defaults(func=cmd_scan, log_file=None)
 

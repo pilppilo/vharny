@@ -94,11 +94,18 @@ they are applied.
 | --- | --- |
 | 0 | Every attempt was analyzed (and no findings, with `--fail-on-findings`). |
 | 1 | Findings were reported and `--fail-on-findings` was set. |
-| 2 | Usage or configuration error. |
-| 3 | The scan is incomplete: some model calls or response parsing failed. |
+| 2 | Usage or configuration error, including a scan target that does not exist. |
+| 3 | The scan is incomplete: some model calls or response parsing failed, or, with `--fail-on-skipped`, files or chunks were skipped. |
+| 4 | Nothing was analyzed: no file produced a chunk to send to the model. |
 
 An incomplete scan has not analyzed the code covered by its failed attempts, so
-exit code 3 takes precedence over 1. Pass `--allow-incomplete` to exit 0 anyway.
+exit codes 4 and 3 take precedence over 1. Pass `--allow-incomplete` or
+`--allow-empty` to exit 0 anyway.
+
+Files over 1 MB, chunks too long for the model, unreadable files and excluded
+directories are skipped. Every run logs a `Skipped` summary, and the reports
+list each skipped item with its reason. Only the `.git` directory itself is
+always excluded; `.github`, `.gitlab` and similar directories are scanned.
 Every report states how many attempts succeeded: SARIF sets
 `invocations[0].executionSuccessful` and lists each failure as a tool execution
 notification, the Markdown report flags an incomplete scan at the top, and the

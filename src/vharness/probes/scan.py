@@ -5,6 +5,12 @@ from __future__ import annotations
 import os
 
 from ..core import Attempt
+from ..coverage import (
+    SKIP_EXCLUDED,
+    SKIP_OVERSIZE_CHUNK,
+    SKIP_OVERSIZE_FILE,
+    SKIP_UNREADABLE,
+)
 from ..log import log
 from .base import Probe, register_builtin
 
@@ -12,6 +18,8 @@ DEFAULT_EXCLUDES = {
     ".git", "node_modules", "vendor", "build", "dist", "out", "__pycache__",
     ".cache", ".venv", "venv", "target", ".idea", ".vscode",
 }
+#: Always excluded, whatever --exclude says: version-control internals.
+GIT_DIR = ".git"
 MAX_FILE_BYTES = 1_000_000
 ROUTING_HEADER_BYTES = 4096
 
@@ -85,26 +93,49 @@ class FileProbe(Probe):
 
     # ---- Probe.attempts -------------------------------------------------
     def attempts(self, **kwargs) -> list[Attempt]:
+        """Chunks to analyze, plus one ``skipped`` attempt per item left out.
+
+        Skipped attempts carry ``context["skip_reason"]`` and a detail note so
+        reports can show what was never analyzed and why.
+        """
         targets = kwargs.get("targets")
         if isinstance(targets, str):
             targets = [targets]
         if not targets:
             raise ValueError(f"probe '{self.name}' requires targets=[...] or target='...'")
         excludes = set(kwargs.get("exclude") or DEFAULT_EXCLUDES)
-        out: list[Attempt] = []
-        files = self._discover(targets, excludes)
+        root = targets[0] if len(targets) == 1 and os.path.isdir(targets[0]) else None
+
+        def display(path: str) -> str:
+            return os.path.relpath(path, root) if root else path
+
+        files, excluded_dirs = self._discover(targets, excludes)
+        out: list[Attempt] = [
+            self._skipped(display(d), SKIP_EXCLUDED, "directory excluded from the scan")
+            for d in excluded_dirs
+        ]
         for path in files:
             try:
                 with open(path, "rb") as fh:
                     raw = fh.read(MAX_FILE_BYTES + 1)
-            except OSError:
-                continue
-            if len(raw) > MAX_FILE_BYTES:
-                log.debug("[%s] skip oversize file (%d bytes): %s", self.name, len(raw), path)
+            except OSError as exc:
+                # Unreadable: route on the name alone so only claiming probes report it.
+                if self.matches(path, b""):
+                    out.append(self._skipped(display(path), SKIP_UNREADABLE, str(exc)))
                 continue
             # Route: only files this probe claims. Shebang-based probes (shell)
             # need the file head for extensionless routing.
             if not self.matches(path, raw[:ROUTING_HEADER_BYTES]):
+                continue
+            if len(raw) > MAX_FILE_BYTES:
+                log.debug("[%s] skip oversize file: %s", self.name, path)
+                out.append(
+                    self._skipped(
+                        display(path),
+                        SKIP_OVERSIZE_FILE,
+                        f"file is larger than {MAX_FILE_BYTES} bytes",
+                    )
+                )
                 continue
             try:
                 content = raw.decode("utf-8")
@@ -113,38 +144,75 @@ class FileProbe(Probe):
             if not self.file_is_interesting(content):
                 log.debug("[%s] skip uninteresting file (no sink match): %s", self.name, path)
                 continue
-            root = targets[0] if len(targets) == 1 and os.path.isdir(targets[0]) else None
-            display = os.path.relpath(path, root) if root else path
+            shown = display(path)
             for name, line, code in self.chunk(content, path):
                 if len(code) > self.max_chunk_chars:
-                    log.debug("[%s] %s: skip oversize chunk '%s' at line %d", self.name, display, name, line)
+                    log.debug("[%s] %s: skip oversize chunk '%s' at line %d", self.name, shown, name, line)
+                    out.append(
+                        self._skipped(
+                            shown,
+                            SKIP_OVERSIZE_CHUNK,
+                            f"chunk '{name}' at line {line} is longer than "
+                            f"{self.max_chunk_chars} characters",
+                            line=line,
+                            function=name,
+                        )
+                    )
                     continue
                 if not self.chunk_is_interesting(code):
-                    log.debug("[%s] %s: skip uninteresting chunk '%s' at line %d", self.name, display, name, line)
+                    log.debug("[%s] %s: skip uninteresting chunk '%s' at line %d", self.name, shown, name, line)
                     continue
-                log.debug("[%s] %s: accept chunk '%s' at line %d", self.name, display, name, line)
+                log.debug("[%s] %s: accept chunk '%s' at line %d", self.name, shown, name, line)
                 out.append(
                     Attempt(
                         prompt=self.user_prompt(code),
                         system=self.system_prompt,
                         probe=self.name,
-                        source=display,
-                        context={"file": display, "line": line, "function": name},
+                        source=shown,
+                        context={"file": shown, "line": line, "function": name},
                     )
                 )
         return out
 
-    def _discover(self, targets: list[str], excludes: set[str]) -> list[str]:
+    def _skipped(
+        self, source: str, reason: str, detail: str, *, line: int = 0, function: str = ""
+    ) -> Attempt:
+        """An attempt recording an item discovery left out; never sent to a model."""
+        context: dict[str, object] = {"file": source, "skip_reason": reason}
+        if line:
+            context["line"] = line
+        if function:
+            context["function"] = function
+        return Attempt(
+            prompt="",
+            probe=self.name,
+            source=source,
+            context=context,
+            status="skipped",
+            detector_notes=[detail],
+        )
+
+    def _discover(
+        self, targets: list[str], excludes: set[str]
+    ) -> tuple[list[str], list[str]]:
+        """Return (files to consider, directories pruned by the exclude rules)."""
         found: list[str] = []
+        excluded: list[str] = []
         for root in targets:
             if os.path.isfile(root):
                 found.append(root)
                 continue
             for dirpath, dirnames, filenames in os.walk(root):
-                dirnames[:] = [d for d in dirnames if d not in excludes and not d.startswith(".git")]
+                kept = []
+                for d in dirnames:
+                    if d == GIT_DIR or d in excludes:
+                        excluded.append(os.path.join(dirpath, d))
+                    else:
+                        kept.append(d)
+                dirnames[:] = kept
                 for fn in filenames:
                     found.append(os.path.join(dirpath, fn))
-        return sorted(found)
+        return sorted(found), sorted(excluded)
 
     def route(self, path: str, head: bytes) -> bool:
         """Routing predicate used by the multi-probe 'scan' preset."""
