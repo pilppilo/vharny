@@ -9,7 +9,7 @@ Prepared against repository revision
 
 ## Read order
 
-1. Repository [AGENTS.md](../../AGENTS.md).
+1. Repository [AGENTS.md](../../docs/AGENTS.md).
 2. [Planning index](../../plans/README.md) and its Current focus documents.
 3. [Library structure](01-library-structure.md).
 4. [Types and callable contracts](02-contracts.md).
