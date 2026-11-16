@@ -654,7 +654,7 @@ def _generator_args(p: argparse.ArgumentParser, include_model: bool = True) -> N
         p.add_argument("--model", help="model name (env VHARNESS_MODEL, config profile)")
         p.add_argument("--profile", default=None, help="named section in the config file (e.g. ollama, openrouter)")
         p.add_argument("--config", dest="config_file", default=None,
-                       help="config file path (default: $VHARNESS_CONFIG, ~/.config/vharness/config.toml, ./vharness.toml)")
+                       help="config file path (default: $VHARNESS_CONFIG, ~/.config/vharness/config.toml, then ./vharness.toml, which may only set `model` unless named here)")
     p.add_argument("--timeout", type=float, default=120.0)
     p.add_argument("--max-retries", type=int, default=3)
     p.add_argument("--max-tokens", type=int, default=1024)

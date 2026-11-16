@@ -116,6 +116,12 @@ Use a named profile with:
 uv run python -m vharness scan ./my-repo --profile openrouter
 ```
 
+A `vharness.toml` in the current directory is used only when no user-level
+config exists, and it may set `model` only. Its `base_url` and `api_key` are
+ignored with a warning, so a repository you scan cannot send your key or code
+to its own server. To trust a project file fully, name it with `--config` or
+`VHARNESS_CONFIG`.
+
 Do not put provider keys in prompts, source files, reports, or committed
 configuration. Harny records run metadata and usage in its local logs; provider
 billing, account quotas, and permissions remain provider responsibilities.
