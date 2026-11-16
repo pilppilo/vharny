@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Tests (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+      - name: Install
+        run: uv sync --frozen
+      - name: Run tests
+        run: uv run pytest -n auto -rs --junitxml=pytest-results.xml
+      - name: Check that every skipped test is allow-listed
+        if: ${{ !cancelled() && hashFiles('pytest-results.xml') != '' }}
+        run: uv run python tools/check_skips.py pytest-results.xml .github/ci-skip-allowlist.txt
+
+  checks:
+    name: Types, lint and formatting
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+          enable-cache: true
+      - name: Install
+        run: uv sync --frozen
+      - name: Pyright
+        run: uv run pyright
+      - name: Pylint
+        run: uv run pylint src/vharness/agent
+      - name: Black
+        run: uv run black --check src/vharness/agent tests/agent
