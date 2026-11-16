@@ -11,6 +11,8 @@ dependencies = [
 [project.optional-dependencies]
 inspect = ["inspect-ai>=0.3,<0.4"]
 gymnasium = ["gymnasium>=0.29,<2"]
+# ARC-AGI Toolkit for the ARC-AGI-3 adapter; it requires Python 3.12+.
+arc = ["arc-agi>=0.9.10,<0.10; python_version >= '3.12'"]
 
 [project.scripts]
 vharness = "vharness.cli:main"
