@@ -37,6 +37,10 @@ class RuntimeStore:
                     session_id INTEGER NOT NULL,
                     start_marker TEXT
                 )""")
+            self._connection.execute("""CREATE TABLE IF NOT EXISTS sends (
+                    proposal_id TEXT PRIMARY KEY,
+                    kind TEXT NOT NULL
+                )""")
             self._connection.commit()
         except sqlite3.Error as exc:
             raise PersistenceError(f"could not open runtime store: {exc}") from exc
@@ -132,6 +136,47 @@ class RuntimeStore:
             if row and row[0] is not None
             else None
         )
+
+    def record_send(self, proposal_id: str, kind: str) -> None:
+        """Durably note, just before the effect, that a claimed dispatch is sent.
+
+        Unlike ``prepare``, this marks only dispatches that reach the external
+        system, so counts of sent effects exclude refused proposals.
+        """
+        with self._lock:
+            try:
+                self._connection.execute("BEGIN IMMEDIATE")
+                claimed = self._connection.execute(
+                    "SELECT 1 FROM dispatches WHERE proposal_id=?", (proposal_id,)
+                ).fetchone()
+                if claimed is None:
+                    raise ContractError("send has no matching durable dispatch intent")
+                self._connection.execute(
+                    "INSERT INTO sends(proposal_id, kind) VALUES (?, ?)",
+                    (proposal_id, kind),
+                )
+                self._connection.commit()
+            except ContractError:
+                self._connection.rollback()
+                raise
+            except sqlite3.Error as exc:
+                self._connection.rollback()
+                raise PersistenceError(
+                    f"could not record dispatch send: {exc}"
+                ) from exc
+
+    def count_sends(self, kind: str) -> int:
+        """Return how many dispatches of ``kind`` were sent, across reopens."""
+        with self._lock:
+            try:
+                row = self._connection.execute(
+                    "SELECT COUNT(*) FROM sends WHERE kind=?", (kind,)
+                ).fetchone()
+            except sqlite3.Error as exc:
+                raise PersistenceError(
+                    f"could not count dispatch sends: {exc}"
+                ) from exc
+        return int(row[0])
 
     # Persisted process identity is one explicit tuple of correlated facts.
     # pylint: disable=too-many-arguments,too-many-positional-arguments
