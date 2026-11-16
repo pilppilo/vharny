@@ -64,7 +64,10 @@ class WorkspaceEnvironment:
             ),
             _action(
                 "exec",
-                "Start a command as an owned job",
+                "Start a command as an owned job. Output is collected whenever "
+                "any action runs, so a command that prints a lot pauses between "
+                "actions. Per stream, the first 4 MiB and the last 1 MiB are kept; "
+                "job_read reports how many bytes were dropped in between",
                 {
                     "command": _STRING,
                     "cwd": _STRING,

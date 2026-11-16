@@ -42,8 +42,8 @@ class ProcessRuntime:
     The worker retains live handles only in memory. On restart, a durable receipt
     is returned when one exists; an intent without a receipt is UNKNOWN and is
     never re-executed. Stored PIDs are diagnostics only and are never signaled.
-    Process deadlines are enforced lazily when a job is read or stopped; this
-    runtime does not own a background watchdog.
+    Process deadlines are enforced, and job output collected, lazily on every
+    action; this runtime does not own a background watchdog or drain thread.
     """
 
     def __init__(
@@ -116,6 +116,9 @@ class ProcessRuntime:
                 duration_ms=int((time.monotonic() - started) * 1000),
                 actions=None,
             )
+        # Every action collects pending output from all live jobs, so a noisy
+        # command keeps running without the model having to read it.
+        self.jobs.drain_all()
         try:
             self._validate_action(proposal.action_name, proposal.arguments)
             payload = self._dispatch(proposal)
