@@ -27,7 +27,8 @@ jobs:
           python-version: ${{ matrix.python }}
           enable-cache: true
       - name: Install
-        run: uv sync --frozen
+        # The arc extra installs only on Python 3.12+ (see pyproject.toml).
+        run: uv sync --frozen --extra arc
       - name: Run tests
         run: uv run pytest -n auto -rs --junitxml=pytest-results.xml
       - name: Check that every skipped test is allow-listed
