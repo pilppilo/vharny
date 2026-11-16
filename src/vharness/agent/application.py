@@ -34,6 +34,7 @@ from ..core import (
     ModelFailureClass,
 )
 from ..generators.openai_compat import OpenAICompatible
+from .adapters.arc_agi_setup import ARC_EVALUATION_CONTRACT, build_arc_dependencies
 from .adapters.child_environment import ChildEnvironment
 from .adapters.process_runtime import ProcessRuntime
 from .adapters.workspace import WorkspaceEnvironment
@@ -59,6 +60,7 @@ from .models import (
     EvaluationReceipt,
     EvaluationRequest,
     JsonValue,
+    Observation,
     PendingDispatch,
     RunIdentity,
     SessionStatus,
@@ -66,6 +68,7 @@ from .models import (
     TaskSpec,
 )
 from .ports import (
+    Environment,
     EvaluationReconciliationResult,
     Evaluator,
     ReconciliationKind,
@@ -212,21 +215,48 @@ class OperatorEvaluator:
 
 
 @dataclass(frozen=True, slots=True)
-class WorkspaceDependencies:
-    """Concrete adapters built for one workspace run."""
+class RunDependencies:
+    """Concrete adapters built for one run: a workspace or an ARC-AGI-3 game."""
 
-    environment: WorkspaceEnvironment
-    runtime: ProcessRuntime
+    environment: Environment
+    runtime: Runtime
     evaluator: Evaluator
     evaluation_mode: EvaluationMode
     evaluation_contract_id: str
+    #: Publishes the session's first observation; called only on creation.
+    initial_observation: Callable[[str], Observation]
+
+
+def build_run_dependencies(
+    settings: RunSettings,
+    artifacts: ArtifactStore,
+    runtime_store_path: str | Path,
+) -> RunDependencies:
+    """Build the adapters the settings select."""
+    if settings.arc is None:
+        return build_workspace_dependencies(settings, artifacts, runtime_store_path)
+    arc = build_arc_dependencies(
+        settings.arc,
+        max_actions=settings.max_actions,
+        games_dir=settings.workspace,
+        artifacts=artifacts,
+        runtime_store_path=runtime_store_path,
+    )
+    return RunDependencies(
+        arc.runtime,
+        arc.runtime,
+        arc.evaluator,
+        settings.evaluation_mode,
+        ARC_EVALUATION_CONTRACT,
+        arc.runtime.initial_observation,
+    )
 
 
 def build_workspace_dependencies(
     settings: RunSettings,
     artifacts: ArtifactStore,
     runtime_store_path: str | Path,
-) -> WorkspaceDependencies:
+) -> RunDependencies:
     """Build the real workspace environment, runtime, and evaluator."""
     environment = WorkspaceEnvironment(settings.workspace, artifacts)
     child_environment = ChildEnvironment(settings.api_key_env, settings.child_env_allow)
@@ -245,20 +275,31 @@ def build_workspace_dependencies(
             timeout_seconds=settings.check_timeout_seconds,
             environment=child_environment,
         )
-        return WorkspaceDependencies(
+        return RunDependencies(
             environment,
             runtime,
             evaluator,
             EvaluationMode.EXTERNAL_CHECK,
             "check-command-evaluator-v1",
+            _workspace_observation(environment, settings.target),
         )
-    return WorkspaceDependencies(
+    return RunDependencies(
         environment,
         runtime,
         OperatorEvaluator(),
         EvaluationMode.OPERATOR,
         "operator-evaluation-v1",
+        _workspace_observation(environment, settings.target),
     )
+
+
+def _workspace_observation(
+    environment: WorkspaceEnvironment, target: str | None
+) -> Callable[[str], Observation]:
+    def observe(session_id: str) -> Observation:
+        return environment.initial_observation(session_id, target=target)
+
+    return observe
 
 
 PROVIDER_HEADERS_ENV = "VHARNESS_PROVIDER_HEADERS"
@@ -375,6 +416,9 @@ def run_identity(
         "max_output_tokens": settings.max_output_tokens,
         "repair_budget": settings.repair_budget,
     }
+    if settings.arc is not None:
+        # Added only for ARC runs, so existing run identities are unchanged.
+        safe["arc"] = settings.arc.to_payload()
     digest = hashlib.sha256(canonical_json(safe).encode("utf-8")).hexdigest()
     return RunIdentity(VERSION, digest, runtime.identity(), evaluator.identity())
 
@@ -523,10 +567,10 @@ class Application:
     ) -> Application:
         artifacts = ArtifactStore(directory.artifacts_path)
         journal = SqliteJournal(directory.journal_path)
-        dependencies: WorkspaceDependencies | None = None
+        dependencies: RunDependencies | None = None
         supervisor_close: Callable[[], None] | None = None
         try:
-            dependencies = build_workspace_dependencies(
+            dependencies = build_run_dependencies(
                 settings, artifacts, directory.runtime_store_path
             )
             if supervisor is None:
@@ -849,13 +893,13 @@ class Application:
 def _create_session(
     settings: RunSettings,
     session_id: str,
-    dependencies: WorkspaceDependencies,
+    dependencies: RunDependencies,
     journal: SqliteJournal,
     artifacts: ArtifactStore,
     supervisor: SupervisionCapability | None,
 ) -> Session:
     environment = dependencies.environment
-    observation = environment.initial_observation(session_id, target=settings.target)
+    observation = dependencies.initial_observation(session_id)
     identity = run_identity(settings, dependencies.runtime, dependencies.evaluator)
     task = TaskSpec(
         task_id=f"vharness-agent-{session_id}",

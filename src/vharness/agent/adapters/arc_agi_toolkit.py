@@ -119,6 +119,10 @@ class ArcScorecardSource(Protocol):
         raise NotImplementedError
 
 
+class ArcToolkitGame(ArcGameConnection, ArcScorecardSource, Protocol):
+    """One game connection that also reads its scorecard."""
+
+
 class TimedCaller:
     """Run blocking calls on a daemon thread with a timeout, one at a time."""
 

@@ -8,6 +8,7 @@ reopenable with the same identity. Secrets are never held here: only the
 
 from __future__ import annotations
 
+import math
 import re
 from dataclasses import dataclass
 from typing import Mapping
@@ -20,6 +21,8 @@ DEFAULT_CHECK_TIMEOUT_SECONDS = 600.0
 DEFAULT_PROVIDER_TIMEOUT_SECONDS = 120.0
 DEFAULT_TRANSPORT_RECOVERY_MAX_RETRIES = 2
 DEFAULT_TRANSPORT_RETRY_DELAYS_SECONDS = (2.0, 8.0)
+DEFAULT_ARC_CALL_TIMEOUT_SECONDS = 30.0
+ARC_OPERATION_MODES = ("normal", "online", "offline")
 _ENV_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
@@ -107,6 +110,18 @@ def _validate_child_env_allow(allow: tuple[str, ...] | None, api_key_env: str) -
         )
 
 
+def _validate_arc(settings: RunSettings) -> None:
+    """ARC runs play one game: no check command, no target, a positive limit."""
+    if settings.arc is None:
+        return
+    if not isinstance(settings.arc, ArcRunSettings):
+        raise ContractError("arc must be ArcRunSettings")
+    if settings.check_command is not None or settings.target is not None:
+        raise ContractError("ARC runs take no check_command or target")
+    if settings.max_actions < 1:
+        raise ContractError("ARC runs need max_actions of at least 1")
+
+
 def _required_delay(value: object, index: int) -> float:
     """Decode one positive retry delay, failing closed on bad input."""
     if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
@@ -117,6 +132,66 @@ def _required_delay(value: object, index: int) -> float:
 
 
 # A run's non-secret configuration is one explicit, serializable record.
+@dataclass(frozen=True, slots=True)
+class ArcRunSettings:
+    """Which ARC-AGI-3 game a run plays, and how the toolkit is reached.
+
+    The run's ``max_actions`` doubles as the runtime's game-action limit.
+    """
+
+    game_id: str
+    seed: int = 0
+    operation_mode: str = "normal"
+    call_timeout_seconds: float = DEFAULT_ARC_CALL_TIMEOUT_SECONDS
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.game_id, str) or not self.game_id.strip():
+            raise ContractError("ARC game_id must be a non-empty string")
+        if isinstance(self.seed, bool) or not isinstance(self.seed, int):
+            raise ContractError("ARC seed must be an integer")
+        if self.seed < 0:
+            raise ContractError("ARC seed must not be negative")
+        if self.operation_mode not in ARC_OPERATION_MODES:
+            raise ContractError(
+                f"ARC operation_mode must be one of {', '.join(ARC_OPERATION_MODES)}"
+            )
+        timeout = self.call_timeout_seconds
+        if (
+            isinstance(timeout, bool)
+            or not isinstance(timeout, (int, float))
+            or not math.isfinite(timeout)
+            or timeout <= 0
+        ):
+            raise ContractError("ARC call_timeout_seconds must be finite and positive")
+
+    def to_payload(self) -> dict[str, object]:
+        """Return the ARC settings as a JSON-compatible object."""
+        return {
+            "game_id": self.game_id,
+            "seed": self.seed,
+            "operation_mode": self.operation_mode,
+            "call_timeout_seconds": self.call_timeout_seconds,
+        }
+
+    @classmethod
+    def from_payload(cls, value: object) -> ArcRunSettings:
+        """Decode persisted ARC settings, failing closed on bad input."""
+        if not isinstance(value, Mapping):
+            raise ContractError("run manifest arc must be an object")
+        timeout = value.get("call_timeout_seconds")
+        if isinstance(timeout, bool) or not isinstance(timeout, (int, float)):
+            raise ContractError("run manifest arc call_timeout_seconds is invalid")
+        operation_mode = value.get("operation_mode")
+        if not isinstance(operation_mode, str):
+            raise ContractError("run manifest arc operation_mode is invalid")
+        return cls(
+            game_id=_required_str(value, "game_id"),
+            seed=_required_int(value, "seed"),
+            operation_mode=operation_mode,
+            call_timeout_seconds=float(timeout),
+        )
+
+
 # pylint: disable=too-many-instance-attributes
 @dataclass(frozen=True, slots=True)
 class RunSettings:
@@ -147,6 +222,8 @@ class RunSettings:
     transport_recovery: TransportRecoverySettings = TransportRecoverySettings()
     #: Variables child processes may see; ``None`` passes all but provider secrets.
     child_env_allow: tuple[str, ...] | None = None
+    #: Set for an ARC-AGI-3 run; ``workspace`` is then where games are downloaded.
+    arc: ArcRunSettings | None = None
 
     def __post_init__(self) -> None:
         if not self.objective.strip():
@@ -184,6 +261,7 @@ class RunSettings:
         if not isinstance(self.transport_recovery, TransportRecoverySettings):
             raise ContractError("transport_recovery must be TransportRecoverySettings")
         _validate_child_env_allow(self.child_env_allow, self.api_key_env)
+        _validate_arc(self)
 
     @property
     def max_recovery_seconds(self) -> float:
@@ -202,20 +280,25 @@ class RunSettings:
         """Return the persisted evaluation mode selected by the run settings."""
         return (
             EvaluationMode.EXTERNAL_CHECK
-            if self.check_command is not None
+            if self.check_command is not None or self.arc is not None
             else EvaluationMode.OPERATOR
         )
 
     @property
     def success_evidence(self) -> str:
         """Describe the operator-selected acceptance condition for the task."""
+        if self.arc is not None:
+            return "the official ARC-AGI-3 scorecard marks the game completed"
         if self.check_command is not None:
             return "operator check command exits zero"
         return "operator evaluation acceptance"
 
     def to_payload(self) -> dict[str, object]:
-        """Return the non-secret settings as a JSON-compatible object."""
-        return {
+        """Return the non-secret settings as a JSON-compatible object.
+
+        ``arc`` appears only for ARC runs, so other manifests are unchanged.
+        """
+        payload: dict[str, object] = {
             "objective": self.objective,
             "workspace": self.workspace,
             "target": self.target,
@@ -241,6 +324,9 @@ class RunSettings:
                 None if self.child_env_allow is None else list(self.child_env_allow)
             ),
         }
+        if self.arc is not None:
+            payload["arc"] = self.arc.to_payload()
+        return payload
 
     @classmethod
     def from_payload(cls, value: Mapping[str, object]) -> RunSettings:
@@ -286,6 +372,11 @@ class RunSettings:
                 value.get("transport_recovery")
             ),
             child_env_allow=_optional_str_tuple(value, "child_env_allow"),
+            arc=(
+                None
+                if value.get("arc") is None
+                else ArcRunSettings.from_payload(value.get("arc"))
+            ),
         )
 
 
