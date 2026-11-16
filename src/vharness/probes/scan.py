@@ -131,7 +131,10 @@ class FileProbe(Probe):
             targets = [targets]
         if not targets:
             raise ValueError(f"probe '{self.name}' requires targets=[...] or target='...'")
-        excludes = set(kwargs.get("exclude") or DEFAULT_EXCLUDES)
+        # --exclude adds to the defaults; no_default_excludes turns them off.
+        excludes = set(kwargs.get("exclude") or ())
+        if not kwargs.get("no_default_excludes"):
+            excludes |= DEFAULT_EXCLUDES
         root = targets[0] if len(targets) == 1 and os.path.isdir(targets[0]) else None
 
         def display(path: str) -> str:

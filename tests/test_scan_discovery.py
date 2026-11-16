@@ -40,14 +40,94 @@ def test_github_and_gitlab_dirs_are_scanned_but_git_is_not(tmp_path):
     assert _skips(got) == [(".git", "excluded-directory")]
 
 
-def test_git_dir_stays_excluded_with_custom_excludes(tmp_path):
+def test_git_dir_stays_excluded_without_default_excludes(tmp_path):
     (tmp_path / ".git").mkdir()
     (tmp_path / ".git" / "x.sh").write_text(RISKY)
     (tmp_path / "vendor").mkdir()
     (tmp_path / "vendor" / "y.sh").write_text(RISKY)
-    got = domains.ShellProbe().attempts(targets=[str(tmp_path)], exclude=["build"])
+    got = domains.ShellProbe().attempts(
+        targets=[str(tmp_path)], exclude=["build"], no_default_excludes=True
+    )
     assert _analyzed(got) == ["vendor/y.sh"]
     assert _skips(got) == [(".git", "excluded-directory")]
+
+
+# ---- COD-27: --exclude adds to the default excludes ------------------------
+
+
+@pytest.fixture
+def repo_with_deps(tmp_path):
+    repo = tmp_path / "repo"
+    for rel in ("src/a.sh", "node_modules/x/a.sh", "gen/a.sh"):
+        path = repo / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(RISKY)
+    return repo
+
+
+def test_default_excludes_apply_without_flags(repo_with_deps):
+    got = domains.ShellProbe().attempts(targets=[str(repo_with_deps)])
+    assert _analyzed(got) == ["gen/a.sh", "src/a.sh"]
+
+
+def test_exclude_adds_to_the_defaults(repo_with_deps):
+    got = domains.ShellProbe().attempts(targets=[str(repo_with_deps)], exclude=["gen"])
+    assert _analyzed(got) == ["src/a.sh"]
+    assert ("node_modules", "excluded-directory") in _skips(got)
+
+
+def test_no_default_excludes_scans_dependency_dirs(repo_with_deps):
+    got = domains.ShellProbe().attempts(
+        targets=[str(repo_with_deps)], exclude=["gen"], no_default_excludes=True
+    )
+    assert _analyzed(got) == ["node_modules/x/a.sh", "src/a.sh"]
+
+
+def test_cli_exclude_flags(repo_with_deps, out_dir):
+    assert (
+        main(
+            [
+                "scan",
+                str(repo_with_deps),
+                "--generator",
+                "mock",
+                "--format",
+                "json",
+                "-q",
+                "--exclude",
+                "gen",
+            ]
+        )
+        == 0
+    )
+    with open("report.json", encoding="utf-8") as fh:
+        report = json.load(fh)
+    assert {s["source"] for s in report["skipped"]} == {"gen", "node_modules"}
+    assert (
+        main(
+            [
+                "scan",
+                str(repo_with_deps),
+                "--generator",
+                "mock",
+                "--format",
+                "json",
+                "-q",
+                "--no-default-excludes",
+            ]
+        )
+        == 0
+    )
+    with open("report.json", encoding="utf-8") as fh:
+        report = json.load(fh)
+    assert report["coverage"]["files_analyzed"] == 3
+
+
+def test_help_lists_default_excludes(capsys):
+    with pytest.raises(SystemExit):
+        main(["scan", "--help"])
+    out = " ".join(capsys.readouterr().out.split())
+    assert "node_modules" in out and "--no-default-excludes" in out
 
 
 # ---- CLI helpers -----------------------------------------------------------

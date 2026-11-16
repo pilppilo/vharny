@@ -28,6 +28,7 @@ from .core import (
 from .coverage import EXIT_EMPTY, EXIT_INCOMPLETE, RunCoverage
 from .log import log, setup as log_setup
 from .outputs import OUTPUT_FIELDS, OutputPathError, refusal as output_refusal
+from .probes.scan import DEFAULT_EXCLUDES
 from .runner import Runner
 from .skills import SkillError, load_skills
 from .workspace import (
@@ -144,6 +145,8 @@ def _probe_kwargs(args, probe_names: list[str]) -> dict:
         kw["targets"] = list(args.targets)
     if getattr(args, "exclude", None):
         kw["exclude"] = list(args.exclude)
+    if getattr(args, "no_default_excludes", False):
+        kw["no_default_excludes"] = True
     if getattr(args, "follow_symlinks", False):
         log.warning(
             "--follow-symlinks: files are read wherever their symlinks point, "
@@ -184,7 +187,8 @@ def _project_inputs(args, workflow: str) -> dict:
     """Persist only non-secret, normalized launch context in project metadata."""
     fields = (
         "targets", "analyzers", "format", "dataset", "corpus_dir", "limit",
-        "exclude", "generator", "model", "profile", "dry_run", "workers",
+        "exclude", "no_default_excludes", "generator", "model", "profile", "dry_run",
+        "workers",
     )
     inputs = {field: getattr(args, field) for field in fields if getattr(args, field, None) is not None}
     inputs["probes"] = list(args._probe_names)
@@ -778,6 +782,23 @@ def _generator_args(p: argparse.ArgumentParser, include_model: bool = True) -> N
     _common_args(p)
 
 
+def _exclude_args(p: argparse.ArgumentParser) -> None:
+    defaults = ", ".join(sorted(DEFAULT_EXCLUDES))
+    p.add_argument(
+        "--exclude",
+        action="append",
+        default=[],
+        metavar="DIR",
+        help=f"directory name to skip, in addition to the defaults (repeatable); "
+        f"defaults: {defaults}",
+    )
+    p.add_argument(
+        "--no-default-excludes",
+        action="store_true",
+        help="scan the default-excluded directories too (.git is always skipped)",
+    )
+
+
 def _follow_symlinks_arg(p: argparse.ArgumentParser) -> None:
     p.add_argument(
         "--follow-symlinks",
@@ -811,7 +832,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_p.add_argument("--dataset", default=None, help="JSONL path for dataset probes")
     run_p.add_argument("--corpus-dir", default=None, help="labeled corpus dir (default: built-in)")
     run_p.add_argument("--limit", type=int, default=None)
-    run_p.add_argument("--exclude", action="append", default=[], help="dir name to skip (repeatable)")
+    _exclude_args(run_p)
     _follow_symlinks_arg(run_p)
     run_p.add_argument("--dry-run", action="store_true")
     run_p.add_argument("--out", default=None, help="base path for report outputs")
@@ -829,7 +850,7 @@ def build_parser() -> argparse.ArgumentParser:
     scan_p.add_argument("--format", default="sarif,markdown", help="comma list: sarif,markdown,json,summary")
     scan_p.add_argument("--out", default=None)
     scan_p.add_argument("--dry-run", action="store_true")
-    scan_p.add_argument("--exclude", action="append", default=[], help="dir name to skip (repeatable)")
+    _exclude_args(scan_p)
     _follow_symlinks_arg(scan_p)
     _allow_incomplete_arg(scan_p)
     scan_p.add_argument(
