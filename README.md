@@ -106,6 +106,9 @@ Files over 1 MB, chunks too long for the model, unreadable files and excluded
 directories are skipped. Every run logs a `Skipped` summary, and the reports
 list each skipped item with its reason. Only the `.git` directory itself is
 always excluded; `.github`, `.gitlab` and similar directories are scanned.
+Dependency and build directories (`node_modules`, `vendor`, `build`, `.venv`
+and others listed in `vharness scan --help`) are skipped by default.
+`--exclude DIR` adds to that list, and `--no-default-excludes` scans them too.
 
 Scans don't read through symlinks that point outside a scan target. Such links
 are reported as skipped (`outside-root`) so a repository can't send your other
