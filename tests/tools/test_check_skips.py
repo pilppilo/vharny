@@ -85,6 +85,29 @@ def test_entry_without_test_name_is_rejected(tmp_path, junit):
         check_skips.main([str(junit), str(allow)])
 
 
+def test_python_conditions_select_entries(tmp_path):
+    allow = _allowlist(
+        tmp_path,
+        "tests/a.py::test_old  [python<3.12]  # only on old Pythons\n"
+        "tests/a.py::test_new [python>=3.12]\n"
+        "tests/a.py::test_always\n",
+    )
+    assert check_skips.read_allowlist(allow, (3, 10)) == {
+        "tests.a::test_old",
+        "tests.a::test_always",
+    }
+    assert check_skips.read_allowlist(allow, (3, 13)) == {
+        "tests.a::test_new",
+        "tests.a::test_always",
+    }
+
+
+def test_malformed_condition_is_rejected(tmp_path):
+    allow = _allowlist(tmp_path, "tests/a.py::test_x [py3]\n")
+    with pytest.raises(ValueError, match="not a pytest node id"):
+        check_skips.read_allowlist(allow, (3, 13))
+
+
 def test_repository_allowlist_is_well_formed():
     entries = check_skips.read_allowlist(ROOT / ".github" / "ci-skip-allowlist.txt")
     assert entries

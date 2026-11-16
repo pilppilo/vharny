@@ -7,3 +7,7 @@ tests/agent/test_phase2_live_software_evidence.py::test_verify_accepts_valid_liv
 tests/agent/test_phase2_operator_evidence.py::test_verify_rejects_tampered_stored_fresh_projection
 tests/agent/test_phase2_operator_evidence.py::test_verify_recomputes_report_after_manifest_hash_update
 tests/agent/test_phase2_operator_evidence.py::test_verify_survives_fresh_autocrlf_clone
+
+# COD-34: the arc extra (arc-agi) requires Python 3.12+, so the toolkit
+# conformance check runs on 3.13 and skips on 3.10.
+tests/agent/test_arc_fixtures.py::test_fixture_conforms_to_the_installed_toolkit  [python<3.12]
