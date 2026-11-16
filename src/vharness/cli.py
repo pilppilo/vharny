@@ -25,6 +25,7 @@ from .core import (
     load_entry_points,
     normalize_names,
 )
+from .coverage import EXIT_INCOMPLETE, RunCoverage
 from .log import log, setup as log_setup
 from .runner import Runner
 from .skills import SkillError, load_skills
@@ -279,9 +280,17 @@ def cmd_run(args) -> int:
     _finish_project_run(
         project_run,
         code,
-        stop_reason="dry_run" if getattr(args, "dry_run", False) else ("fail_on_findings" if code else "complete"),
+        stop_reason=_stop_reason(args, code),
     )
     return code
+
+
+def _stop_reason(args, code: int) -> str:
+    if getattr(args, "dry_run", False):
+        return "dry_run"
+    if code == EXIT_INCOMPLETE:
+        return "incomplete"
+    return "fail_on_findings" if code else "complete"
 
 
 def _cmd_run(args) -> int:
@@ -337,10 +346,28 @@ def _cmd_run(args) -> int:
     import dataclasses
     run_info = dataclasses.asdict(info) | run_info_extra | {"run_info": info}
     runner.evaluate(attempts, run_info, evaluator_names)
+    if _incomplete(args, attempts):
+        return EXIT_INCOMPLETE
     if getattr(args, "fail_on_findings", False) and any(a.findings for a in attempts):
         log.info("fail-on-findings: %d finding(s) present — exiting 1", sum(len(a.findings) for a in attempts))
         return 1
     return 0
+
+
+def _incomplete(args, attempts: list) -> bool:
+    """Warn about failed attempts; True when the command must exit incomplete."""
+    coverage = RunCoverage.from_attempts(attempts)
+    if coverage.complete:
+        return False
+    log.warning("incomplete run: %s", coverage.summary())
+    if not getattr(args, "fail_on_incomplete", False):
+        return False
+    log.error(
+        "exiting %d because %d attempt(s) failed; pass --allow-incomplete to exit 0",
+        EXIT_INCOMPLETE,
+        coverage.failed,
+    )
+    return True
 
 
 def cmd_scan(args) -> int:
@@ -621,6 +648,8 @@ def cmd_replay(args) -> int:
     evaluator_names = [e.strip() for e in (args.evaluators or "metrics,summary").split(",") if e.strip()]
     runner = Runner(_NeverGenerate(), log_file=None)
     runner.evaluate(attempts, run_info, evaluator_names)
+    if _incomplete(args, attempts):
+        return EXIT_INCOMPLETE
     if getattr(args, "fail_on_findings", False) and any(a.findings for a in attempts):
         return 1
     return 0
@@ -671,6 +700,16 @@ def _generator_args(p: argparse.ArgumentParser, include_model: bool = True) -> N
     _common_args(p)
 
 
+def _allow_incomplete_arg(p: argparse.ArgumentParser) -> None:
+    p.add_argument(
+        "--allow-incomplete",
+        dest="fail_on_incomplete",
+        action="store_false",
+        help=f"exit 0 even when model calls or response parsing failed "
+        f"(default: exit {EXIT_INCOMPLETE})",
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="vharness", description="pluggable LLM security harness")
     parser.add_argument("--version", action="version", version=f"vharness {VERSION}")
@@ -703,6 +742,7 @@ def build_parser() -> argparse.ArgumentParser:
     scan_p.add_argument("--out", default=None)
     scan_p.add_argument("--dry-run", action="store_true")
     scan_p.add_argument("--exclude", action="append", default=[], help="dir name to skip (repeatable)")
+    _allow_incomplete_arg(scan_p)
     _generator_args(scan_p)
     scan_p.set_defaults(func=cmd_scan, log_file=None)
 
@@ -741,6 +781,7 @@ def build_parser() -> argparse.ArgumentParser:
     replay_p.add_argument("--markdown-out", default=None)
     replay_p.add_argument("--json-out", default=None)
     replay_p.add_argument("--metrics-out", default=None)
+    _allow_incomplete_arg(replay_p)
     _common_args(replay_p)
     replay_p.set_defaults(func=cmd_replay)
 

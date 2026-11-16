@@ -7,6 +7,7 @@ import json
 import os
 
 from ..core import Attempt
+from ..coverage import RunCoverage
 from ..log import log
 from ..sarif import build_sarif
 from .base import Evaluator, register_builtin
@@ -41,7 +42,9 @@ class SarifReport(Evaluator):
 
     def evaluate(self, attempts: list[Attempt], run_info: dict) -> None:
         path = _out_path(run_info, "report.sarif", run_info.get("sarif_out"), "sarif")
-        sarif = build_sarif(list(_all_findings(attempts)))
+        sarif = build_sarif(
+            list(_all_findings(attempts)), coverage=RunCoverage.from_attempts(attempts)
+        )
         _write_parent(path)
         with open(path, "w", encoding="utf-8") as fh:
             json.dump(sarif, fh, indent=2)
@@ -56,12 +59,22 @@ class MarkdownReport(Evaluator):
     def evaluate(self, attempts: list[Attempt], run_info: dict) -> None:
         path = _out_path(run_info, "report.md", run_info.get("markdown_out"), "md")
         findings = sorted(_all_findings(attempts), key=lambda f: (_SEV_ORDER.get(f.severity, 3), f.file, f.line))
+        coverage = RunCoverage.from_attempts(attempts)
         out: list[str] = [
-            f"# Security scan report",
+            "# Security scan report",
             "",
             f"**{len(findings)} findings** across {len({f.file for f in findings})} file(s).",
             "",
+            f"**Coverage:** {coverage.summary()}.",
+            "",
         ]
+        if not coverage.complete:
+            out += [
+                f"> **Incomplete scan.** {coverage.failed} of {coverage.total} attempts "
+                "failed, so the code they covered was not analyzed. The findings "
+                "below come only from the attempts that succeeded.",
+                "",
+            ]
         by_file: dict[str, list] = {}
         for f in findings:
             by_file.setdefault(f.file, []).append(f)
@@ -79,7 +92,18 @@ class MarkdownReport(Evaluator):
                     out += ["", "**Suggested patch** (advisory — review before applying):", "", "```", f.patch, "```"]
                 out.append("")
         if not findings:
-            out.append("_No findings._")
+            out.append(
+                "_No findings._"
+                if coverage.complete
+                else "_No findings in the attempts that succeeded._"
+            )
+        if coverage.failures:
+            out += ["## Failed attempts", ""]
+            out += [
+                f"- `{failure.source}`: {failure.status} — {failure.message}"
+                for failure in coverage.failures
+            ]
+            out.append("")
         _write_parent(path)
         with open(path, "w", encoding="utf-8") as fh:
             fh.write("\n".join(out))
@@ -89,7 +113,7 @@ class MarkdownReport(Evaluator):
 @register_builtin
 class JsonReport(Evaluator):
     name = "json"
-    help = "write findings as flat JSON"
+    help = "write findings and attempt coverage as JSON"
 
     def evaluate(self, attempts: list[Attempt], run_info: dict) -> None:
         path = _out_path(run_info, "report.json", run_info.get("json_out"), "json")
@@ -100,9 +124,13 @@ class JsonReport(Evaluator):
             }
             for f in _all_findings(attempts)
         ]
+        report = {
+            "coverage": RunCoverage.from_attempts(attempts).as_dict(),
+            "findings": data,
+        }
         _write_parent(path)
         with open(path, "w", encoding="utf-8") as fh:
-            json.dump(data, fh, indent=2)
+            json.dump(report, fh, indent=2)
         log.info("wrote JSON: %s", path)
 
 

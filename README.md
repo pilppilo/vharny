@@ -88,6 +88,22 @@ SARIF can be uploaded to GitHub code scanning or another compatible security
 results platform. Suggested patches are advisory and should be reviewed before
 they are applied.
 
+`scan` and `replay` exit with these codes:
+
+| Code | Meaning |
+| --- | --- |
+| 0 | Every attempt was analyzed (and no findings, with `--fail-on-findings`). |
+| 1 | Findings were reported and `--fail-on-findings` was set. |
+| 2 | Usage or configuration error. |
+| 3 | The scan is incomplete: some model calls or response parsing failed. |
+
+An incomplete scan has not analyzed the code covered by its failed attempts, so
+exit code 3 takes precedence over 1. Pass `--allow-incomplete` to exit 0 anyway.
+Every report states how many attempts succeeded: SARIF sets
+`invocations[0].executionSuccessful` and lists each failure as a tool execution
+notification, the Markdown report flags an incomplete scan at the top, and the
+JSON report is an object with `coverage` counts and a `findings` list.
+
 ## Configure a provider
 
 Configuration is resolved per field in this order:
