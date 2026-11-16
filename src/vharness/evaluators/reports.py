@@ -65,9 +65,23 @@ class MarkdownReport(Evaluator):
             "",
             f"**{len(findings)} findings** across {len({f.file for f in findings})} file(s).",
             "",
-            f"**Coverage:** {coverage.summary()}.",
+            f"**Coverage:** {coverage.analyzed} chunk(s) from "
+            f"{coverage.files_analyzed} file(s) analyzed. {coverage.summary()}.",
             "",
         ]
+        if coverage.analyzed == 0:
+            out += [
+                "> **Nothing was analyzed.** No file produced a chunk to send to the "
+                "model, so this report says nothing about the code. Check the scan "
+                "targets and the skipped items below.",
+                "",
+            ]
+        if coverage.gaps:
+            out += [
+                f"> **Partial coverage.** {len(coverage.gaps)} file(s) or chunk(s) "
+                "were skipped and never analyzed; see Skipped below.",
+                "",
+            ]
         if not coverage.complete:
             out += [
                 f"> **Incomplete scan.** {coverage.failed} of {coverage.total} attempts "
@@ -104,6 +118,13 @@ class MarkdownReport(Evaluator):
                 for failure in coverage.failures
             ]
             out.append("")
+        if coverage.skips:
+            out += ["## Skipped", ""]
+            out += [
+                f"- `{item.source}`: {item.reason} — {item.detail}"
+                for item in coverage.skips
+            ]
+            out.append("")
         _write_parent(path)
         with open(path, "w", encoding="utf-8") as fh:
             fh.write("\n".join(out))
@@ -124,9 +145,14 @@ class JsonReport(Evaluator):
             }
             for f in _all_findings(attempts)
         ]
+        coverage = RunCoverage.from_attempts(attempts)
         report = {
-            "coverage": RunCoverage.from_attempts(attempts).as_dict(),
+            "coverage": coverage.as_dict(),
             "findings": data,
+            "skipped": [
+                {"source": item.source, "reason": item.reason, "detail": item.detail}
+                for item in coverage.skips
+            ],
         }
         _write_parent(path)
         with open(path, "w", encoding="utf-8") as fh:

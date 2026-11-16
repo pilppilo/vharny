@@ -74,7 +74,7 @@ def test_project_scoped_scan_uses_isolated_defaults_and_preserves_standalone(tmp
 
     assert main([
         "scan", "--project", str(tmp_path), str(source), "--generator", "mock",
-        "--format", "json", "-q",
+        "--format", "json", "-q", "--allow-empty",
     ]) == 0
     capsys.readouterr()
 
@@ -116,7 +116,9 @@ def test_standalone_scan_retains_legacy_default_outputs(tmp_path, monkeypatch):
 
     from vharness.cli import main
 
-    assert main(["scan", str(source), "--generator", "mock", "--format", "json", "-q"]) == 0
+    assert main(
+        ["scan", str(source), "--generator", "mock", "--format", "json", "-q", "--allow-empty"]
+    ) == 0
     assert (tmp_path / "scan_log.jsonl").exists()
     assert (tmp_path / "report.json").exists()
     assert not (tmp_path / ".vharness").exists()

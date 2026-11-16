@@ -1,7 +1,6 @@
 """Failed model calls must make a scan visibly incomplete, not 'No findings'."""
 
 import json
-import logging
 
 import pytest
 
@@ -12,16 +11,6 @@ from vharness.generators.mock import Mock
 from vharness.sarif import build_sarif
 
 BROKEN = "BROKEN_REPLY_MARKER"
-
-
-@pytest.fixture(autouse=True)
-def _restore_vharness_logger():
-    """`main(["-q", ...])` reconfigures the shared logger; undo it for later tests."""
-    logger = logging.getLogger("vharness")
-    level, handlers = logger.level, list(logger.handlers)
-    yield
-    logger.setLevel(level)
-    logger.handlers[:] = handlers
 
 
 def _attempt(source: str, status: str, error: str | None = None) -> Attempt:
@@ -51,7 +40,7 @@ def test_coverage_counts_each_outcome():
     assert not coverage.complete
     assert [f.source for f in coverage.failures] == ["b.sh", "c.sh", "d.sh"]
     assert coverage.failures[0].message == "connection refused"
-    assert "1 of 5 attempts ok; 3 failed" in coverage.summary()
+    assert "1 of 4 attempts ok; 3 failed" in coverage.summary()
 
 
 def test_sarif_records_failed_execution():

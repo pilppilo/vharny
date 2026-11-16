@@ -449,6 +449,7 @@ def test_project_scan_and_eval_record_effective_workflows(tmp_path):
                 "--format",
                 "json",
                 "-q",
+                "--allow-empty",
             ]
         )
         == 0

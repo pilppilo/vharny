@@ -16,6 +16,16 @@ FAILED_STATUSES = ("api_error", "parse_error", "internal_error")
 
 #: Exit code for a scan or replay that finished with failed attempts.
 EXIT_INCOMPLETE = 3
+#: Exit code for a scan that analyzed nothing at all.
+EXIT_EMPTY = 4
+
+#: ``Attempt.context["skip_reason"]`` values set by file discovery.
+SKIP_EXCLUDED = "excluded-directory"
+SKIP_OVERSIZE_FILE = "oversize-file"
+SKIP_UNREADABLE = "unreadable-file"
+SKIP_OVERSIZE_CHUNK = "oversize-chunk"
+#: Skips that are deliberate rather than a gap in what was analyzed.
+_INTENTIONAL_SKIPS = (SKIP_EXCLUDED,)
 
 
 @dataclass(frozen=True)
@@ -28,8 +38,23 @@ class AttemptFailure:
 
 
 @dataclass(frozen=True)
-class RunCoverage:
-    """Counts of attempt outcomes for one run, plus each failure."""
+class SkippedItem:
+    """A file, directory or chunk left out of the analysis, and why."""
+
+    source: str
+    reason: str
+    detail: str
+
+    @property
+    def intentional(self) -> bool:
+        """True for deliberate exclusions, which are not coverage gaps."""
+        return self.reason in _INTENTIONAL_SKIPS
+
+
+# One serializable record of a run's outcome counts and the items behind them.
+@dataclass(frozen=True)
+class RunCoverage:  # pylint: disable=too-many-instance-attributes
+    """Counts of attempt outcomes for one run, plus each failure and skip."""
 
     total: int
     ok: int
@@ -38,6 +63,8 @@ class RunCoverage:
     internal_errors: int
     skipped: int
     failures: tuple[AttemptFailure, ...]
+    skips: tuple[SkippedItem, ...] = ()
+    files_analyzed: int = 0
 
     @property
     def failed(self) -> int:
@@ -49,28 +76,50 @@ class RunCoverage:
         """True when no attempt failed."""
         return self.failed == 0
 
+    @property
+    def analyzed(self) -> int:
+        """Attempts sent to the model, whatever their outcome."""
+        return self.total - self.skipped
+
+    @property
+    def gaps(self) -> tuple[SkippedItem, ...]:
+        """Skipped items that leave code unanalyzed (not deliberate exclusions)."""
+        return tuple(item for item in self.skips if not item.intentional)
+
+    def skip_counts(self) -> dict[str, int]:
+        """Number of skipped items per reason."""
+        counts: dict[str, int] = {}
+        for item in self.skips:
+            counts[item.reason] = counts.get(item.reason, 0) + 1
+        return counts
+
     def summary(self) -> str:
-        """One line, e.g. '8 of 10 attempts ok; 2 failed (api 2, parse 0, ...)'."""
+        """One line, e.g. '8 of 10 attempts ok; 2 failed (...); 1 skipped (...)'."""
         line = (
-            f"{self.ok} of {self.total} attempts ok; {self.failed} failed "
+            f"{self.ok} of {self.analyzed} attempts ok; {self.failed} failed "
             f"(api {self.api_errors}, parse {self.parse_errors}, "
             f"internal {self.internal_errors})"
         )
         if self.skipped:
-            line += f"; {self.skipped} skipped"
+            reasons = ", ".join(
+                f"{r} {n}" for r, n in sorted(self.skip_counts().items())
+            )
+            line += f"; {self.skipped} skipped ({reasons})"
         return line
 
     def as_dict(self) -> dict[str, int | bool]:
         """JSON-ready counts, as written to reports."""
         return {
             "complete": self.complete,
-            "attempts": self.total,
+            "attempts": self.analyzed,
+            "files_analyzed": self.files_analyzed,
             "ok": self.ok,
             "failed": self.failed,
             "api_errors": self.api_errors,
             "parse_errors": self.parse_errors,
             "internal_errors": self.internal_errors,
             "skipped": self.skipped,
+            "skipped_gaps": len(self.gaps),
         }
 
     @classmethod
@@ -94,6 +143,16 @@ class RunCoverage:
             internal_errors=sum(a.status == "internal_error" for a in attempts),
             skipped=sum(a.status == "skipped" for a in attempts),
             failures=failures,
+            skips=tuple(
+                SkippedItem(
+                    source=a.source or "unknown",
+                    reason=str(a.context.get("skip_reason", "skipped")),
+                    detail="; ".join(a.detector_notes),
+                )
+                for a in attempts
+                if a.status == "skipped"
+            ),
+            files_analyzed=len({a.source for a in attempts if a.status != "skipped"}),
         )
 
 

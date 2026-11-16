@@ -44,6 +44,24 @@ def _invocation(coverage: RunCoverage) -> dict:
         }
         for failure in coverage.failures
     ]
+    notifications += [
+        {
+            "level": "note" if item.intentional else "warning",
+            "message": {"text": f"skipped ({item.reason}): {item.detail}"},
+            "locations": [
+                {
+                    "physicalLocation": {
+                        "artifactLocation": {
+                            "uri": item.source,
+                            "uriBaseId": "%SRCROOT%",
+                        }
+                    }
+                }
+            ],
+            "descriptor": {"id": item.reason},
+        }
+        for item in coverage.skips
+    ]
     return {
         "executionSuccessful": coverage.complete,
         "toolExecutionNotifications": notifications,

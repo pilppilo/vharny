@@ -85,6 +85,36 @@ class RunInfo:
     skills: list[dict] | None = None
 
 
+def _dedupe_skips(attempts: list[Attempt]) -> list[Attempt]:
+    """Keep one skipped attempt per (source, reason, line).
+
+    Every filesystem probe walks the same tree, so the same excluded directory
+    or unreadable file can be reported by several probes.
+    """
+    seen: set[tuple[str, object, object]] = set()
+    kept: list[Attempt] = []
+    for a in attempts:
+        if a.status == "skipped":
+            key = (a.source, a.context.get("skip_reason"), a.context.get("line"))
+            if key in seen:
+                continue
+            seen.add(key)
+        kept.append(a)
+    return kept
+
+
+def _skip_summary(attempts: list[Attempt]) -> str:
+    """One line such as 'Skipped 3: excluded-directory 2, oversize-file 1'."""
+    counts: dict[str, int] = {}
+    for a in attempts:
+        if a.status == "skipped":
+            reason = str(a.context.get("skip_reason", "skipped"))
+            counts[reason] = counts.get(reason, 0) + 1
+    detail = ", ".join(f"{reason} {n}" for reason, n in sorted(counts.items()))
+    total = sum(counts.values())
+    return f"Skipped {total}" + (f": {detail}" if detail else "")
+
+
 class Runner:
     def __init__(
         self,
@@ -150,11 +180,13 @@ class Runner:
                     a.context = dict(a.context)
                     a.context["skills"] = [s.metadata() for s in self.skills]
             attempts.extend(got)
+        attempts = _dedupe_skips(attempts)
 
         # Reconnaissance summary
         file_chunks: dict[str, list[Attempt]] = {}
         for a in attempts:
-            file_chunks.setdefault(a.source, []).append(a)
+            if a.status != "skipped":
+                file_chunks.setdefault(a.source, []).append(a)
 
         target_arg = probe_kwargs.get("targets") or probe_kwargs.get("path")
         target_disp = ""
@@ -166,11 +198,12 @@ class Runner:
 
         log.info(
             "[recon] Triaged %d chunk(s) across %d file(s)%s (probes: %s)",
-            len(attempts),
+            sum(len(chs) for chs in file_chunks.values()),
             len(file_chunks),
             target_disp,
             ", ".join(probe_names),
         )
+        log.info("[recon] %s", _skip_summary(attempts))
 
         if (self.verbose >= 1 or self.show_findings) and file_chunks:
             for src, chs in sorted(file_chunks.items()):
@@ -226,6 +259,12 @@ class Runner:
         detectors = [DETECTOR_REGISTRY.instantiate(n) for n in self.detector_names]
 
         def work(attempt: Attempt, attempt_index: int) -> Attempt:
+            if attempt.status == "skipped":  # left out by discovery; never generated
+                try:
+                    self._log(attempt, info, attempt_index)
+                except Exception as exc:  # noqa: BLE001 — a skip must be durable too
+                    raise RunPersistenceError(f"attempt log write failed: {exc}") from exc
+                return attempt
             try:
                 gen = self.generator.generate(attempt.system, attempt.prompt)
                 attempt.record(gen)
@@ -274,7 +313,10 @@ class Runner:
                     log.info("[%d/%d] %s → %s (%s)%s", completed, total, loc, a.verdict or "?", a.status, telem)
 
                 # Show explicit error message if generation or detector failed
-                if a.status != "ok":
+                if a.status == "skipped":
+                    log.info("    ↳ skipped (%s): %s", a.context.get("skip_reason", "?"),
+                             "; ".join(a.detector_notes))
+                elif a.status != "ok":
                     err_msg = None
                     if a.generation and a.generation.error:
                         err_msg = a.generation.error

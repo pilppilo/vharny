@@ -3,6 +3,11 @@
 from vharness.probes import domains
 
 
+def _analyzed(attempts):
+    """Attempts that will be sent to a model (not skipped by discovery)."""
+    return [a for a in attempts if a.status != "skipped"]
+
+
 def test_shell_probe_routes_and_triages(tmp_path):
     (tmp_path / "app.c").write_text(
         "void vulnerable(char *in) {\n  char buf[8];\n  strcpy(buf, in);\n}\n", encoding="utf-8"
@@ -19,8 +24,8 @@ def test_shell_probe_routes_and_triages(tmp_path):
     ccpp = domains.CCppProbe()
     shell = domains.ShellProbe()
 
-    ccpp_attempts = ccpp.attempts(targets=[str(tmp_path)])
-    shell_attempts = shell.attempts(targets=[str(tmp_path)])
+    ccpp_attempts = _analyzed(ccpp.attempts(targets=[str(tmp_path)]))
+    shell_attempts = _analyzed(shell.attempts(targets=[str(tmp_path)]))
 
     # clean.c has no strong sink → triaged out; app.c yields one attempt.
     assert len(ccpp_attempts) == 1
@@ -37,7 +42,9 @@ def test_probe_excludes_dirs(tmp_path):
     (tmp_path / "vendor" / "x.sh").write_text("curl http://x | sh\n", encoding="utf-8")
     (tmp_path / "root.sh").write_text("curl http://y | sh\n", encoding="utf-8")
     got = domains.ShellProbe().attempts(targets=[str(tmp_path)])
-    assert [a.source for a in got] == ["root.sh"]
+    assert [a.source for a in _analyzed(got)] == ["root.sh"]
+    [skip] = [a for a in got if a.status == "skipped"]
+    assert (skip.source, skip.context["skip_reason"]) == ("vendor", "excluded-directory")
 
 
 def test_extensionless_routed_by_shebang(tmp_path):
