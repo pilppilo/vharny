@@ -106,6 +106,19 @@ class ArcGameConnection(Protocol):
         raise NotImplementedError
 
 
+class ArcScorecardSource(Protocol):
+    """Reads the official scorecard for the game being played."""
+
+    @property
+    def info(self) -> ArcToolkitInfo:
+        """What this source runs on."""
+        raise NotImplementedError
+
+    def scorecard(self) -> object | None:
+        """The scorecard as JSON-like data, or ``None`` when there is none."""
+        raise NotImplementedError
+
+
 class TimedCaller:
     """Run blocking calls on a daemon thread with a timeout, one at a time."""
 
@@ -161,9 +174,12 @@ class TimedCaller:
 
 
 class ToolkitGameConnection:
-    """An ``ArcGameConnection`` over the official ``arc-agi`` package."""
+    """``ArcGameConnection`` and ``ArcScorecardSource`` over the ``arc-agi`` package."""
 
-    def __init__(self, env: Any, game_action: Any, info: ArcToolkitInfo) -> None:
+    def __init__(
+        self, arcade: Any, env: Any, game_action: Any, info: ArcToolkitInfo
+    ) -> None:
+        self._arcade = arcade
         self._env = env
         self._game_action = game_action
         self._info = info
@@ -191,8 +207,17 @@ class ToolkitGameConnection:
         )
         return frame
 
+    def scorecard(self) -> object | None:
+        """Call ``Arcade.get_scorecard()`` for the default scorecard, as JSON."""
+        self._require_open()
+        card = self._arcade.get_scorecard()
+        if card is None:
+            return None
+        dumped: object = card.model_dump(mode="json")
+        return dumped
+
     def close(self) -> None:
-        """Stop using the game. The scorecard is the evaluator's to close."""
+        """Stop using the game. The scorecard is left open."""
         self._closed = True
 
     def _require_open(self) -> None:
@@ -238,7 +263,7 @@ def open_toolkit_game(  # pylint: disable=too-many-arguments
         operation_mode=str(arcade.operation_mode.value),
         base_url=str(arcade.arc_base_url),
     )
-    return ToolkitGameConnection(env, game_action, info)
+    return ToolkitGameConnection(arcade, env, game_action, info)
 
 
 def require_arc_toolkit() -> Any:
