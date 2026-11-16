@@ -9,6 +9,7 @@ from dataclasses import asdict, dataclass
 
 from ..core import Attempt
 from ..log import log
+from ..outputs import open_output
 from .base import Evaluator, register_builtin
 
 
@@ -148,8 +149,8 @@ class MetricsReport(Evaluator):
         out = run_info.get("metrics_out") or "eval_metrics.json"
         if run_info.get("out_dir") and not os.path.isabs(out):
             out = os.path.join(run_info["out_dir"], out)
-        os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
-        with open(out, "w", encoding="utf-8") as fh:
+        explicit = "metrics_out" in set(run_info.get("explicit_outputs") or ())
+        with open_output(out, "w", follow_symlinks=explicit) as fh:
             json.dump({"metrics": m, "per_sample": [
                 {
                     "id": a.id, "source": a.source, "probe": a.probe,

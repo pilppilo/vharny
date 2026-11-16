@@ -106,6 +106,14 @@ Files over 1 MB, chunks too long for the model, unreadable files and excluded
 directories are skipped. Every run logs a `Skipped` summary, and the reports
 list each skipped item with its reason. Only the `.git` directory itself is
 always excluded; `.github`, `.gitlab` and similar directories are scanned.
+
+Scans don't read through symlinks that point outside a scan target. Such links
+are reported as skipped (`outside-root`) so a repository can't send your other
+files to the model. `--follow-symlinks` restores the old behavior with a
+warning. Default output files (`report.*`, `scan_log.jsonl`,
+`eval_metrics.json`) are never written through a symlink: if one is planted
+there, the run stops with exit code 2. Output paths you name with `--out`,
+`--log-file` or the per-format flags may be symlinks on purpose.
 Every report states how many attempts succeeded: SARIF sets
 `invocations[0].executionSuccessful` and lists each failure as a tool execution
 notification, the Markdown report flags an incomplete scan at the top, and the

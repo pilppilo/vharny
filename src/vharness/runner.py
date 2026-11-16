@@ -21,6 +21,7 @@ from .core import (
 )
 from .generators.base import Generator
 from .log import get_verbosity, log
+from .outputs import open_output
 from .skills import Skill, render_skill_instructions
 
 # Built-ins register when the stage packages are imported.
@@ -127,6 +128,7 @@ class Runner:
         skills: list[Skill] | None = None,
         verbose: int | None = None,
         show_findings: bool = False,
+        log_file_explicit: bool = True,
     ) -> None:
         load_entry_points()  # third-party plugins, idempotent
         self.generator = generator
@@ -134,6 +136,8 @@ class Runner:
         self.workers = workers
         self.log_file = log_file
         self.log_raw = log_raw
+        # A defaulted log path is never written through a symlink.
+        self.log_file_explicit = log_file_explicit
         self.skills = list(skills or [])
         self._skill_instructions = render_skill_instructions(self.skills)
         self.verbose = verbose if verbose is not None else get_verbosity()
@@ -152,7 +156,11 @@ class Runner:
         run_id: str | None = None,
     ) -> tuple[list[Attempt], RunInfo]:
         """Execute a full pipeline pass; returns (attempts, run_info)."""
-        self._fh = open(self.log_file, "a", encoding="utf-8") if self.log_file else None
+        self._fh = (
+            open_output(self.log_file, "a", follow_symlinks=self.log_file_explicit)
+            if self.log_file
+            else None
+        )
         try:
             return self._run_impl(probe_names, probe_kwargs, dry_run=dry_run, run_id=run_id)
         finally:

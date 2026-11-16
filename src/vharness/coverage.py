@@ -24,6 +24,7 @@ SKIP_EXCLUDED = "excluded-directory"
 SKIP_OVERSIZE_FILE = "oversize-file"
 SKIP_UNREADABLE = "unreadable-file"
 SKIP_OVERSIZE_CHUNK = "oversize-chunk"
+SKIP_OUTSIDE_ROOT = "outside-root"
 #: Skips that are deliberate rather than a gap in what was analyzed.
 _INTENTIONAL_SKIPS = (SKIP_EXCLUDED,)
 
