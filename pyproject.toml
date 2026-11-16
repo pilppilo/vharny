@@ -4,13 +4,13 @@ version = "0.2.0"
 description = "Pluggable LLM security harness: probe → generator → detector → evaluator"
 requires-python = ">=3.10"
 dependencies = [
-    "openai>=1.40",
+    "openai>=1.40,<4",
     "tomli>=2.0; python_version < '3.11'",
 ]
 
 [project.optional-dependencies]
-inspect = ["inspect-ai>=0.3"]
-gymnasium = ["gymnasium>=0.29"]
+inspect = ["inspect-ai>=0.3,<0.4"]
+gymnasium = ["gymnasium>=0.29,<2"]
 
 [project.scripts]
 vharness = "vharness.cli:main"

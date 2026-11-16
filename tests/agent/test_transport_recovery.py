@@ -150,9 +150,21 @@ def _drive_until(
     raise AssertionError("coordinator loop did not reach the expected state")
 
 
+def _openai_http():
+    """The HTTP library the installed openai SDK builds its errors from.
+
+    openai 1.x and 2.x use ``httpx``; 3.x uses ``httpx2``. Taking the module
+    from the SDK keeps these tests running on every supported major version.
+    """
+    from openai import _exceptions  # pylint: disable=import-outside-toplevel
+
+    http = getattr(_exceptions, "httpx2", None) or getattr(_exceptions, "httpx", None)
+    assert http is not None, "openai no longer exposes its HTTP library"
+    return http
+
+
 def test_adapter_classifies_provider_exceptions():
-    httpx = pytest.importorskip("httpx")
-    pytest.importorskip("openai")
+    httpx = _openai_http()
     from openai import APIConnectionError, APIStatusError, APITimeoutError
 
     from vharness.generators.openai_compat import _failure_class
@@ -173,8 +185,7 @@ def test_adapter_classifies_provider_exceptions():
 
 
 def test_adapter_error_generation_carries_the_failure_class(monkeypatch):
-    httpx = pytest.importorskip("httpx")
-    pytest.importorskip("openai")
+    httpx = _openai_http()
     from openai import APIConnectionError
 
     from vharness.generators.openai_compat import OpenAICompatible

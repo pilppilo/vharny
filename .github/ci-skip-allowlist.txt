@@ -2,10 +2,6 @@
 # tools/check_skips.py fails CI on any other skip, and on an entry here that
 # no longer skips, so remove entries as their issues are fixed.
 
-# COD-17: openai 3.x no longer depends on httpx, so these transport tests skip.
-tests/agent/test_transport_recovery.py::test_adapter_classifies_provider_exceptions
-tests/agent/test_transport_recovery.py::test_adapter_error_generation_carries_the_failure_class
-
 # COD-19: pinned evidence revisions are not in this repository's history.
 tests/agent/test_phase2_live_software_evidence.py::test_verify_accepts_valid_live_bundle_without_mutation
 tests/agent/test_phase2_operator_evidence.py::test_verify_rejects_tampered_stored_fresh_projection
