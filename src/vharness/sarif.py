@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from .core import VERSION, Finding
+from .coverage import RunCoverage
 
 SCHEMA_URI = "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json"
 TOOL_NAME = "vharness"
@@ -23,7 +24,40 @@ def _fingerprint(f: Finding) -> str:
     return hashlib.sha256(f"{f.file}|{f.cwe}|{f.function}|{f.sink}".encode()).hexdigest()[:16]
 
 
-def build_sarif(findings: list[Finding], tool_name: str = TOOL_NAME) -> dict:
+def _invocation(coverage: RunCoverage) -> dict:
+    """SARIF invocation recording whether every attempt produced a result."""
+    notifications = [
+        {
+            "level": "error",
+            "message": {"text": f"{failure.status}: {failure.message}"},
+            "locations": [
+                {
+                    "physicalLocation": {
+                        "artifactLocation": {
+                            "uri": failure.source,
+                            "uriBaseId": "%SRCROOT%",
+                        }
+                    }
+                }
+            ],
+            "descriptor": {"id": failure.status},
+        }
+        for failure in coverage.failures
+    ]
+    return {
+        "executionSuccessful": coverage.complete,
+        "toolExecutionNotifications": notifications,
+        "properties": {"coverage": coverage.as_dict()},
+    }
+
+
+def build_sarif(
+    findings: list[Finding],
+    tool_name: str = TOOL_NAME,
+    *,
+    coverage: RunCoverage | None = None,
+) -> dict:
+    """Build a SARIF log; with `coverage`, record execution success and failures."""
     by_cwe: dict[str, list[Finding]] = {}
     for f in findings:
         by_cwe.setdefault(f.cwe, []).append(f)
@@ -59,27 +93,30 @@ def build_sarif(findings: list[Finding], tool_name: str = TOOL_NAME) -> dict:
                 "properties": {"function": f.function, "severity": f.severity, "patch": f.patch},
             }
         )
-    return {
-        "$schema": SCHEMA_URI,
-        "version": "2.1.0",
-        "runs": [
-            {
-                "tool": {
-                    "driver": {
-                        "name": tool_name,
-                        "version": TOOL_VERSION,
-                        "informationUri": "https://cwe.mitre.org/",
-                        "rules": rules,
-                    }
-                },
-                "originalUriBaseIds": {"%SRCROOT%": {"uri": "file:///"}},
-                "results": results,
+    run: dict = {
+        "tool": {
+            "driver": {
+                "name": tool_name,
+                "version": TOOL_VERSION,
+                "informationUri": "https://cwe.mitre.org/",
+                "rules": rules,
             }
-        ],
+        },
+        "originalUriBaseIds": {"%SRCROOT%": {"uri": "file:///"}},
+        "results": results,
     }
+    if coverage is not None:
+        run["invocations"] = [_invocation(coverage)]
+    return {"$schema": SCHEMA_URI, "version": "2.1.0", "runs": [run]}
 
 
-def write_sarif(findings: list[Finding], output_file: str, tool_name: str = TOOL_NAME) -> None:
+def write_sarif(
+    findings: list[Finding],
+    output_file: str,
+    tool_name: str = TOOL_NAME,
+    *,
+    coverage: RunCoverage | None = None,
+) -> None:
     Path(output_file).parent.mkdir(parents=True, exist_ok=True)
     with open(output_file, "w", encoding="utf-8") as fh:
-        json.dump(build_sarif(findings, tool_name), fh, indent=2)
+        json.dump(build_sarif(findings, tool_name, coverage=coverage), fh, indent=2)
