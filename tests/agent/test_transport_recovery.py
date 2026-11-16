@@ -10,6 +10,7 @@ and ends the wait through the existing resume, steer, and stop commands.
 from __future__ import annotations
 
 import json
+import time
 from dataclasses import replace
 from pathlib import Path
 from typing import Callable
@@ -140,13 +141,25 @@ def _events_of(app: Application, kind: str) -> list:
 
 
 def _drive_until(
-    app: Application, predicate: Callable[[Application], bool], *, limit: int = 500
+    app: Application,
+    predicate: Callable[[Application], bool],
+    *,
+    timeout_seconds: float = 10.0,
 ) -> None:
-    """Tick the coordinator loop until the predicate holds or the bound trips."""
-    for _ in range(limit):
+    """Tick the coordinator loop until the predicate holds or the time bound trips.
+
+    Model calls run on a worker thread, so a tick can return before the call
+    settles. A tick-count bound raced that worker under load (about one run in
+    five); a wall-clock bound with a short pause between ticks does not.
+    """
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
         if predicate(app):
             return
         app.tick()
+        time.sleep(0.001)
+    if predicate(app):
+        return
     raise AssertionError("coordinator loop did not reach the expected state")
 
 
