@@ -18,7 +18,7 @@ here is decided until the operator says so.
 | # | Decision | Proposal | Why |
 | --- | --- | --- | --- |
 | 1 | Scored suite | The public ARC-AGI-3 games reported by the pinned toolkit, minus the development games in decision 2 | BENCH-0001 names "the available official ARC-AGI-3 set/toolkit" |
-| 2 | Development games | `ls20`, `ft09`, `vc33` | They are the original preview games and the docs' examples; COD-34 confirms they run locally without an API key. Anything used for fixtures or tuning must not be scored |
+| 2 | Development games | `ls20`, `ft09`, `vc33`, `dc22` | `ls20`, `ft09` and `vc33` are the original preview games and the docs' examples. `dc22` (`dc22-fdcac232`) was used for the recorded fixtures (COD-34) and the smoke run (COD-38), so it is development too. Anything used for fixtures or tuning must not be scored |
 | 3 | Where scored runs execute | Toolkit `ONLINE` mode through the ARC API, with one scorecard per campaign arm | The scorecard then comes from the external authority, as ADR-0002 requires. `COMPETITION` mode is not proposed: it scores against every available game, including the development games |
 | 4 | Model and provider | Operator's choice; one model for the whole campaign | Results from different models cannot be pooled |
 | 5 | Per-game budgets | Operator's choice of environment actions, model calls, and output tokens per game | Budgets bound cost and must be equal across arms |
@@ -48,7 +48,7 @@ Filled at freeze, after COD-34 pins the toolkit.
 
 | Item | Value |
 | --- | --- |
-| `arc-agi` toolkit version | pending COD-34 (0.9.9 was current on 2026-11-16) |
+| `arc-agi` toolkit version | 0.9.10, pinned by COD-34 (`arc-agi>=0.9.10,<0.10`); confirm at freeze |
 | Toolkit operation mode | per decision 3 |
 | Vharness git revision | recorded at freeze; must be clean |
 | Vharness package version | recorded at freeze |
