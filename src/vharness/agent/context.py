@@ -8,7 +8,8 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from functools import partial
 from types import MappingProxyType
 from typing import Callable, Mapping
 
@@ -38,6 +39,13 @@ TOKEN_ESTIMATOR = "calibrated-chars-v2"
 PRIOR_CHARS_PER_TOKEN = 1.25
 #: Margin over the worst observed tokens-per-character ratio.
 CALIBRATION_MARGIN = 1.1
+#: ADR-0020: in calibrated mode, retrieved notes may use at most this share of
+#: the space left after must-have context and reserved output; recent history
+#: gets the rest, including any share retrieved notes leave unused.
+RETRIEVED_SHARE = 0.25
+#: ADR-0020: fixed share kept for the request's bookkeeping (the manifest
+#: summary), which is filled in after the candidate items are measured.
+BOOKKEEPING_TOKENS = 256
 COEFFICIENTS: Mapping[str, float] = MappingProxyType(
     {
         "overlap": 1.0,
@@ -151,12 +159,21 @@ class ContextManifest:
     token_estimator: str = TOKEN_ESTIMATOR
     #: Worst provider tokens-per-character ratio the estimate used; None = prior.
     estimate_tokens_per_char: float | None = None
+    #: ADR-0020: the measure fit was decided in (TOKEN_COUNTER or TOKEN_ESTIMATOR).
+    fit_basis: str = TOKEN_COUNTER
+    #: ADR-0020: band limits in the fit basis; empty under TOKEN_COUNTER.
+    share_limits: Mapping[str, int] = field(
+        default_factory=lambda: MappingProxyType({})
+    )
 
     def __post_init__(self) -> None:
         object.__setattr__(
             self, "coefficients", MappingProxyType(dict(self.coefficients))
         )
         object.__setattr__(self, "allocation", MappingProxyType(dict(self.allocation)))
+        object.__setattr__(
+            self, "share_limits", MappingProxyType(dict(self.share_limits))
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -187,10 +204,22 @@ class TokenAccounting:
     serialization_overhead_tokens: int
     estimated_input_tokens: int = 0
     estimated_system_prompt_tokens: int = 0
+    #: ADR-0020: TOKEN_ESTIMATOR once a provider has reported usage.
+    fit_basis: str = TOKEN_COUNTER
 
     @property
     def total_tokens(self) -> int:
-        """Return the full system, request, and reserved-output total."""
+        """Return the full system, request, and reserved-output total.
+
+        Under ADR-0020 the total is in the calibrated estimate once a provider
+        has reported usage, and in the recorded word count before that.
+        """
+        if self.fit_basis == TOKEN_ESTIMATOR:
+            return (
+                self.estimated_input_tokens
+                + self.estimated_system_prompt_tokens
+                + self.reserved_output_tokens
+            )
         return (
             self.input_tokens + self.system_prompt_tokens + self.reserved_output_tokens
         )
@@ -224,7 +253,7 @@ def estimate_serialized_tokens(text: str, tokens_per_char: float | None = None) 
     return math.ceil(len(text) * rate)
 
 
-# pylint: disable=too-many-locals,too-many-arguments
+# pylint: disable=too-many-locals,too-many-arguments,too-many-statements
 def assemble_context(
     state: SessionState,
     events: tuple[Event, ...],
@@ -272,7 +301,7 @@ def assemble_context(
     remaining = token_budget - required
     exact_accounting: TokenAccounting | None = None
 
-    def fits(candidate: tuple[ContextItem, ...]) -> bool:
+    def fits(candidate: tuple[ContextItem, ...], ceiling: int = token_budget) -> bool:
         """Ask the caller's serializer whether this exact candidate fits."""
         text = "\n".join(item.text for item in candidate)
         provisional = _manifest(
@@ -291,16 +320,20 @@ def assemble_context(
         if counter is None:  # pragma: no cover - only called in exact mode
             return True
         accounting = counter(candidate, text, provisional)
-        return accounting.total_tokens <= token_budget
+        return accounting.total_tokens <= ceiling
 
+    share_limits: Mapping[str, int] = MappingProxyType({})
+    retrieved_fits: Callable[[tuple[ContextItem, ...]], bool] | None = None
+    recent_fits: Callable[[tuple[ContextItem, ...]], bool] | None = None
     if request_token_counter is not None:
-        required = _required_exact_tokens(
+        mandatory_accounting = _required_exact_accounting(
             request_token_counter,
             state,
             cursor,
             token_budget,
             mandatory,
         )
+        required = mandatory_accounting.total_tokens
         if required > token_budget:
             return ContextOverflow(
                 missing_item_ids=tuple(item.item_id for item in mandatory),
@@ -308,6 +341,11 @@ def assemble_context(
                 tokens_required=required,
             )
         remaining = token_budget
+        retrieved_ceiling, recent_ceiling, share_limits = _shares(
+            mandatory_accounting.fit_basis, required, token_budget
+        )
+        retrieved_fits = partial(fits, ceiling=retrieved_ceiling)
+        recent_fits = partial(fits, ceiling=recent_ceiling)
     retrieved, omitted_retrieved = _select_retrieved(
         state,
         events,
@@ -316,7 +354,7 @@ def assemble_context(
         cursor,
         hits,
         prefix=mandatory if request_token_counter is not None else (),
-        fits=fits if request_token_counter is not None else None,
+        fits=retrieved_fits,
     )
     retrieved_tokens = sum(count_tokens(item.text) for item in retrieved)
     remaining -= retrieved_tokens
@@ -325,7 +363,7 @@ def assemble_context(
         remaining,
         retrieved,
         prefix=(*mandatory, *retrieved) if request_token_counter is not None else (),
-        fits=fits if request_token_counter is not None else None,
+        fits=recent_fits,
         receipt_content=content_map,
     )
     recent_tokens = sum(count_tokens(item.text) for item in recent)
@@ -382,6 +420,11 @@ def assemble_context(
             retrieved_tokens=retrieved_tokens,
             recent_tokens=recent_tokens,
             unused=token_budget - exact_accounting.total_tokens,
+        )
+        manifest = replace(
+            manifest,
+            fit_basis=exact_accounting.fit_basis,
+            share_limits=share_limits,
         )
     return ContextBundle(items, manifest, text)
 
@@ -1187,14 +1230,44 @@ def _manifest(
     )
 
 
-def _required_exact_tokens(
+def _shares(
+    fit_basis: str, required: int, token_budget: int
+) -> tuple[int, int, Mapping[str, int]]:
+    """ADR-0020: the retrieved and recent ceilings, and band limits.
+
+    Under the word count the whole budget stays open to every band, as before.
+    In the calibrated estimate, ``BOOKKEEPING_TOKENS`` are kept for the
+    manifest summary; retrieved notes may use ``RETRIEVED_SHARE`` of what is
+    left after must-have context and reserved output; recent history may use
+    everything else, including any share retrieved notes leave unused.
+    """
+    if fit_basis != TOKEN_ESTIMATOR:
+        return token_budget, token_budget, MappingProxyType({})
+    open_space = max(0, token_budget - required - BOOKKEEPING_TOKENS)
+    retrieved_ceiling = required + math.floor(RETRIEVED_SHARE * open_space)
+    recent_ceiling = required + open_space
+    return (
+        retrieved_ceiling,
+        recent_ceiling,
+        MappingProxyType(
+            {
+                "mandatory": required,
+                "retrieved": retrieved_ceiling - required,
+                "recent": recent_ceiling - retrieved_ceiling,
+                "bookkeeping": token_budget - recent_ceiling,
+            }
+        ),
+    )
+
+
+def _required_exact_accounting(
     counter: RequestTokenCounter,
     state: SessionState,
     cursor: int,
     token_budget: int,
     mandatory: tuple[ContextItem, ...],
-) -> int:
-    """Return the exact total needed for mandatory context."""
+) -> TokenAccounting:
+    """Return the accounting for mandatory context alone."""
     text = "\n".join(item.text for item in mandatory)
     manifest = _manifest(
         state,
@@ -1208,4 +1281,4 @@ def _required_exact_tokens(
         system_prompt_tokens=None,
         serialization_overhead_tokens=None,
     )
-    return counter(mandatory, text, manifest).total_tokens
+    return counter(mandatory, text, manifest)

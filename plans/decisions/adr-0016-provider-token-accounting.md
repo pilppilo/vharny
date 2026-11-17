@@ -2,10 +2,10 @@
 id: ADR-0016
 title: Provider token accounting and context-fit enforcement
 type: decision
-status: accepted
+status: superseded
 owners: [operator]
 created: 2026-11-09
-updated: 2026-11-10
+updated: 2026-11-17
 depends_on: [ADR-0008, ADR-0015]
 supersedes: []
 related: [ARCH-0001, PHASE-0004]

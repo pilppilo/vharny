@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 
 import hashlib
 from dataclasses import dataclass, replace
@@ -20,6 +21,7 @@ from vharness.agent import (
 )
 from vharness.agent.artifacts import ArtifactStore
 from vharness.agent.context import (
+    _shares,
     SYSTEM_PROMPT,
     count_tokens,
     estimate_serialized_tokens,
@@ -32,6 +34,7 @@ from vharness.agent.kernel import (
     ModelResponse,
     configuration_for,
     parse_agent_result,
+    render_request,
 )
 from vharness.agent.replay import replay
 from vharness.agent.models import (
@@ -554,7 +557,9 @@ def test_calibrated_projection_refuses_an_over_budget_request(tmp_path):
     model = OverBudgetModel()
     session.step(model)
 
-    with pytest.raises(TransitionError, match="projected context exceeds token budget"):
+    # ADR-0020: once calibrated, the must-have context alone is measured in
+    # real size, so the refusal happens at assembly, before the projection.
+    with pytest.raises(TransitionError, match="context exceeds token budget"):
         session.prepare_decision(model)
 
     overflow = [
@@ -1162,4 +1167,110 @@ def test_visible_manifest_counts_items_instead_of_listing_them(tmp_path):
     assert "included" not in visible and "item_tokens" not in visible
     assert sum(visible["included_by_band"].values()) == len(recorded["included"])
     assert recorded["item_tokens"]  # still journaled in full
+    journal.close()
+
+
+class _RatioModel:
+    """Reports prompt tokens as a set share of each request's characters."""
+
+    model_id = "ratio"
+
+    def __init__(self, ratios: dict[int, float], default: float) -> None:
+        self.ratios = ratios
+        self.default = default
+        self.calls = 0
+
+    def decide(self, request):
+        ratio = self.ratios.get(self.calls, self.default)
+        self.calls += 1
+        prompt = math.ceil(len(render_request(request)) * ratio)
+        output = '{"kind": "LineageQuery"}'
+        return ModelResponse(
+            result=LineageQuery(),
+            output=output,
+            model_id=self.model_id,
+            finish_reason="stop",
+            usage=UsageMeasurement(
+                measurement_id=f"{request.request_id}-usage",
+                model_calls=1,
+                input_tokens=prompt,
+            ),
+            attempts=(
+                ModelAttempt(output=output, finish_reason="stop", prompt_tokens=prompt),
+            ),
+        )
+
+
+def _manifests_of(session) -> list[dict]:
+    return [
+        e.payload["manifest"]
+        for e in session.events(limit=100_000)
+        if e.kind == "model_decided"
+    ]
+
+
+def test_fit_switches_to_real_size_after_the_first_report(tmp_path):
+    """ADR-0020: word count before any report, calibrated estimate after."""
+    session, journal = _model_session(tmp_path)
+    model = _RatioModel({}, default=0.3)
+    session.step(model)
+    session.step(model)
+    first, second = _manifests_of(session)[:2]
+    assert first["fit_basis"] == "whitespace-v1"
+    assert first["share_limits"] == {}
+    assert second["fit_basis"] == "calibrated-chars-v2"
+    limits = second["share_limits"]
+    assert sum(limits.values()) == second["token_budget"]
+    assert limits["bookkeeping"] == 256
+    assert limits["retrieved"] == math.floor(
+        0.25 * (second["token_budget"] - limits["mandatory"] - 256)
+    )
+    # In real size the request is far larger than its word count suggested.
+    assert limits["mandatory"] > second["serialized_input_tokens"]
+    replay(list(session.events(limit=1000)))
+    journal.close()
+
+
+def test_share_limits_split_the_budget():
+    retrieved, recent, limits = _shares("calibrated-chars-v2", 4_000, 16_384)
+    open_space = 16_384 - 4_000 - 256
+    assert retrieved == 4_000 + math.floor(0.25 * open_space)
+    assert recent == 4_000 + open_space
+    assert dict(limits) == {
+        "mandatory": 4_000,
+        "retrieved": retrieved - 4_000,
+        "recent": recent - retrieved,
+        "bookkeeping": 256,
+    }
+    assert sum(limits.values()) == 16_384
+    assert _shares("whitespace-v1", 4_000, 16_384) == (16_384, 16_384, {})
+
+
+def test_one_dense_call_raises_the_estimate_for_the_rest_of_a_long_run(tmp_path):
+    """ADR-0020: the worst-seen ratio never comes back down over a long run.
+
+    100 decisions keep the test fast; ADR-0020 records a 200-decision run with
+    the same pattern.
+    """
+    session, journal = _model_session(tmp_path, model_calls=110)
+    model = _RatioModel({2: 0.9}, default=0.3)
+    for _ in range(100):
+        session.step(model)
+    manifests = _manifests_of(session)
+    assert len(manifests) == 100
+    events = list(session.events(limit=100_000))
+    assert not [e for e in events if e.kind == "context_overflow"]
+    ratios = [m["estimate_tokens_per_char"] for m in manifests[1:]]
+    assert ratios[0] == pytest.approx(0.3, rel=0.01)
+    assert all(r == pytest.approx(0.9, rel=0.01) for r in ratios[3:])
+    assert ratios == sorted(ratios)  # never decreases
+    # Every calibrated request fits the budget in real size.
+    assert all(m["allocation"]["unused"] >= 0 for m in manifests[1:])
+    last = manifests[-1]
+    assert last["fit_basis"] == "calibrated-chars-v2"
+    left = last["token_budget"] - last["share_limits"]["mandatory"]
+    # Space left for history and notes at the end, after the dense call fixed
+    # the ratio at 0.9: recorded so a campaign can see the cost.
+    assert 0 < left < last["token_budget"]
+    replay(events)
     journal.close()
