@@ -12,3 +12,4 @@ tests/agent/test_phase2_operator_evidence.py::test_verify_survives_fresh_autocrl
 # conformance check runs on 3.13 and skips on 3.10.
 tests/agent/test_arc_fixtures.py::test_fixture_conforms_to_the_installed_toolkit  [python<3.12]
 tests/agent/test_arc_agi_contract.py::test_from_toolkit_accepts_real_toolkit_frames  [python<3.12]
+tests/agent/test_arc_agi_runtime.py::test_real_toolkit_key_fetch_never_prints_the_key  [python<3.12]

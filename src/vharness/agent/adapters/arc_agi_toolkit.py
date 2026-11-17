@@ -10,14 +10,19 @@ background; until it finishes, the caller refuses new calls rather than
 overlap them on the same game.
 
 The API key is never handled here. The toolkit reads ``ARC_API_KEY`` from the
-environment itself; this module neither reads nor stores its value.
+environment itself; this module neither reads nor stores its value. The
+toolkit would log the key it uses (``Got anonymous API key: ...``) at INFO on
+stdout, so its loggers are set to WARNING and redact anything that looks like
+a key (COD-71).
 """
 
 from __future__ import annotations
 
 import importlib
 import importlib.metadata
+import logging
 import math
+import re
 import threading
 from dataclasses import dataclass
 from typing import Any, Callable, Mapping, Protocol, TypeVar
@@ -33,7 +38,41 @@ ARC_API_KEY_ENV = "ARC_API_KEY"
 #: Default bound on any one toolkit call, in seconds.
 DEFAULT_CALL_TIMEOUT_SECONDS = 30.0
 
+#: Logger handed to the toolkit's ``Arcade``; quiet and redacted.
+TOOLKIT_LOGGER_NAME = "vharness.arc_toolkit"
+#: Toolkit module loggers that print to stdout on their own.
+TOOLKIT_MODULE_LOGGERS = ("arc_agi.base", "arc_agi.scorecard")
+_KEY_PATTERN = re.compile(r"(?i)(api[ _-]?key\W{0,3})([A-Za-z0-9][A-Za-z0-9._-]{7,})")
+
 _T = TypeVar("_T")
+
+
+class _RedactKeys(logging.Filter):  # pylint: disable=too-few-public-methods
+    """Replace anything after "API key" that looks like a key with [redacted]."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        message = record.getMessage()
+        redacted = _KEY_PATTERN.sub(r"\1[redacted]", message)
+        if redacted != message:
+            record.msg = redacted
+            record.args = ()
+        return True
+
+
+def _quiet(logger: logging.Logger) -> logging.Logger:
+    """WARNING and above only, with keys redacted; idempotent."""
+    logger.setLevel(logging.WARNING)
+    for target in (logger, *logger.handlers):
+        if not any(isinstance(f, _RedactKeys) for f in target.filters):
+            target.addFilter(_RedactKeys())
+    return logger
+
+
+def toolkit_logger() -> logging.Logger:
+    """The logger the toolkit writes through, and quiet its own module loggers."""
+    for name in TOOLKIT_MODULE_LOGGERS:
+        _quiet(logging.getLogger(name))
+    return _quiet(logging.getLogger(TOOLKIT_LOGGER_NAME))
 
 
 class ArcCallError(AgentError):
@@ -253,6 +292,7 @@ def open_toolkit_game(  # pylint: disable=too-many-arguments
             operation_mode=arc_agi.OperationMode(operation_mode),
             arc_base_url=base_url,
             environments_dir=environments_dir,
+            logger=toolkit_logger(),
         )
         return arcade, arcade.make(game_id, seed=seed)
 

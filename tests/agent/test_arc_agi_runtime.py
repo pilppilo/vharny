@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import importlib
 import json
+import logging
 import sys
 import threading
 from dataclasses import dataclass, field, replace
@@ -16,9 +18,11 @@ from vharness.agent.adapters.arc_agi_runtime import ArcRuntime
 from vharness.agent.adapters.arc_agi_toolkit import (
     ArcCallBusy,
     ArcCallError,
+    TOOLKIT_MODULE_LOGGERS,
     ArcToolkitInfo,
     TimedCaller,
     require_arc_toolkit,
+    toolkit_logger,
 )
 from vharness.agent.adapters.runtime_store import proposal_fingerprint
 from vharness.agent.artifacts import ArtifactStore
@@ -519,3 +523,64 @@ def test_missing_toolkit_names_the_extra(monkeypatch):
     monkeypatch.setitem(sys.modules, "arc_agi", None)
     with pytest.raises(ContractError, match=r"install vharness\[arc\]"):
         require_arc_toolkit()
+
+
+# ---- toolkit logging (COD-71) -------------------------------------------------
+
+
+def test_toolkit_logger_drops_info_and_redacts_keys(capsys, caplog):
+    secret = "5382e9f0-4626-4399-b87f-175a9d2a46ae"
+    logger = toolkit_logger()
+    with caplog.at_level(logging.DEBUG):
+        logger.info("Got anonymous API key: %s", secret)
+        logger.warning("retrying with api_key=%s", secret)
+        logger.error("API key: %s rejected", secret)
+    captured = capsys.readouterr()
+    text = caplog.text + captured.out + captured.err
+    assert secret not in text
+    assert "Got anonymous API key" not in text  # INFO is dropped
+    assert text.count("[redacted]") == 2
+    assert toolkit_logger() is logger
+    assert len([f for f in logger.filters if type(f).__name__ == "_RedactKeys"]) == 1
+
+
+def test_toolkit_module_loggers_are_quieted(capsys):
+    toolkit_logger()
+    for name in TOOLKIT_MODULE_LOGGERS:
+        module_logger = logging.getLogger(name)
+        assert module_logger.level == logging.WARNING
+        module_logger.info("Created new scorecard: abc")
+        module_logger.warning("bad api key ffffffff-1111-2222-3333-444444444444")
+    captured = capsys.readouterr()
+    text = captured.out + captured.err
+    assert "Created new scorecard" not in text
+    assert "ffffffff-1111" not in text
+
+
+def test_real_toolkit_key_fetch_never_prints_the_key(capsys, caplog, monkeypatch):
+    arc_agi = pytest.importorskip(
+        "arc_agi", reason="needs the arc extra (arc-agi, Python 3.12+)"
+    )
+    secret = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+
+    class _Response:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict[str, str]:
+            return {"api_key": secret}
+
+    monkeypatch.setattr(
+        importlib.import_module("arc_agi.base").requests,
+        "get",
+        lambda *args, **kwargs: _Response(),
+    )
+    arcade = object.__new__(arc_agi.Arcade)
+    arcade.logger = toolkit_logger()
+    arcade.arc_base_url = "https://three.arcprize.org"
+    with caplog.at_level(logging.DEBUG):
+        assert (
+            arcade._get_anonymous_api_key() == secret
+        )  # pylint: disable=protected-access
+    captured = capsys.readouterr()
+    assert secret not in caplog.text + captured.out + captured.err
