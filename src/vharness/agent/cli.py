@@ -203,6 +203,7 @@ def _handle_preflight(
             _PreflightGenerator(settings.max_output_tokens),
             model_id=effective_model or "unconfigured-provider-model",
             repair_budget=settings.repair_budget,
+            initial_output_tokens=settings.initial_output_tokens,
         )
 
     try:
@@ -688,6 +689,7 @@ def _workspace_settings(arguments: argparse.Namespace) -> RunSettings:
         response_format=arguments.response_format,
         provider_timeout=arguments.provider_timeout,
         provider_stream=arguments.provider_stream,
+        initial_output_tokens=arguments.initial_output_tokens,
         api_key_env=arguments.api_key_env,
         max_actions=arguments.max_actions,
         max_model_calls=arguments.max_model_calls,
@@ -1699,6 +1701,15 @@ def _add_run_arguments(parser: argparse.ArgumentParser) -> None:
         help="model context budget per decision",
     )
     parser.add_argument("--max-output-tokens", type=_positive, default=512)
+    parser.add_argument(
+        "--initial-output-tokens",
+        type=_positive,
+        default=None,
+        metavar="TOKENS",
+        help="start each decision at this answer limit and double it whenever "
+        "a reply runs out, up to --max-output-tokens (default: always use "
+        "--max-output-tokens); suits reasoning models whose answer length varies",
+    )
     parser.add_argument("--repair-budget", type=_nonnegative, default=1)
     parser.add_argument("--journal", type=Path, default=None)
     parser.add_argument("--artifacts", type=Path, default=None)

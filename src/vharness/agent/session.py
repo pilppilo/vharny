@@ -3971,7 +3971,13 @@ def _token_breach_payload(
         provider_input = response.usage.input_tokens
     if provider_input is None:
         return None
-    reserved = context_manifest.reserved_output_tokens or 0
+    # COD-88: a grown answer limit is what the call actually reserved.
+    requested = [
+        attempt.output_limit
+        for attempt in response.attempts
+        if attempt.output_limit is not None
+    ]
+    reserved = max(requested, default=context_manifest.reserved_output_tokens or 0)
     if provider_input + reserved <= context_manifest.token_budget:
         return None
     return {

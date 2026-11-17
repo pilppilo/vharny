@@ -710,6 +710,7 @@ def test_workspace_settings_carry_response_format():
         response_format="json_object",
         provider_timeout=300.0,
         provider_stream=True,
+        initial_output_tokens=None,
         api_key_env="TEST_KEY",
         max_actions=6,
         max_model_calls=8,

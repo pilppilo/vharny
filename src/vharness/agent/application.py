@@ -356,7 +356,10 @@ def build_model(settings: RunSettings) -> tuple[Model, Callable[[], None] | None
         stream=settings.provider_stream,
     )
     model = CompatibleModel(
-        generator, model_id=endpoint.model, repair_budget=settings.repair_budget
+        generator,
+        model_id=endpoint.model,
+        repair_budget=settings.repair_budget,
+        initial_output_tokens=settings.initial_output_tokens,
     )
     return model, generator.close
 
@@ -421,6 +424,9 @@ def run_identity(
     if settings.arc is not None:
         # Added only for ARC runs, so existing run identities are unchanged.
         safe["arc"] = settings.arc.to_payload()
+    if settings.initial_output_tokens is not None:
+        # COD-88: growth changes what each call asks for; set-only, as above.
+        safe["initial_output_tokens"] = settings.initial_output_tokens
     digest = hashlib.sha256(canonical_json(safe).encode("utf-8")).hexdigest()
     return RunIdentity(VERSION, digest, runtime.identity(), evaluator.identity())
 
