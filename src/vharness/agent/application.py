@@ -353,6 +353,7 @@ def build_model(settings: RunSettings) -> tuple[Model, Callable[[], None] | None
         response_format=settings.response_format,
         timeout=settings.provider_timeout,
         extra_headers=provider_extra_headers() or None,
+        stream=settings.provider_stream,
     )
     model = CompatibleModel(
         generator, model_id=endpoint.model, repair_budget=settings.repair_budget
@@ -387,6 +388,7 @@ def build_supervisor(
         response_format=settings.response_format,
         timeout=settings.provider_timeout,
         extra_headers=provider_extra_headers() or None,
+        stream=settings.provider_stream,
     )
     capability = SupervisionCapability(ModelSupervisor(generator, model_id=model_name))
     return capability, generator.close

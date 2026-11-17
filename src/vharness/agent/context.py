@@ -88,9 +88,11 @@ SYSTEM_PROMPT = (
     "complete. Verify its factual claims against current observations, action "
     "receipts, and artifacts; do not say a fix, test, or report was delivered "
     "unless the corresponding current evidence is visible."
-    " When supervisor guidance appears in the context, respond to it with "
-    "GuidanceResponse carrying accept, reject, or replan and a concise reason, "
-    "or proceed with the result your work requires."
+    " When a supervisor_guidance item appears in the context, respond to it "
+    "with GuidanceResponse carrying accept, reject, or replan and a concise "
+    "reason, or proceed with the result your work requires. Without a "
+    "supervisor_guidance item there is no open guidance: never send "
+    "GuidanceResponse, and ignore guidance marked closed in history."
 )
 RESERVED_OUTPUT_TOKENS = 256
 # The whitespace counter undercounts provider tokens by ~4.1x to ~9.5x on
@@ -865,6 +867,10 @@ class _RecentRenderContext:
     proposals: Mapping[str, tuple[str, Mapping[str, object]]]
     receipt_content: Mapping[str, ReceiptExcerpt]
     occurrences: Mapping[str, tuple[int, int]]
+    #: COD-76: the event id of the one open guidance, if any. Every other
+    #: guidance_received event renders as closed, without its advice, so the
+    #: model is never invited to answer guidance that no longer applies.
+    open_guidance_id: str | None
 
     @classmethod
     def build(
@@ -894,8 +900,12 @@ class _RecentRenderContext:
                 name,
                 arguments if isinstance(arguments, Mapping) else MappingProxyType({}),
             )
+        active = active_guidance(events)
         return cls(
-            proposals, receipt_content, _receipt_occurrences(events, receipt_content)
+            proposals,
+            receipt_content,
+            _receipt_occurrences(events, receipt_content),
+            active[0] if active is not None else None,
         )
 
 
@@ -971,6 +981,17 @@ def _select_recent(
     return tuple(selected), tuple(omitted)
 
 
+_GUIDANCE_CLOSING_KINDS = frozenset(
+    {
+        "guidance_accepted",
+        "guidance_rejected",
+        "guidance_expired",
+        "guidance_suppressed",
+        "guidance_response_rejected",
+    }
+)
+
+
 def _recent_event_text(event: Event, context: _RecentRenderContext) -> str:
     """Render bounded per-kind content; unmapped kinds keep the bare prefix."""
     # pylint: disable=too-many-return-statements
@@ -993,8 +1014,8 @@ def _recent_event_text(event: Event, context: _RecentRenderContext) -> str:
         return _render_command_field(event, prefix, "objective")
     if event.kind == "evaluation_received":
         return _render_evaluation(event, prefix)
-    if event.kind == "guidance_received":
-        return _render_guidance(event, prefix)
+    if event.kind == "guidance_received" or event.kind in _GUIDANCE_CLOSING_KINDS:
+        return _render_guidance(event, prefix, context.open_guidance_id)
     if event.kind == "attempt_started":
         return _render_attempt_started(event, prefix)
     if event.kind == "attempt_inspected":
@@ -1122,7 +1143,12 @@ def _render_evaluation(event: Event, prefix: str) -> str:
     return " ".join(parts) if len(parts) > 1 else prefix
 
 
-def _render_guidance(event: Event, prefix: str) -> str:
+def _render_guidance(event: Event, prefix: str, open_guidance_id: str | None) -> str:
+    """Render open guidance with its advice; closed guidance only as closed."""
+    if event.kind != "guidance_received":
+        return f"{prefix}; guidance closed"
+    if event.event_id != open_guidance_id:
+        return f"{prefix} closed; needs no response"
     guidance = event.payload.get("guidance")
     if not isinstance(guidance, Mapping):
         return prefix

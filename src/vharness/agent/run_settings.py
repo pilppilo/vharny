@@ -110,8 +110,21 @@ def _validate_child_env_allow(allow: tuple[str, ...] | None, api_key_env: str) -
         )
 
 
+def _optional_flag(value: Mapping[str, object], key: str) -> bool:
+    """A persisted boolean that defaults to False when absent."""
+    flag = value.get(key, False)
+    if not isinstance(flag, bool):
+        raise ContractError(f"run manifest {key} must be a boolean")
+    return flag
+
+
 def _validate_arc(settings: RunSettings) -> None:
-    """ARC runs play one game: no check command, no target, a positive limit."""
+    """ARC runs play one game: no check command, no target, a positive limit.
+
+    Also checks ``provider_stream``, the other optional run flag.
+    """
+    if not isinstance(settings.provider_stream, bool):
+        raise ContractError("provider_stream must be a boolean")
     if settings.arc is None:
         return
     if not isinstance(settings.arc, ArcRunSettings):
@@ -219,6 +232,8 @@ class RunSettings:
     shell: str | None = None
     response_format: str | None = None
     provider_timeout: float = DEFAULT_PROVIDER_TIMEOUT_SECONDS
+    #: COD-76: stream replies so long reasoning never leaves the connection idle.
+    provider_stream: bool = False
     transport_recovery: TransportRecoverySettings = TransportRecoverySettings()
     #: Variables child processes may see; ``None`` passes all but provider secrets.
     child_env_allow: tuple[str, ...] | None = None
@@ -296,7 +311,8 @@ class RunSettings:
     def to_payload(self) -> dict[str, object]:
         """Return the non-secret settings as a JSON-compatible object.
 
-        ``arc`` appears only for ARC runs, so other manifests are unchanged.
+        ``arc`` and ``provider_stream`` appear only when set, so other
+        manifests are unchanged.
         """
         payload: dict[str, object] = {
             "objective": self.objective,
@@ -326,6 +342,8 @@ class RunSettings:
         }
         if self.arc is not None:
             payload["arc"] = self.arc.to_payload()
+        if self.provider_stream:
+            payload["provider_stream"] = True
         return payload
 
     @classmethod
@@ -368,6 +386,7 @@ class RunSettings:
             check_timeout_seconds=check_timeout_seconds,
             shell=_optional_str(value, "shell"),
             provider_timeout=provider_timeout,
+            provider_stream=_optional_flag(value, "provider_stream"),
             transport_recovery=TransportRecoverySettings.from_payload(
                 value.get("transport_recovery")
             ),

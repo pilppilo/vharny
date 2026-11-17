@@ -1,4 +1,11 @@
-"""OpenAI-compatible HTTP generator: retry, truncation retry, SQLite cache, usage stats."""
+"""OpenAI-compatible HTTP generator: retry, truncation retry, SQLite cache, usage stats.
+
+With ``stream=True`` each reply is streamed and collected (COD-76). A
+non-streamed request sends nothing while a reasoning model thinks, and an idle
+limit somewhere between client and provider ended such calls at 300 s even
+with a 600 s client timeout. Streamed tokens, reasoning included, keep the
+connection busy. Usage is requested in the final chunk.
+"""
 
 from __future__ import annotations
 
@@ -8,9 +15,13 @@ import random
 import sqlite3
 import threading
 import time
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass
+from typing import TypedDict
 
 from openai import APIConnectionError, APIStatusError, APITimeoutError, OpenAI
+from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
+from openai.types.chat.completion_create_params import ResponseFormat
 
 from ..config import EndpointConfig
 from ..core import Generation, ModelFailureClass
@@ -22,8 +33,12 @@ RESPONSE_FORMAT_JSON_OBJECT = "json_object"
 _VALID_RESPONSE_FORMATS = (RESPONSE_FORMAT_JSON_OBJECT,)
 
 
+class _StreamCut(Exception):
+    """A streamed reply ended before the provider sent a finish reason."""
+
+
 def _transient(exc: Exception) -> bool:
-    if isinstance(exc, (APIConnectionError, APITimeoutError)):
+    if isinstance(exc, (APIConnectionError, APITimeoutError, _StreamCut)):
         return True
     if isinstance(exc, APIStatusError):
         return exc.status_code == 429 or exc.status_code >= 500
@@ -34,7 +49,7 @@ def _failure_class(exc: Exception) -> str:
     """Classify one caught provider exception without retaining its text."""
     if isinstance(exc, APITimeoutError):
         return ModelFailureClass.TRANSIENT_TIMEOUT.value
-    if isinstance(exc, APIConnectionError):
+    if isinstance(exc, (APIConnectionError, _StreamCut)):
         return ModelFailureClass.TRANSIENT_CONNECTION.value
     if isinstance(exc, APIStatusError):
         if exc.status_code in (401, 403):
@@ -60,6 +75,57 @@ def _reasoning_tokens(usage: object) -> int | None:
     return value
 
 
+class _FormatKwargs(TypedDict, total=False):
+    response_format: ResponseFormat
+
+
+@dataclass(frozen=True, slots=True)
+class _Message:
+    content: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class _Choice:
+    message: _Message
+    finish_reason: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class _StreamedResponse:
+    """A streamed reply collected into the shape of a non-streamed one."""
+
+    choices: tuple[_Choice, ...]
+    usage: object | None
+
+
+def _collect_stream(chunks: Iterable[object]) -> _StreamedResponse:
+    """Join streamed content deltas; keep the last finish reason and the usage.
+
+    A stream that closes without a finish reason was cut in transit; its partial
+    text is never returned as an answer.
+    """
+    parts: list[str] = []
+    finish: str | None = None
+    usage: object | None = None
+    saw_choice = False
+    for chunk in chunks:
+        chunk_usage = getattr(chunk, "usage", None)
+        if chunk_usage is not None:
+            usage = chunk_usage
+        for choice in getattr(chunk, "choices", None) or ():
+            saw_choice = True
+            text = getattr(getattr(choice, "delta", None), "content", None)
+            if text:
+                parts.append(text)
+            reason = getattr(choice, "finish_reason", None)
+            if reason:
+                finish = reason
+    if saw_choice and finish is None:
+        raise _StreamCut("the stream ended before a finish reason")
+    choices = (_Choice(_Message("".join(parts)), finish),) if saw_choice else ()
+    return _StreamedResponse(choices, usage)
+
+
 @register_builtin
 class OpenAICompatible(Generator):
     name = "openai"
@@ -79,6 +145,7 @@ class OpenAICompatible(Generator):
         cache_path: str | None = None,
         response_format: str | None = None,
         extra_headers: Mapping[str, str] | None = None,
+        stream: bool = False,
     ) -> None:
         if (
             response_format is not None
@@ -93,6 +160,7 @@ class OpenAICompatible(Generator):
         self.length_retries = length_retries
         self.max_tokens = max_tokens
         self.temperature = temperature
+        self.stream = stream
         self.response_format = response_format
         self.stats = {
             "queries": 0,
@@ -176,11 +244,49 @@ class OpenAICompatible(Generator):
             f"tokens={s['prompt_tokens'] + s['completion_tokens']} latency_p50={p50:.2f}s"
         )
 
-    def _response_format_kwargs(self) -> dict[str, object]:
-        """Return the request kwargs enforcing provider-side JSON when selected."""
+    def _response_format_kwargs(self) -> _FormatKwargs:
+        """Return the request kwargs enforcing provider-side JSON when selected.
+
+        Absent, not a sentinel, when no format is chosen: the request then
+        carries no ``response_format`` key at all.
+        """
         if self.response_format is None:
             return {}
-        return {"response_format": {"type": self.response_format}}
+        return {"response_format": {"type": "json_object"}}
+
+    def _request(
+        self, system: str, prompt: str, max_tokens: int
+    ) -> ChatCompletion | _StreamedResponse:
+        """One chat-completions call, streamed and collected when enabled.
+
+        Stream errors raise inside this call, so a connection lost mid-stream
+        is classified and retried like any other transport failure.
+        """
+        messages: list[ChatCompletionMessageParam] = [
+            {"role": "system", "content": system},
+            {"role": "user", "content": prompt},
+        ]
+        if not self.stream:
+            return self._client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=self.temperature,
+                max_tokens=max_tokens,
+                **self._response_format_kwargs(),
+            )
+        stream = self._client.chat.completions.create(
+            model=self.model,
+            messages=messages,
+            temperature=self.temperature,
+            max_tokens=max_tokens,
+            stream=True,
+            stream_options={"include_usage": True},
+            **self._response_format_kwargs(),
+        )
+        try:
+            return _collect_stream(stream)
+        finally:
+            stream.close()
 
     def generate(self, system: str, prompt: str) -> Generation:
         key = self._cache_key(system, prompt)
@@ -205,16 +311,7 @@ class OpenAICompatible(Generator):
         for attempt in range(total_attempts):
             started = time.perf_counter()
             try:
-                response = self._client.chat.completions.create(
-                    model=self.model,
-                    messages=[
-                        {"role": "system", "content": system},
-                        {"role": "user", "content": prompt},
-                    ],
-                    temperature=self.temperature,
-                    max_tokens=max_tokens,
-                    **self._response_format_kwargs(),
-                )
+                response = self._request(system, prompt, max_tokens)
             except Exception as e:  # noqa: BLE001 — classified below
                 latency = time.perf_counter() - started
                 total_latency += latency
