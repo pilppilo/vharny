@@ -5,12 +5,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import json
 import math
 from dataclasses import fields, is_dataclass
 from decimal import Decimal
 from enum import Enum
-from typing import Mapping, cast
+from typing import cast
 
 from .errors import ContractError
 from .models import JsonValue

@@ -7,12 +7,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import json
 import hashlib
 import math
 import time
 from dataclasses import dataclass, field
-from typing import Callable, Mapping, Protocol, Union
+from typing import Callable, Protocol, Union
 
 from ..core import MODEL_FAILURE_CLASSES, ModelFailureClass
 from .codec import MAX_JSON_BYTES, parse_json_object, to_json_value

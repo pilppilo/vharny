@@ -51,9 +51,10 @@ import json
 import math
 import time
 from collections import Counter
+from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, AbstractSet, Mapping, Protocol, Sequence
+from typing import TYPE_CHECKING, AbstractSet, Protocol, Sequence
 from uuid import uuid4
 
 from .codec import MAX_JSON_BYTES, canonical_json, parse_json_object

@@ -7,9 +7,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import hashlib
 from dataclasses import replace
-from typing import Iterable, Mapping
+from typing import Iterable
 
 from .codec import canonical_json, parse_json_object
 from .errors import ContractError, IntegrityError, TransitionError
