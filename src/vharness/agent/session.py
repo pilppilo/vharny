@@ -859,6 +859,8 @@ class Session:
                 token_counter=TOKEN_COUNTER,
             )
 
+        tokens_per_char = _observed_tokens_per_char(events)
+
         def request_token_counter(
             items: tuple[ContextItem, ...],
             text: str,
@@ -874,9 +876,11 @@ class Session:
                 system_prompt_tokens=system_tokens,
                 reserved_output_tokens=reserved_output_tokens,
                 serialization_overhead_tokens=max(0, input_tokens - context_tokens),
-                estimated_input_tokens=estimate_serialized_tokens(serialized),
+                estimated_input_tokens=estimate_serialized_tokens(
+                    serialized, tokens_per_char
+                ),
                 estimated_system_prompt_tokens=estimate_serialized_tokens(
-                    SYSTEM_PROMPT
+                    SYSTEM_PROMPT, tokens_per_char
                 ),
             )
 
@@ -899,6 +903,12 @@ class Session:
                 {"overflow": assembled, "duration_ns": context_duration_ns},
             )
             raise TransitionError("mandatory context exceeds token budget")
+        # COD-73: record the calibration the estimate used, so it is reproducible.
+        assembled = ContextBundle(
+            assembled.items,
+            replace(assembled.manifest, estimate_tokens_per_char=tokens_per_char),
+            assembled.text,
+        )
         request, visible_input, context_manifest = self._finalize_request(
             make_request,
             assembled,
@@ -3835,6 +3845,12 @@ def _projected_input_tokens(events: tuple[Event, ...], text: str) -> int | None:
     tokens-per-character ratio projects the candidate request, and an
     over-budget projection is refused rather than sent.
     """
+    ratio = _observed_tokens_per_char(events)
+    return None if ratio is None else math.ceil(len(text) * ratio)
+
+
+def _observed_tokens_per_char(events: tuple[Event, ...]) -> float | None:
+    """The worst provider tokens-per-character ratio in the journal, or None."""
     intents: dict[str, int] = {}
     ratios: list[float] = []
     for event in events:
@@ -3849,9 +3865,7 @@ def _projected_input_tokens(events: tuple[Event, ...], text: str) -> int | None:
             tokens = _provider_prompt_tokens(event.payload)
             if chars and tokens:
                 ratios.append(tokens / chars)
-    if not ratios:
-        return None
-    return math.ceil(len(text) * max(ratios))
+    return max(ratios) if ratios else None
 
 
 def _provider_prompt_tokens(payload: Mapping[str, object]) -> int | None:
@@ -3895,8 +3909,9 @@ def _stable_request(
     context_manifest = assembled.manifest
     request = make_request(assembled)
     text = render_request(request)
+    tokens_per_char = context_manifest.estimate_tokens_per_char
     for _ in range(3):
-        estimated = estimate_serialized_tokens(text)
+        estimated = estimate_serialized_tokens(text, tokens_per_char)
         if estimated == context_manifest.estimated_input_tokens:
             return request, text, context_manifest
         context_manifest = replace(

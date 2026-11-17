@@ -493,7 +493,7 @@ def test_identical_journal_and_budget_yield_identical_manifests(dependencies):
     assert first.manifest == second.manifest
     assert manifests[0]["policy_version"] == 2
     assert manifests[0]["token_counter"] == "whitespace-v1"
-    assert manifests[0]["token_estimator"] == "conservative-chars-v1"
+    assert manifests[0]["token_estimator"] == "calibrated-chars-v2"
 
 
 def test_current_plan_contributes_to_journal_retrieval_query(dependencies, monkeypatch):

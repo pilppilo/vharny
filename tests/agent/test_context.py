@@ -297,9 +297,48 @@ def test_current_plan_contributes_to_salience_query():
 def test_serialized_input_estimate_bounds_the_run6_dense_request():
     dense = "x" * 205_811
     assert estimate_serialized_tokens("") == 0
-    assert estimate_serialized_tokens("abc") == 1
-    assert estimate_serialized_tokens(dense) == 68_604
+    assert estimate_serialized_tokens("abc") == 3  # 1.25 chars per token prior
+    assert estimate_serialized_tokens(dense) == 164649
     assert estimate_serialized_tokens(dense) > 24_000
+
+
+def test_calibrated_estimate_adds_a_margin_over_the_observed_ratio():
+    text = "a" * 1_000
+    assert estimate_serialized_tokens(text, 0.5) == 550  # 0.5 x 1.1 margin
+    assert estimate_serialized_tokens(text, 0.25) == 275
+    assert estimate_serialized_tokens("", 0.5) == 0
+
+
+def test_prior_and_calibration_bound_the_cod38_smoke_requests():
+    """COD-73: every recorded smoke request, before and after calibration."""
+    import json
+    import sqlite3
+    from pathlib import Path as _Path
+
+    journal = (
+        _Path(__file__).parents[2]
+        / "evidence/phase-0004-arc-agi-3-smoke/attempt-4-scorecard/session.sqlite3"
+    )
+    db = sqlite3.connect(f"file:{journal}?mode=ro", uri=True)
+    rows = db.execute(
+        "SELECT kind, payload FROM events WHERE kind IN "
+        "('model_intended', 'model_decided') ORDER BY sequence"
+    ).fetchall()
+    db.close()
+    inputs, worst = {}, None
+    checked = 0
+    for kind, raw in rows:
+        payload = json.loads(raw)
+        if kind == "model_intended":
+            inputs[payload["request_id"]] = payload["input"]
+            continue
+        text = inputs[payload["request_id"]]
+        reported = payload["usage"]["input_tokens"]
+        assert estimate_serialized_tokens(text, worst) >= reported
+        ratio = reported / len(text)
+        worst = ratio if worst is None else max(worst, ratio)
+        checked += 1
+    assert checked >= 14
 
 
 def test_exact_fit_and_one_token_overflow_use_recorded_counter():

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import hashlib
 from dataclasses import dataclass, replace
 
@@ -511,7 +513,7 @@ def test_manifest_records_exact_serialized_window_accounting(tmp_path):
     assert manifest["estimated_input_tokens"] == estimate_serialized_tokens(
         decided.payload["input"]
     )
-    assert manifest["token_estimator"] == "conservative-chars-v1"
+    assert manifest["token_estimator"] == "calibrated-chars-v2"
     assert manifest["reserved_output_tokens"] == 256
     assert allocation["unused"] == manifest["token_budget"] - (
         manifest["serialized_input_tokens"]
@@ -1104,4 +1106,60 @@ def test_open_reconciles_interrupted_model_reservation(tmp_path):
     kinds = [event.kind for event in opened.events(limit=100)]
     assert kinds.count("model_malformed") == 1
     assert interrupted_model_reservations(opened._state) == ()
+    journal.close()
+
+
+def test_estimate_is_calibrated_from_provider_usage(tmp_path):
+    """COD-73: after a report, the estimate uses the worst observed ratio."""
+    session, journal = _model_session(tmp_path)
+
+    class ReportingModel:
+        model_id = "reporting"
+
+        def decide(self, request):
+            output = '{"kind": "LineageQuery"}'
+            return ModelResponse(
+                result=LineageQuery(),
+                output=output,
+                model_id=self.model_id,
+                finish_reason="stop",
+                usage=UsageMeasurement(
+                    measurement_id=f"{request.request_id}-usage",
+                    model_calls=1,
+                    input_tokens=3000,
+                ),
+                attempts=(
+                    ModelAttempt(
+                        output=output, finish_reason="stop", prompt_tokens=3000
+                    ),
+                ),
+            )
+
+    session.step(ReportingModel())
+    session.step(ReportingModel())
+    decided = [e for e in session.events(limit=200) if e.kind == "model_decided"]
+    first, second = (e.payload["manifest"] for e in decided[:2])
+    assert first["estimate_tokens_per_char"] is None
+    assert first["estimated_input_tokens"] == estimate_serialized_tokens(
+        decided[0].payload["input"]
+    )
+    ratio = 3000 / len(decided[0].payload["input"])
+    assert second["estimate_tokens_per_char"] == pytest.approx(ratio)
+    assert second["estimated_input_tokens"] == estimate_serialized_tokens(
+        decided[1].payload["input"], ratio
+    )
+    replay(list(session.events(limit=200)))
+    journal.close()
+
+
+def test_visible_manifest_counts_items_instead_of_listing_them(tmp_path):
+    """COD-73: the growing item lists stay in the journal, not in the prompt."""
+    session, journal = _model_session(tmp_path)
+    session.step(ScriptedModel((LineageQuery(),)))
+    decided = [e for e in session.events(limit=200) if e.kind == "model_decided"]
+    visible = json.loads(decided[0].payload["input"])["manifest"]
+    recorded = decided[0].payload["manifest"]
+    assert "included" not in visible and "item_tokens" not in visible
+    assert sum(visible["included_by_band"].values()) == len(recorded["included"])
+    assert recorded["item_tokens"]  # still journaled in full
     journal.close()
