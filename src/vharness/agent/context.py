@@ -31,8 +31,13 @@ POLICY_VERSION = 2
 # The recorded serialized-window count stays the selection heuristic; the
 # admission bound is a separate conservative estimate (ADR-0016).
 TOKEN_COUNTER = "whitespace-v1"
-TOKEN_ESTIMATOR = "conservative-chars-v1"
-CHARS_PER_TOKEN = 3
+# COD-73: the estimate is calibrated from provider-reported usage. Before the
+# first report it assumes 1.25 characters per token, below every ratio observed
+# so far (run6: 1.28-2.95; ARC-AGI-3 hex grids: about 1.75).
+TOKEN_ESTIMATOR = "calibrated-chars-v2"
+PRIOR_CHARS_PER_TOKEN = 1.25
+#: Margin over the worst observed tokens-per-character ratio.
+CALIBRATION_MARGIN = 1.1
 COEFFICIENTS: Mapping[str, float] = MappingProxyType(
     {
         "overlap": 1.0,
@@ -144,6 +149,8 @@ class ContextManifest:
     serialization_overhead_tokens: int | None = None
     estimated_input_tokens: int | None = None
     token_estimator: str = TOKEN_ESTIMATOR
+    #: Worst provider tokens-per-character ratio the estimate used; None = prior.
+    estimate_tokens_per_char: float | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -200,16 +207,21 @@ def count_tokens(text: str) -> int:
     return 0 if not stripped else len(stripped.split())
 
 
-def estimate_serialized_tokens(text: str) -> int:
-    """Estimate serialized-window tokens coarsely and protectively (ADR-0016).
+def estimate_serialized_tokens(text: str, tokens_per_char: float | None = None) -> int:
+    """Estimate serialized-window tokens as an upper bound (ADR-0016, COD-73).
 
-    Run6's requests measured 1.28-2.95 characters per provider token; this
-    bound assumes 3 and is deliberately coarse. Admission still refuses
-    gross overruns (the 205,811-character request estimates 68,604 tokens),
-    and provider-reported usage reconciles the residual underestimates after
-    the call rather than silently trusting the estimate.
+    With no provider report yet, assume ``PRIOR_CHARS_PER_TOKEN``, which is
+    below every ratio observed so far. Once a provider has reported usage,
+    ``tokens_per_char`` is the worst ratio it showed, and the estimate adds
+    ``CALIBRATION_MARGIN`` to it. The provider's own count is still recorded
+    after each call and reconciled; this estimate only bounds it beforehand.
     """
-    return math.ceil(len(text) / CHARS_PER_TOKEN)
+    rate = (
+        1 / PRIOR_CHARS_PER_TOKEN
+        if tokens_per_char is None
+        else tokens_per_char * CALIBRATION_MARGIN
+    )
+    return math.ceil(len(text) * rate)
 
 
 # pylint: disable=too-many-locals,too-many-arguments
