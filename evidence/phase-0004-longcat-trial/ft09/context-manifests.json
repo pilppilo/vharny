@@ -1,0 +1,184 @@
+[
+ {
+  "sequence": 6,
+  "at": "2026-11-17T21:03:03.136865+00:00",
+  "manifest": {
+   "duration_ns": 1388865,
+   "manifest": {
+    "__type__": "ContextManifest",
+    "allocation": {
+     "mandatory": 97,
+     "overhead": 563,
+     "recent": 13,
+     "reserved_output": 4096,
+     "retrieved": 8,
+     "unused": 60578
+    },
+    "coefficients": {
+     "causal_proximity": 1.0,
+     "mmr": 8.0,
+     "overlap": 1.0,
+     "recency": 1.0,
+     "salience": 1.0,
+     "unresolved": 2.0
+    },
+    "estimate_tokens_per_char": null,
+    "estimated_input_tokens": 10106,
+    "fit_basis": "whitespace-v1",
+    "included": [
+     [
+      "objective",
+      "mandatory"
+     ],
+     [
+      "environment",
+      "mandatory"
+     ],
+     [
+      "operator",
+      "mandatory"
+     ],
+     [
+      "evaluation",
+      "mandatory"
+     ],
+     [
+      "lineage_head",
+      "mandatory"
+     ],
+     [
+      "attempt",
+      "mandatory"
+     ],
+     [
+      "plan",
+      "mandatory"
+     ],
+     [
+      "self_state",
+      "mandatory"
+     ],
+     [
+      "budgets",
+      "mandatory"
+     ],
+     [
+      "receipt",
+      "mandatory"
+     ],
+     [
+      "observation",
+      "mandatory"
+     ],
+     [
+      "node:root-run-c053d405e81f",
+      "retrieved"
+     ],
+     [
+      "attempt:attempt-97f8c05beb5a44948f8eefd58165cff6",
+      "retrieved"
+     ],
+     [
+      "event:event-672e3d6daec7426c99f1299cfdb17cf9",
+      "recent"
+     ],
+     [
+      "event:event-6fd4e2d8c86142be9f13345fdf626527",
+      "recent"
+     ],
+     [
+      "event:event-0a826241e0f946c1a48f5aee86908652",
+      "recent"
+     ],
+     [
+      "event:event-411d17b59c024134b7f2b08b50a7e849",
+      "recent"
+     ]
+    ],
+    "item_tokens": [
+     [
+      "objective",
+      12
+     ],
+     [
+      "environment",
+      57
+     ],
+     [
+      "operator",
+      2
+     ],
+     [
+      "evaluation",
+      2
+     ],
+     [
+      "lineage_head",
+      3
+     ],
+     [
+      "attempt",
+      4
+     ],
+     [
+      "plan",
+      2
+     ],
+     [
+      "self_state",
+      3
+     ],
+     [
+      "budgets",
+      8
+     ],
+     [
+      "receipt",
+      2
+     ],
+     [
+      "observation",
+      2
+     ],
+     [
+      "node:root-run-c053d405e81f",
+      4
+     ],
+     [
+      "attempt:attempt-97f8c05beb5a44948f8eefd58165cff6",
+      4
+     ],
+     [
+      "event:event-672e3d6daec7426c99f1299cfdb17cf9",
+      3
+     ],
+     [
+      "event:event-6fd4e2d8c86142be9f13345fdf626527",
+      3
+     ],
+     [
+      "event:event-0a826241e0f946c1a48f5aee86908652",
+      4
+     ],
+     [
+      "event:event-411d17b59c024134b7f2b08b50a7e849",
+      3
+     ]
+    ],
+    "journal_cursor": 4,
+    "objective_version": 1,
+    "omitted": [],
+    "policy_version": 2,
+    "reserved_output_tokens": 4096,
+    "serialization_overhead_tokens": 563,
+    "serialized_input_tokens": 681,
+    "share_limits": {},
+    "system_prompt_tokens": 181,
+    "token_budget": 65536,
+    "token_counter": "whitespace-v1",
+    "token_estimator": "calibrated-chars-v2",
+    "tokens_used": 118
+   }
+  }
+ }
+]

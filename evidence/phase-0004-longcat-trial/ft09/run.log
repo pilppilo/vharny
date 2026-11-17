@@ -1,0 +1,12 @@
+OBJECTIVE complete the game
+SESSION run-c053d405e81f mode=arc-agi-3
+GAME ft09-0d8bbf25 seed=0 mode=normal
+RUN-DIR /home/claude/arc-runs/trial-ft09
+CHECK official ARC-AGI-3 scorecard
+MODEL decision failed detail=provider output exhausted
+MODEL repaired defect=output-exhausted kind=none field=output-limit
+MODEL repaired defect=output-exhausted kind=none field=output-limit
+MODEL repaired defect=output-exhausted kind=none field=output-limit
+MODEL repaired defect=output-exhausted kind=none field=output-ceiling
+ERROR run failed: provider output exhausted: empty or length-limited output
+TERMINAL failure; inspect the journal and adjust the bounded run
