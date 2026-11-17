@@ -1,0 +1,446 @@
+{
+  "settings": {
+    "api_key_env": "LONGCAT_API_KEY",
+    "arc": {
+      "call_timeout_seconds": 30.0,
+      "game_id": "dc22-fdcac232",
+      "operation_mode": "normal",
+      "seed": 0
+    },
+    "base_url": "https://api.longcat.chat/openai/v1",
+    "check_command": null,
+    "check_timeout_seconds": 600.0,
+    "child_env_allow": null,
+    "max_actions": 20,
+    "max_evaluations": 2,
+    "max_model_calls": 40,
+    "max_output_tokens": 32768,
+    "max_steps": 200,
+    "model": "LongCat-2.5",
+    "objective": "complete the game",
+    "provider_timeout": 600.0,
+    "repair_budget": 1,
+    "response_format": null,
+    "shell": "/bin/bash",
+    "target": null,
+    "token_budget": 65536,
+    "transport_recovery": {
+      "max_retries": 2,
+      "retry_delays_seconds": [
+        2.0,
+        8.0
+      ],
+      "version": 1
+    },
+    "workspace": "/home/claude/arc-runs/attempt-4/arc-games"
+  },
+  "event_counts": {
+    "session_created": 1,
+    "supervision_enabled": 1,
+    "attempt_started": 4,
+    "model_configuration_bound": 1,
+    "artifact_read": 105,
+    "context_assembled": 16,
+    "model_intended": 16,
+    "model_decided": 15,
+    "action_intended": 11,
+    "receipt_received": 11,
+    "command_admitted": 5,
+    "model_malformed": 1,
+    "session_paused": 1,
+    "command_applied": 5,
+    "operator_message": 2,
+    "session_resumed": 1,
+    "supervision_triggered": 4,
+    "supervisor_intended": 1,
+    "guidance_received": 1,
+    "guidance_expired": 1,
+    "attempt_abandoned": 1,
+    "operator_escalated": 2,
+    "question_recorded": 2,
+    "question_answered": 1,
+    "evaluation_intended": 2,
+    "evaluation_intake": 2,
+    "evaluation_received": 2,
+    "guidance_response_rejected": 2,
+    "session_stopped": 1
+  },
+  "decisions": [
+    {
+      "at": "2026-11-17T00:47:09.870703+00:00",
+      "result": "ActionChoice",
+      "input_tokens": 7843,
+      "completion_tokens": 17330,
+      "reasoning_tokens": 17283,
+      "duration_ms": 221944
+    },
+    {
+      "at": "2026-11-17T00:53:01.578703+00:00",
+      "result": "ActionChoice",
+      "input_tokens": 11294,
+      "completion_tokens": 391,
+      "reasoning_tokens": 336,
+      "duration_ms": 12091
+    },
+    {
+      "at": "2026-11-17T00:54:08.810903+00:00",
+      "result": "ActionChoice",
+      "input_tokens": 11939,
+      "completion_tokens": 4062,
+      "reasoning_tokens": 4006,
+      "duration_ms": 67127
+    },
+    {
+      "at": "2026-11-17T00:54:48.896458+00:00",
+      "result": "ActionChoice",
+      "input_tokens": 13159,
+      "completion_tokens": 346,
+      "reasoning_tokens": 266,
+      "duration_ms": 9891
+    },
+    {
+      "at": "2026-11-17T00:55:14.413589+00:00",
+      "result": "ActionChoice",
+      "input_tokens": 13904,
+      "completion_tokens": 1342,
+      "reasoning_tokens": 1260,
+      "duration_ms": 25356
+    },
+    {
+      "at": "2026-11-17T00:55:32.099518+00:00",
+      "result": "ActionChoice",
+      "input_tokens": 14556,
+      "completion_tokens": 644,
+      "reasoning_tokens": 587,
+      "duration_ms": 17491
+    },
+    {
+      "at": "2026-11-17T00:56:17.024697+00:00",
+      "result": "ActionChoice",
+      "input_tokens": 15521,
+      "completion_tokens": 2909,
+      "reasoning_tokens": 2822,
+      "duration_ms": 44750
+    },
+    {
+      "at": "2026-11-17T00:56:31.307336+00:00",
+      "result": "ActionChoice",
+      "input_tokens": 16806,
+      "completion_tokens": 569,
+      "reasoning_tokens": 487,
+      "duration_ms": 14090
+    },
+    {
+      "at": "2026-11-17T00:56:38.933978+00:00",
+      "result": "ActionChoice",
+      "input_tokens": 17925,
+      "completion_tokens": 135,
+      "reasoning_tokens": 80,
+      "duration_ms": 7397
+    },
+    {
+      "at": "2026-11-17T00:56:52.745260+00:00",
+      "result": "ActionChoice",
+      "input_tokens": 19102,
+      "completion_tokens": 566,
+      "reasoning_tokens": 487,
+      "duration_ms": 13560
+    },
+    {
+      "at": "2026-11-17T00:57:02.995661+00:00",
+      "result": "ActionChoice",
+      "input_tokens": 20334,
+      "completion_tokens": 220,
+      "reasoning_tokens": 115,
+      "duration_ms": 10017
+    },
+    {
+      "at": "2026-11-17T00:58:08.844223+00:00",
+      "result": "EvaluationChoice",
+      "input_tokens": 22136,
+      "completion_tokens": 226,
+      "reasoning_tokens": 163,
+      "duration_ms": 9370
+    },
+    {
+      "at": "2026-11-17T00:58:25.940702+00:00",
+      "result": "EvaluationChoice",
+      "input_tokens": 24626,
+      "completion_tokens": 802,
+      "reasoning_tokens": 702,
+      "duration_ms": 16775
+    },
+    {
+      "at": "2026-11-17T00:58:42.132094+00:00",
+      "result": "GuidanceResponse",
+      "input_tokens": 25806,
+      "completion_tokens": 442,
+      "reasoning_tokens": 317,
+      "duration_ms": 15687
+    },
+    {
+      "at": "2026-11-17T00:59:01.856084+00:00",
+      "result": "GuidanceResponse",
+      "input_tokens": 26457,
+      "completion_tokens": 894,
+      "reasoning_tokens": 798,
+      "duration_ms": 19297
+    }
+  ],
+  "model_failures": [
+    {
+      "at": "2026-11-17T00:52:10.026560+00:00",
+      "failure_class": "transient-connection",
+      "attempts": [
+        {
+          "finish_reason": "",
+          "completion_tokens": null,
+          "reasoning_tokens": null,
+          "duration_ms": 300047
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "at": "2026-11-17T00:47:09.871283+00:00",
+      "action": "step",
+      "arguments": {
+        "action": 1
+      }
+    },
+    {
+      "at": "2026-11-17T00:53:01.579458+00:00",
+      "action": "step",
+      "arguments": {
+        "action": 1
+      }
+    },
+    {
+      "at": "2026-11-17T00:54:08.812491+00:00",
+      "action": "step",
+      "arguments": {
+        "action": 1
+      }
+    },
+    {
+      "at": "2026-11-17T00:54:48.897486+00:00",
+      "action": "step",
+      "arguments": {
+        "action": 2
+      }
+    },
+    {
+      "at": "2026-11-17T00:55:14.415488+00:00",
+      "action": "step",
+      "arguments": {
+        "action": 2
+      }
+    },
+    {
+      "at": "2026-11-17T00:55:32.100907+00:00",
+      "action": "step",
+      "arguments": {
+        "action": 1
+      }
+    },
+    {
+      "at": "2026-11-17T00:56:17.025820+00:00",
+      "action": "step",
+      "arguments": {
+        "action": 6,
+        "x": 24,
+        "y": 20
+      }
+    },
+    {
+      "at": "2026-11-17T00:56:31.308796+00:00",
+      "action": "step",
+      "arguments": {
+        "action": 6,
+        "x": 32,
+        "y": 32
+      }
+    },
+    {
+      "at": "2026-11-17T00:56:38.936739+00:00",
+      "action": "step",
+      "arguments": {
+        "action": 1
+      }
+    },
+    {
+      "at": "2026-11-17T00:56:52.746946+00:00",
+      "action": "step",
+      "arguments": {
+        "action": 1
+      }
+    },
+    {
+      "at": "2026-11-17T00:57:02.997719+00:00",
+      "action": "step",
+      "arguments": {
+        "action": 1
+      }
+    }
+  ],
+  "receipts": [
+    {
+      "at": "2026-11-17T00:47:09.925050+00:00",
+      "status": "succeeded",
+      "error": null
+    },
+    {
+      "at": "2026-11-17T00:53:01.633783+00:00",
+      "status": "succeeded",
+      "error": null
+    },
+    {
+      "at": "2026-11-17T00:54:08.867780+00:00",
+      "status": "succeeded",
+      "error": null
+    },
+    {
+      "at": "2026-11-17T00:54:48.952557+00:00",
+      "status": "succeeded",
+      "error": null
+    },
+    {
+      "at": "2026-11-17T00:55:14.472856+00:00",
+      "status": "succeeded",
+      "error": null
+    },
+    {
+      "at": "2026-11-17T00:55:32.157625+00:00",
+      "status": "succeeded",
+      "error": null
+    },
+    {
+      "at": "2026-11-17T00:56:17.080984+00:00",
+      "status": "succeeded",
+      "error": null
+    },
+    {
+      "at": "2026-11-17T00:56:31.367457+00:00",
+      "status": "succeeded",
+      "error": null
+    },
+    {
+      "at": "2026-11-17T00:56:38.995551+00:00",
+      "status": "succeeded",
+      "error": null
+    },
+    {
+      "at": "2026-11-17T00:56:52.803382+00:00",
+      "status": "succeeded",
+      "error": null
+    },
+    {
+      "at": "2026-11-17T00:57:03.055059+00:00",
+      "status": "succeeded",
+      "error": null
+    }
+  ],
+  "evaluations": [
+    {
+      "at": "2026-11-17T00:58:08.905040+00:00",
+      "valid": true,
+      "accepted": false,
+      "comparison": "incomplete",
+      "objectives": {
+        "actions": 11,
+        "card_id": "fa9a788f-d170-46e4-bcf7-5ab02d1ab394",
+        "completed": false,
+        "game_id": "dc22-fdcac232",
+        "latest_run": {
+          "actions": 11,
+          "guid": "5ec3e531-5a3f-4744-afb4-fe5976af0c83",
+          "level_actions": [
+            11,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "level_baseline_actions": [
+            59,
+            102,
+            67,
+            98,
+            324,
+            578
+          ],
+          "level_scores": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "levels_completed": 0,
+          "resets": 0,
+          "score": 0.0,
+          "state": "NOT_FINISHED"
+        },
+        "level_count": 6,
+        "levels_completed": 0,
+        "resets": 0,
+        "score": 0.0
+      }
+    },
+    {
+      "at": "2026-11-17T00:58:26.005462+00:00",
+      "valid": true,
+      "accepted": false,
+      "comparison": "incomplete",
+      "objectives": {
+        "actions": 11,
+        "card_id": "fa9a788f-d170-46e4-bcf7-5ab02d1ab394",
+        "completed": false,
+        "game_id": "dc22-fdcac232",
+        "latest_run": {
+          "actions": 11,
+          "guid": "5ec3e531-5a3f-4744-afb4-fe5976af0c83",
+          "level_actions": [
+            11,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "level_baseline_actions": [
+            59,
+            102,
+            67,
+            98,
+            324,
+            578
+          ],
+          "level_scores": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "levels_completed": 0,
+          "resets": 0,
+          "score": 0.0,
+          "state": "NOT_FINISHED"
+        },
+        "level_count": 6,
+        "levels_completed": 0,
+        "resets": 0,
+        "score": 0.0
+      }
+    }
+  ],
+  "last_event": {
+    "kind": "command_applied",
+    "at": "2026-11-17T01:02:04.371392+00:00"
+  }
+}

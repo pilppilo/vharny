@@ -4,3 +4,4 @@
 /evidence/phase-0003-failure-traces/** -text
 
 tools/exp_0001_supervisor_policy.py text eol=lf
+/evidence/phase-0004-arc-agi-3-smoke/** -text

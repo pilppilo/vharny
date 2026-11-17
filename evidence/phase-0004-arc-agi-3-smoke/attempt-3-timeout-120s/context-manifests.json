@@ -1,0 +1,1329 @@
+[
+  {
+    "sequence": 6,
+    "at": "2026-11-17T00:33:18.437634+00:00",
+    "manifest": {
+      "duration_ns": 8082415,
+      "manifest": {
+        "__type__": "ContextManifest",
+        "allocation": {
+          "mandatory": 97,
+          "overhead": 630,
+          "recent": 13,
+          "reserved_output": 8192,
+          "retrieved": 8,
+          "unused": 56435
+        },
+        "coefficients": {
+          "causal_proximity": 1.0,
+          "mmr": 8.0,
+          "overlap": 1.0,
+          "recency": 1.0,
+          "salience": 1.0,
+          "unresolved": 2.0
+        },
+        "estimated_input_tokens": 4588,
+        "included": [
+          [
+            "objective",
+            "mandatory"
+          ],
+          [
+            "environment",
+            "mandatory"
+          ],
+          [
+            "operator",
+            "mandatory"
+          ],
+          [
+            "evaluation",
+            "mandatory"
+          ],
+          [
+            "lineage_head",
+            "mandatory"
+          ],
+          [
+            "attempt",
+            "mandatory"
+          ],
+          [
+            "plan",
+            "mandatory"
+          ],
+          [
+            "self_state",
+            "mandatory"
+          ],
+          [
+            "budgets",
+            "mandatory"
+          ],
+          [
+            "receipt",
+            "mandatory"
+          ],
+          [
+            "observation",
+            "mandatory"
+          ],
+          [
+            "node:root-run-3ce7f6553761",
+            "retrieved"
+          ],
+          [
+            "attempt:attempt-ca1fe6e40c744923839c097a0ebb9b78",
+            "retrieved"
+          ],
+          [
+            "event:event-a0ec26a3b28a4146b2c7eda19d62299d",
+            "recent"
+          ],
+          [
+            "event:event-51902a4c05da4e32aa16246a4ff55e9c",
+            "recent"
+          ],
+          [
+            "event:event-4eb7714efe9f496289f6659180382f55",
+            "recent"
+          ],
+          [
+            "event:event-39a2cd38534b412cbf429b6cc12c9127",
+            "recent"
+          ]
+        ],
+        "item_tokens": [
+          [
+            "objective",
+            12
+          ],
+          [
+            "environment",
+            57
+          ],
+          [
+            "operator",
+            2
+          ],
+          [
+            "evaluation",
+            2
+          ],
+          [
+            "lineage_head",
+            3
+          ],
+          [
+            "attempt",
+            4
+          ],
+          [
+            "plan",
+            2
+          ],
+          [
+            "self_state",
+            3
+          ],
+          [
+            "budgets",
+            8
+          ],
+          [
+            "receipt",
+            2
+          ],
+          [
+            "observation",
+            2
+          ],
+          [
+            "node:root-run-3ce7f6553761",
+            4
+          ],
+          [
+            "attempt:attempt-ca1fe6e40c744923839c097a0ebb9b78",
+            4
+          ],
+          [
+            "event:event-a0ec26a3b28a4146b2c7eda19d62299d",
+            3
+          ],
+          [
+            "event:event-51902a4c05da4e32aa16246a4ff55e9c",
+            3
+          ],
+          [
+            "event:event-4eb7714efe9f496289f6659180382f55",
+            4
+          ],
+          [
+            "event:event-39a2cd38534b412cbf429b6cc12c9127",
+            3
+          ]
+        ],
+        "journal_cursor": 4,
+        "objective_version": 1,
+        "omitted": [],
+        "policy_version": 2,
+        "reserved_output_tokens": 8192,
+        "serialization_overhead_tokens": 630,
+        "serialized_input_tokens": 748,
+        "system_prompt_tokens": 161,
+        "token_budget": 65536,
+        "token_counter": "whitespace-v1",
+        "token_estimator": "conservative-chars-v1",
+        "tokens_used": 118
+      }
+    }
+  },
+  {
+    "sequence": 10,
+    "at": "2026-11-17T00:35:21.892380+00:00",
+    "manifest": {
+      "duration_ns": 6210053,
+      "manifest": {
+        "__type__": "ContextManifest",
+        "allocation": {
+          "mandatory": 97,
+          "overhead": 642,
+          "recent": 25,
+          "reserved_output": 8192,
+          "retrieved": 8,
+          "unused": 56411
+        },
+        "coefficients": {
+          "causal_proximity": 1.0,
+          "mmr": 8.0,
+          "overlap": 1.0,
+          "recency": 1.0,
+          "salience": 1.0,
+          "unresolved": 2.0
+        },
+        "estimated_input_tokens": 4772,
+        "included": [
+          [
+            "objective",
+            "mandatory"
+          ],
+          [
+            "environment",
+            "mandatory"
+          ],
+          [
+            "operator",
+            "mandatory"
+          ],
+          [
+            "evaluation",
+            "mandatory"
+          ],
+          [
+            "lineage_head",
+            "mandatory"
+          ],
+          [
+            "attempt",
+            "mandatory"
+          ],
+          [
+            "plan",
+            "mandatory"
+          ],
+          [
+            "self_state",
+            "mandatory"
+          ],
+          [
+            "budgets",
+            "mandatory"
+          ],
+          [
+            "receipt",
+            "mandatory"
+          ],
+          [
+            "observation",
+            "mandatory"
+          ],
+          [
+            "node:root-run-3ce7f6553761",
+            "retrieved"
+          ],
+          [
+            "attempt:attempt-ca1fe6e40c744923839c097a0ebb9b78",
+            "retrieved"
+          ],
+          [
+            "event:event-a0ec26a3b28a4146b2c7eda19d62299d",
+            "recent"
+          ],
+          [
+            "event:event-51902a4c05da4e32aa16246a4ff55e9c",
+            "recent"
+          ],
+          [
+            "event:event-4eb7714efe9f496289f6659180382f55",
+            "recent"
+          ],
+          [
+            "event:event-39a2cd38534b412cbf429b6cc12c9127",
+            "recent"
+          ],
+          [
+            "event:event-009bed769c1d4cd684788851486e37bb",
+            "recent"
+          ],
+          [
+            "event:event-c1ab48c74c5042f691835bc6bfed5b25",
+            "recent"
+          ],
+          [
+            "event:event-de9865e8245f4ef8abe30e957ecb522b",
+            "recent"
+          ],
+          [
+            "event:event-d2366015cbed4eb2a9229f53a656ec41",
+            "recent"
+          ]
+        ],
+        "item_tokens": [
+          [
+            "objective",
+            12
+          ],
+          [
+            "environment",
+            57
+          ],
+          [
+            "operator",
+            2
+          ],
+          [
+            "evaluation",
+            2
+          ],
+          [
+            "lineage_head",
+            3
+          ],
+          [
+            "attempt",
+            4
+          ],
+          [
+            "plan",
+            2
+          ],
+          [
+            "self_state",
+            3
+          ],
+          [
+            "budgets",
+            8
+          ],
+          [
+            "receipt",
+            2
+          ],
+          [
+            "observation",
+            2
+          ],
+          [
+            "node:root-run-3ce7f6553761",
+            4
+          ],
+          [
+            "attempt:attempt-ca1fe6e40c744923839c097a0ebb9b78",
+            4
+          ],
+          [
+            "event:event-a0ec26a3b28a4146b2c7eda19d62299d",
+            3
+          ],
+          [
+            "event:event-51902a4c05da4e32aa16246a4ff55e9c",
+            3
+          ],
+          [
+            "event:event-4eb7714efe9f496289f6659180382f55",
+            4
+          ],
+          [
+            "event:event-39a2cd38534b412cbf429b6cc12c9127",
+            3
+          ],
+          [
+            "event:event-009bed769c1d4cd684788851486e37bb",
+            3
+          ],
+          [
+            "event:event-c1ab48c74c5042f691835bc6bfed5b25",
+            3
+          ],
+          [
+            "event:event-de9865e8245f4ef8abe30e957ecb522b",
+            3
+          ],
+          [
+            "event:event-d2366015cbed4eb2a9229f53a656ec41",
+            3
+          ]
+        ],
+        "journal_cursor": 8,
+        "objective_version": 1,
+        "omitted": [],
+        "policy_version": 2,
+        "reserved_output_tokens": 8192,
+        "serialization_overhead_tokens": 642,
+        "serialized_input_tokens": 772,
+        "system_prompt_tokens": 161,
+        "token_budget": 65536,
+        "token_counter": "whitespace-v1",
+        "token_estimator": "conservative-chars-v1",
+        "tokens_used": 130
+      }
+    }
+  },
+  {
+    "sequence": 17,
+    "at": "2026-11-17T00:36:17.485299+00:00",
+    "manifest": {
+      "duration_ns": 8234095,
+      "manifest": {
+        "__type__": "ContextManifest",
+        "allocation": {
+          "mandatory": 97,
+          "overhead": 729,
+          "recent": 48,
+          "reserved_output": 8192,
+          "retrieved": 8,
+          "unused": 56301
+        },
+        "coefficients": {
+          "causal_proximity": 1.0,
+          "mmr": 8.0,
+          "overlap": 1.0,
+          "recency": 1.0,
+          "salience": 1.0,
+          "unresolved": 2.0
+        },
+        "estimated_input_tokens": 5989,
+        "included": [
+          [
+            "objective",
+            "mandatory"
+          ],
+          [
+            "environment",
+            "mandatory"
+          ],
+          [
+            "operator",
+            "mandatory"
+          ],
+          [
+            "evaluation",
+            "mandatory"
+          ],
+          [
+            "lineage_head",
+            "mandatory"
+          ],
+          [
+            "attempt",
+            "mandatory"
+          ],
+          [
+            "plan",
+            "mandatory"
+          ],
+          [
+            "self_state",
+            "mandatory"
+          ],
+          [
+            "budgets",
+            "mandatory"
+          ],
+          [
+            "receipt",
+            "mandatory"
+          ],
+          [
+            "observation",
+            "mandatory"
+          ],
+          [
+            "node:root-run-3ce7f6553761",
+            "retrieved"
+          ],
+          [
+            "attempt:attempt-ca1fe6e40c744923839c097a0ebb9b78",
+            "retrieved"
+          ],
+          [
+            "event:event-a0ec26a3b28a4146b2c7eda19d62299d",
+            "recent"
+          ],
+          [
+            "event:event-51902a4c05da4e32aa16246a4ff55e9c",
+            "recent"
+          ],
+          [
+            "event:event-4eb7714efe9f496289f6659180382f55",
+            "recent"
+          ],
+          [
+            "event:event-39a2cd38534b412cbf429b6cc12c9127",
+            "recent"
+          ],
+          [
+            "event:event-009bed769c1d4cd684788851486e37bb",
+            "recent"
+          ],
+          [
+            "event:event-c1ab48c74c5042f691835bc6bfed5b25",
+            "recent"
+          ],
+          [
+            "event:event-de9865e8245f4ef8abe30e957ecb522b",
+            "recent"
+          ],
+          [
+            "event:event-d2366015cbed4eb2a9229f53a656ec41",
+            "recent"
+          ],
+          [
+            "event:event-0147e243613043abbc65bc7ecae0f3cb",
+            "recent"
+          ],
+          [
+            "event:event-0ca44307c83c4dbc9e9c0f4cc6072196",
+            "recent"
+          ],
+          [
+            "event:event-9d0523efda73454db962b4ab6250afb5",
+            "recent"
+          ],
+          [
+            "event:event-911d4a471b924627bc02e3cb65d7e46a",
+            "recent"
+          ],
+          [
+            "event:event-c57deef8568f4965aea287c00b8a1f6c",
+            "recent"
+          ],
+          [
+            "event:event-0283ddf2868645a6bb9d8219f17d2940",
+            "recent"
+          ]
+        ],
+        "item_tokens": [
+          [
+            "objective",
+            12
+          ],
+          [
+            "environment",
+            57
+          ],
+          [
+            "operator",
+            2
+          ],
+          [
+            "evaluation",
+            2
+          ],
+          [
+            "lineage_head",
+            3
+          ],
+          [
+            "attempt",
+            4
+          ],
+          [
+            "plan",
+            2
+          ],
+          [
+            "self_state",
+            3
+          ],
+          [
+            "budgets",
+            8
+          ],
+          [
+            "receipt",
+            2
+          ],
+          [
+            "observation",
+            2
+          ],
+          [
+            "node:root-run-3ce7f6553761",
+            4
+          ],
+          [
+            "attempt:attempt-ca1fe6e40c744923839c097a0ebb9b78",
+            4
+          ],
+          [
+            "event:event-a0ec26a3b28a4146b2c7eda19d62299d",
+            3
+          ],
+          [
+            "event:event-51902a4c05da4e32aa16246a4ff55e9c",
+            3
+          ],
+          [
+            "event:event-4eb7714efe9f496289f6659180382f55",
+            4
+          ],
+          [
+            "event:event-39a2cd38534b412cbf429b6cc12c9127",
+            3
+          ],
+          [
+            "event:event-009bed769c1d4cd684788851486e37bb",
+            3
+          ],
+          [
+            "event:event-c1ab48c74c5042f691835bc6bfed5b25",
+            3
+          ],
+          [
+            "event:event-de9865e8245f4ef8abe30e957ecb522b",
+            3
+          ],
+          [
+            "event:event-d2366015cbed4eb2a9229f53a656ec41",
+            3
+          ],
+          [
+            "event:event-0147e243613043abbc65bc7ecae0f3cb",
+            3
+          ],
+          [
+            "event:event-0ca44307c83c4dbc9e9c0f4cc6072196",
+            3
+          ],
+          [
+            "event:event-9d0523efda73454db962b4ab6250afb5",
+            3
+          ],
+          [
+            "event:event-911d4a471b924627bc02e3cb65d7e46a",
+            4
+          ],
+          [
+            "event:event-c57deef8568f4965aea287c00b8a1f6c",
+            4
+          ],
+          [
+            "event:event-0283ddf2868645a6bb9d8219f17d2940",
+            6
+          ]
+        ],
+        "journal_cursor": 14,
+        "objective_version": 1,
+        "omitted": [],
+        "policy_version": 2,
+        "reserved_output_tokens": 8192,
+        "serialization_overhead_tokens": 729,
+        "serialized_input_tokens": 882,
+        "system_prompt_tokens": 161,
+        "token_budget": 65536,
+        "token_counter": "whitespace-v1",
+        "token_estimator": "conservative-chars-v1",
+        "tokens_used": 153
+      }
+    }
+  },
+  {
+    "sequence": 25,
+    "at": "2026-11-17T00:36:22.491201+00:00",
+    "manifest": {
+      "duration_ns": 14366127,
+      "manifest": {
+        "__type__": "ContextManifest",
+        "allocation": {
+          "mandatory": 97,
+          "overhead": 750,
+          "recent": 80,
+          "reserved_output": 8192,
+          "retrieved": 8,
+          "unused": 56248
+        },
+        "coefficients": {
+          "causal_proximity": 1.0,
+          "mmr": 8.0,
+          "overlap": 1.0,
+          "recency": 1.0,
+          "salience": 1.0,
+          "unresolved": 2.0
+        },
+        "estimated_input_tokens": 6343,
+        "included": [
+          [
+            "objective",
+            "mandatory"
+          ],
+          [
+            "environment",
+            "mandatory"
+          ],
+          [
+            "operator",
+            "mandatory"
+          ],
+          [
+            "evaluation",
+            "mandatory"
+          ],
+          [
+            "lineage_head",
+            "mandatory"
+          ],
+          [
+            "attempt",
+            "mandatory"
+          ],
+          [
+            "plan",
+            "mandatory"
+          ],
+          [
+            "self_state",
+            "mandatory"
+          ],
+          [
+            "budgets",
+            "mandatory"
+          ],
+          [
+            "receipt",
+            "mandatory"
+          ],
+          [
+            "observation",
+            "mandatory"
+          ],
+          [
+            "node:root-run-3ce7f6553761",
+            "retrieved"
+          ],
+          [
+            "attempt:attempt-ca1fe6e40c744923839c097a0ebb9b78",
+            "retrieved"
+          ],
+          [
+            "event:event-a0ec26a3b28a4146b2c7eda19d62299d",
+            "recent"
+          ],
+          [
+            "event:event-51902a4c05da4e32aa16246a4ff55e9c",
+            "recent"
+          ],
+          [
+            "event:event-4eb7714efe9f496289f6659180382f55",
+            "recent"
+          ],
+          [
+            "event:event-39a2cd38534b412cbf429b6cc12c9127",
+            "recent"
+          ],
+          [
+            "event:event-009bed769c1d4cd684788851486e37bb",
+            "recent"
+          ],
+          [
+            "event:event-c1ab48c74c5042f691835bc6bfed5b25",
+            "recent"
+          ],
+          [
+            "event:event-de9865e8245f4ef8abe30e957ecb522b",
+            "recent"
+          ],
+          [
+            "event:event-d2366015cbed4eb2a9229f53a656ec41",
+            "recent"
+          ],
+          [
+            "event:event-0147e243613043abbc65bc7ecae0f3cb",
+            "recent"
+          ],
+          [
+            "event:event-0ca44307c83c4dbc9e9c0f4cc6072196",
+            "recent"
+          ],
+          [
+            "event:event-9d0523efda73454db962b4ab6250afb5",
+            "recent"
+          ],
+          [
+            "event:event-911d4a471b924627bc02e3cb65d7e46a",
+            "recent"
+          ],
+          [
+            "event:event-c57deef8568f4965aea287c00b8a1f6c",
+            "recent"
+          ],
+          [
+            "event:event-0283ddf2868645a6bb9d8219f17d2940",
+            "recent"
+          ],
+          [
+            "event:event-5591082aa23d452396290d51ea6f6ca6",
+            "recent"
+          ],
+          [
+            "event:event-569f46b56c7643e8bb440157b663c0a6",
+            "recent"
+          ],
+          [
+            "event:event-6a768f2219764af19470656a7bafa958",
+            "recent"
+          ],
+          [
+            "event:event-29ddfcce81d14d05b362c00d43793696",
+            "recent"
+          ],
+          [
+            "event:event-ab1fbcf102bd414dbea40a302c53c854",
+            "recent"
+          ],
+          [
+            "event:event-6841dfd2bceb4c40b2b5a68ed4a72ee4",
+            "recent"
+          ],
+          [
+            "event:event-5338a544ef7448ae98f3d4bdf581ad73",
+            "recent"
+          ]
+        ],
+        "item_tokens": [
+          [
+            "objective",
+            12
+          ],
+          [
+            "environment",
+            57
+          ],
+          [
+            "operator",
+            2
+          ],
+          [
+            "evaluation",
+            2
+          ],
+          [
+            "lineage_head",
+            3
+          ],
+          [
+            "attempt",
+            4
+          ],
+          [
+            "plan",
+            2
+          ],
+          [
+            "self_state",
+            3
+          ],
+          [
+            "budgets",
+            8
+          ],
+          [
+            "receipt",
+            2
+          ],
+          [
+            "observation",
+            2
+          ],
+          [
+            "node:root-run-3ce7f6553761",
+            4
+          ],
+          [
+            "attempt:attempt-ca1fe6e40c744923839c097a0ebb9b78",
+            4
+          ],
+          [
+            "event:event-a0ec26a3b28a4146b2c7eda19d62299d",
+            3
+          ],
+          [
+            "event:event-51902a4c05da4e32aa16246a4ff55e9c",
+            3
+          ],
+          [
+            "event:event-4eb7714efe9f496289f6659180382f55",
+            4
+          ],
+          [
+            "event:event-39a2cd38534b412cbf429b6cc12c9127",
+            3
+          ],
+          [
+            "event:event-009bed769c1d4cd684788851486e37bb",
+            3
+          ],
+          [
+            "event:event-c1ab48c74c5042f691835bc6bfed5b25",
+            3
+          ],
+          [
+            "event:event-de9865e8245f4ef8abe30e957ecb522b",
+            3
+          ],
+          [
+            "event:event-d2366015cbed4eb2a9229f53a656ec41",
+            3
+          ],
+          [
+            "event:event-0147e243613043abbc65bc7ecae0f3cb",
+            3
+          ],
+          [
+            "event:event-0ca44307c83c4dbc9e9c0f4cc6072196",
+            3
+          ],
+          [
+            "event:event-9d0523efda73454db962b4ab6250afb5",
+            3
+          ],
+          [
+            "event:event-911d4a471b924627bc02e3cb65d7e46a",
+            4
+          ],
+          [
+            "event:event-c57deef8568f4965aea287c00b8a1f6c",
+            4
+          ],
+          [
+            "event:event-0283ddf2868645a6bb9d8219f17d2940",
+            6
+          ],
+          [
+            "event:event-5591082aa23d452396290d51ea6f6ca6",
+            3
+          ],
+          [
+            "event:event-569f46b56c7643e8bb440157b663c0a6",
+            3
+          ],
+          [
+            "event:event-6a768f2219764af19470656a7bafa958",
+            3
+          ],
+          [
+            "event:event-29ddfcce81d14d05b362c00d43793696",
+            3
+          ],
+          [
+            "event:event-ab1fbcf102bd414dbea40a302c53c854",
+            4
+          ],
+          [
+            "event:event-6841dfd2bceb4c40b2b5a68ed4a72ee4",
+            4
+          ],
+          [
+            "event:event-5338a544ef7448ae98f3d4bdf581ad73",
+            12
+          ]
+        ],
+        "journal_cursor": 21,
+        "objective_version": 1,
+        "omitted": [],
+        "policy_version": 2,
+        "reserved_output_tokens": 8192,
+        "serialization_overhead_tokens": 750,
+        "serialized_input_tokens": 935,
+        "system_prompt_tokens": 161,
+        "token_budget": 65536,
+        "token_counter": "whitespace-v1",
+        "token_estimator": "conservative-chars-v1",
+        "tokens_used": 185
+      }
+    }
+  },
+  {
+    "sequence": 31,
+    "at": "2026-11-17T00:38:24.648523+00:00",
+    "manifest": {
+      "duration_ns": 16536565,
+      "manifest": {
+        "__type__": "ContextManifest",
+        "allocation": {
+          "mandatory": 97,
+          "overhead": 768,
+          "recent": 98,
+          "reserved_output": 8192,
+          "retrieved": 8,
+          "unused": 56212
+        },
+        "coefficients": {
+          "causal_proximity": 1.0,
+          "mmr": 8.0,
+          "overlap": 1.0,
+          "recency": 1.0,
+          "salience": 1.0,
+          "unresolved": 2.0
+        },
+        "estimated_input_tokens": 6619,
+        "included": [
+          [
+            "objective",
+            "mandatory"
+          ],
+          [
+            "environment",
+            "mandatory"
+          ],
+          [
+            "operator",
+            "mandatory"
+          ],
+          [
+            "evaluation",
+            "mandatory"
+          ],
+          [
+            "lineage_head",
+            "mandatory"
+          ],
+          [
+            "attempt",
+            "mandatory"
+          ],
+          [
+            "plan",
+            "mandatory"
+          ],
+          [
+            "self_state",
+            "mandatory"
+          ],
+          [
+            "budgets",
+            "mandatory"
+          ],
+          [
+            "receipt",
+            "mandatory"
+          ],
+          [
+            "observation",
+            "mandatory"
+          ],
+          [
+            "node:root-run-3ce7f6553761",
+            "retrieved"
+          ],
+          [
+            "attempt:attempt-ca1fe6e40c744923839c097a0ebb9b78",
+            "retrieved"
+          ],
+          [
+            "event:event-a0ec26a3b28a4146b2c7eda19d62299d",
+            "recent"
+          ],
+          [
+            "event:event-51902a4c05da4e32aa16246a4ff55e9c",
+            "recent"
+          ],
+          [
+            "event:event-4eb7714efe9f496289f6659180382f55",
+            "recent"
+          ],
+          [
+            "event:event-39a2cd38534b412cbf429b6cc12c9127",
+            "recent"
+          ],
+          [
+            "event:event-009bed769c1d4cd684788851486e37bb",
+            "recent"
+          ],
+          [
+            "event:event-c1ab48c74c5042f691835bc6bfed5b25",
+            "recent"
+          ],
+          [
+            "event:event-de9865e8245f4ef8abe30e957ecb522b",
+            "recent"
+          ],
+          [
+            "event:event-d2366015cbed4eb2a9229f53a656ec41",
+            "recent"
+          ],
+          [
+            "event:event-0147e243613043abbc65bc7ecae0f3cb",
+            "recent"
+          ],
+          [
+            "event:event-0ca44307c83c4dbc9e9c0f4cc6072196",
+            "recent"
+          ],
+          [
+            "event:event-9d0523efda73454db962b4ab6250afb5",
+            "recent"
+          ],
+          [
+            "event:event-911d4a471b924627bc02e3cb65d7e46a",
+            "recent"
+          ],
+          [
+            "event:event-c57deef8568f4965aea287c00b8a1f6c",
+            "recent"
+          ],
+          [
+            "event:event-0283ddf2868645a6bb9d8219f17d2940",
+            "recent"
+          ],
+          [
+            "event:event-5591082aa23d452396290d51ea6f6ca6",
+            "recent"
+          ],
+          [
+            "event:event-569f46b56c7643e8bb440157b663c0a6",
+            "recent"
+          ],
+          [
+            "event:event-6a768f2219764af19470656a7bafa958",
+            "recent"
+          ],
+          [
+            "event:event-29ddfcce81d14d05b362c00d43793696",
+            "recent"
+          ],
+          [
+            "event:event-ab1fbcf102bd414dbea40a302c53c854",
+            "recent"
+          ],
+          [
+            "event:event-6841dfd2bceb4c40b2b5a68ed4a72ee4",
+            "recent"
+          ],
+          [
+            "event:event-5338a544ef7448ae98f3d4bdf581ad73",
+            "recent"
+          ],
+          [
+            "event:event-edd8c409e25543e7b0a1ed0e5507ec49",
+            "recent"
+          ],
+          [
+            "event:event-7adc1cc1a52443e58ed0afee1f850cb4",
+            "recent"
+          ],
+          [
+            "event:event-a7766eedf14141e9887a60e2b283b06f",
+            "recent"
+          ],
+          [
+            "event:event-71aafe057a734963bd851db5f611bc5f",
+            "recent"
+          ],
+          [
+            "event:event-04f027a7a674406885e1f715cbf34b3f",
+            "recent"
+          ],
+          [
+            "event:event-4f1a1876d3514338b621a321ed7a1564",
+            "recent"
+          ]
+        ],
+        "item_tokens": [
+          [
+            "objective",
+            12
+          ],
+          [
+            "environment",
+            57
+          ],
+          [
+            "operator",
+            2
+          ],
+          [
+            "evaluation",
+            2
+          ],
+          [
+            "lineage_head",
+            3
+          ],
+          [
+            "attempt",
+            4
+          ],
+          [
+            "plan",
+            2
+          ],
+          [
+            "self_state",
+            3
+          ],
+          [
+            "budgets",
+            8
+          ],
+          [
+            "receipt",
+            2
+          ],
+          [
+            "observation",
+            2
+          ],
+          [
+            "node:root-run-3ce7f6553761",
+            4
+          ],
+          [
+            "attempt:attempt-ca1fe6e40c744923839c097a0ebb9b78",
+            4
+          ],
+          [
+            "event:event-a0ec26a3b28a4146b2c7eda19d62299d",
+            3
+          ],
+          [
+            "event:event-51902a4c05da4e32aa16246a4ff55e9c",
+            3
+          ],
+          [
+            "event:event-4eb7714efe9f496289f6659180382f55",
+            4
+          ],
+          [
+            "event:event-39a2cd38534b412cbf429b6cc12c9127",
+            3
+          ],
+          [
+            "event:event-009bed769c1d4cd684788851486e37bb",
+            3
+          ],
+          [
+            "event:event-c1ab48c74c5042f691835bc6bfed5b25",
+            3
+          ],
+          [
+            "event:event-de9865e8245f4ef8abe30e957ecb522b",
+            3
+          ],
+          [
+            "event:event-d2366015cbed4eb2a9229f53a656ec41",
+            3
+          ],
+          [
+            "event:event-0147e243613043abbc65bc7ecae0f3cb",
+            3
+          ],
+          [
+            "event:event-0ca44307c83c4dbc9e9c0f4cc6072196",
+            3
+          ],
+          [
+            "event:event-9d0523efda73454db962b4ab6250afb5",
+            3
+          ],
+          [
+            "event:event-911d4a471b924627bc02e3cb65d7e46a",
+            4
+          ],
+          [
+            "event:event-c57deef8568f4965aea287c00b8a1f6c",
+            4
+          ],
+          [
+            "event:event-0283ddf2868645a6bb9d8219f17d2940",
+            6
+          ],
+          [
+            "event:event-5591082aa23d452396290d51ea6f6ca6",
+            3
+          ],
+          [
+            "event:event-569f46b56c7643e8bb440157b663c0a6",
+            3
+          ],
+          [
+            "event:event-6a768f2219764af19470656a7bafa958",
+            3
+          ],
+          [
+            "event:event-29ddfcce81d14d05b362c00d43793696",
+            3
+          ],
+          [
+            "event:event-ab1fbcf102bd414dbea40a302c53c854",
+            4
+          ],
+          [
+            "event:event-6841dfd2bceb4c40b2b5a68ed4a72ee4",
+            4
+          ],
+          [
+            "event:event-5338a544ef7448ae98f3d4bdf581ad73",
+            12
+          ],
+          [
+            "event:event-edd8c409e25543e7b0a1ed0e5507ec49",
+            3
+          ],
+          [
+            "event:event-7adc1cc1a52443e58ed0afee1f850cb4",
+            3
+          ],
+          [
+            "event:event-a7766eedf14141e9887a60e2b283b06f",
+            3
+          ],
+          [
+            "event:event-71aafe057a734963bd851db5f611bc5f",
+            3
+          ],
+          [
+            "event:event-04f027a7a674406885e1f715cbf34b3f",
+            3
+          ],
+          [
+            "event:event-4f1a1876d3514338b621a321ed7a1564",
+            3
+          ]
+        ],
+        "journal_cursor": 27,
+        "objective_version": 1,
+        "omitted": [],
+        "policy_version": 2,
+        "reserved_output_tokens": 8192,
+        "serialization_overhead_tokens": 768,
+        "serialized_input_tokens": 971,
+        "system_prompt_tokens": 161,
+        "token_budget": 65536,
+        "token_counter": "whitespace-v1",
+        "token_estimator": "conservative-chars-v1",
+        "tokens_used": 203
+      }
+    }
+  }
+]
