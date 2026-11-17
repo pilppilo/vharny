@@ -1706,9 +1706,9 @@ def _add_run_arguments(parser: argparse.ArgumentParser) -> None:
         type=_positive,
         default=None,
         metavar="TOKENS",
-        help="start each decision at this answer limit and double it whenever "
-        "a reply runs out, up to --max-output-tokens (default: always use "
-        "--max-output-tokens); suits reasoning models whose answer length varies",
+        help="start each decision at this answer limit; when a reply runs out, "
+        "first ask for the answer at the same limit, then double the limit, up "
+        "to --max-output-tokens (default: always use --max-output-tokens)",
     )
     parser.add_argument("--repair-budget", type=_nonnegative, default=1)
     parser.add_argument("--journal", type=Path, default=None)

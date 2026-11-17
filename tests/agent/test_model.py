@@ -1318,16 +1318,30 @@ def test_skipping_certain_probes_never_changes_a_selection(tmp_path, monkeypatch
     assert results[0] == results[1]
 
 
-# --- COD-88: grow the answer limit only when a call runs out ---
+# --- COD-88 / COD-91: answer now first, then grow the answer limit ---
+
+ANSWER_NOW = "emit it now without extending your reasoning"
 
 
 class _ReasoningGenerator:
-    """Reasons for ``needs`` tokens before answering; a smaller limit runs out."""
+    """Reasons for ``needs`` tokens before answering; a smaller limit runs out.
 
-    def __init__(self, needs: int, max_tokens: int, prompt_tokens: int = 3) -> None:
+    With ``obeys_answer_now`` the model answers at once when asked to, as
+    LongCat-2.5 often did in the trial.
+    """
+
+    def __init__(
+        self,
+        needs: int,
+        max_tokens: int,
+        prompt_tokens: int = 3,
+        *,
+        obeys_answer_now: bool = False,
+    ) -> None:
         self.needs = needs
         self.max_tokens = max_tokens
         self.prompt_tokens = prompt_tokens
+        self.obeys_answer_now = obeys_answer_now
         self.limits: list[int] = []
         self.prompts: list[str] = []
 
@@ -1335,7 +1349,8 @@ class _ReasoningGenerator:
         del system
         self.limits.append(self.max_tokens)
         self.prompts.append(prompt)
-        if self.max_tokens < self.needs:
+        answers_now = self.obeys_answer_now and ANSWER_NOW in prompt
+        if self.max_tokens < self.needs and not answers_now:
             return FakeGeneration(
                 "",
                 finish_reason="length",
@@ -1353,27 +1368,51 @@ def _decided(session: Session) -> dict:
     return next(event for event in events if event.kind == "model_decided").payload
 
 
-def test_a_512_token_limit_spent_on_reasoning_grows_until_the_call_succeeds(
-    tmp_path,
-):
-    # The ARC-AGI-3 smoke run: 512 tokens ran out mid-reasoning.
-    generator = _ReasoningGenerator(needs=1500, max_tokens=32768)
-    model = CompatibleModel(generator, repair_budget=0, initial_output_tokens=512)
-    session, journal = _step_session(tmp_path, model)
-
-    assert generator.limits == [512, 1024, 2048]
-    assert len(set(generator.prompts)) == 1  # the same request, only more room
-    assert generator.max_tokens == 32768  # restored after each call
-    attempts = _decided(session)["attempts"]
-    assert [attempt["output_limit"] for attempt in attempts] == [512, 1024, 2048]
-    raises = [
+def _repairs(session: Session) -> list[dict]:
+    return [
         event.payload
         for event in session.events(limit=200)
         if event.kind == "model_repaired"
     ]
-    assert [payload["field"] for payload in raises] == ["output-limit"] * 2
-    assert "512 -> 1024" in raises[0]["marker"]
-    assert "1024 -> 2048" in raises[1]["marker"]
+
+
+def test_a_run_out_call_is_asked_for_the_answer_before_any_raise(tmp_path):
+    # The trial's common case: a call runs out, the re-ask answers at once.
+    generator = _ReasoningGenerator(needs=1500, max_tokens=32768, obeys_answer_now=True)
+    model = CompatibleModel(generator, repair_budget=0, initial_output_tokens=512)
+    session, journal = _step_session(tmp_path, model)
+
+    assert generator.limits == [512, 512]  # no raise
+    assert ANSWER_NOW not in generator.prompts[0]
+    assert ANSWER_NOW in generator.prompts[1]
+    notes = _repairs(session)
+    assert [note["field"] for note in notes] == ["output-ceiling"]
+    assert "answer-now re-ask at output limit 512 before any raise" in (
+        notes[0]["marker"]
+    )
+    replay(session.events(limit=200))
+    journal.close()
+
+
+def test_a_re_ask_that_runs_out_leads_to_raises_that_keep_asking(tmp_path):
+    # The ARC-AGI-3 smoke run: 512 tokens ran out mid-reasoning, every time.
+    generator = _ReasoningGenerator(needs=1500, max_tokens=32768)
+    model = CompatibleModel(generator, repair_budget=0, initial_output_tokens=512)
+    session, journal = _step_session(tmp_path, model)
+
+    assert generator.limits == [512, 512, 1024, 2048]
+    assert all(ANSWER_NOW in prompt for prompt in generator.prompts[1:])
+    assert generator.max_tokens == 32768  # restored after each call
+    attempts = _decided(session)["attempts"]
+    assert [a["output_limit"] for a in attempts] == [512, 512, 1024, 2048]
+    notes = _repairs(session)
+    assert [note["field"] for note in notes] == [
+        "output-ceiling",
+        "output-limit",
+        "output-limit",
+    ]
+    assert "512 -> 1024; answer-now re-ask" in notes[1]["marker"]
+    assert "1024 -> 2048; answer-now re-ask" in notes[2]["marker"]
     replay(session.events(limit=200))
     journal.close()
 
@@ -1398,17 +1437,21 @@ def test_the_context_reserves_the_starting_limit_not_the_maximum(tmp_path):
     journal.close()
 
 
-def test_growth_stops_at_the_maximum_then_uses_the_re_ask(tmp_path):
+def test_growth_stops_at_the_maximum_then_uses_the_budgeted_re_ask(tmp_path):
     generator = _ReasoningGenerator(needs=5000, max_tokens=1024)
     model = CompatibleModel(generator, repair_budget=1, initial_output_tokens=512)
     with pytest.raises(ModelCallError) as raised:
         _step_session(tmp_path, model)
 
-    # One raise to the maximum, then ADR-0017's single re-ask at that limit.
-    assert generator.limits == [512, 1024, 1024]
-    assert "emit it now" in generator.prompts[2]
+    # Answer-now re-ask, one raise to the maximum, then ADR-0017's re-ask.
+    assert generator.limits == [512, 512, 1024, 1024]
     assert raised.value.failure_class == "output-exhausted"
-    assert [a.output_limit for a in raised.value.attempts] == [512, 1024, 1024]
+    assert [a.output_limit for a in raised.value.attempts] == [512, 512, 1024, 1024]
+    assert [note["field"] for note in raised.value.repairs] == [
+        "output-ceiling",
+        "output-limit",
+        "output-ceiling",
+    ]
 
 
 def test_growth_stops_at_what_the_token_budget_still_fits(tmp_path):
@@ -1417,8 +1460,9 @@ def test_growth_stops_at_what_the_token_budget_still_fits(tmp_path):
     model = CompatibleModel(generator, repair_budget=0, initial_output_tokens=512)
     session, journal = _step_session(tmp_path, model)
 
-    assert generator.limits == [512, 784]
-    assert [a["output_limit"] for a in _decided(session)["attempts"]] == [512, 784]
+    assert generator.limits == [512, 512, 784]
+    attempts = _decided(session)["attempts"]
+    assert [a["output_limit"] for a in attempts] == [512, 512, 784]
     journal.close()
 
 
@@ -1428,8 +1472,16 @@ def test_growth_never_spends_calls_the_model_call_budget_lacks(tmp_path):
     with pytest.raises(ModelCallError):
         _step_session(tmp_path, model)
 
-    # The session's budget is 4 model calls: the first plus three raises.
-    assert generator.limits == [512, 1024, 2048, 4096]
+    # The session's budget is 4 model calls: the first, the re-ask, two raises.
+    assert generator.limits == [512, 512, 1024, 2048]
+
+
+def test_without_growth_the_re_ask_still_spends_the_repair_budget(tmp_path):
+    generator = _ReasoningGenerator(needs=5000, max_tokens=256)
+    with pytest.raises(ModelCallError):
+        _step_session(tmp_path, CompatibleModel(generator, repair_budget=0))
+
+    assert generator.limits == [256]  # no free re-ask without growth
 
 
 def test_without_growth_attempts_record_no_limit(tmp_path):
