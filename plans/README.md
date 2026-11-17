@@ -69,10 +69,11 @@ None.
 | ADR-0013 | accepted | Bounded provider transport recovery with a durable operator-resumable waiting state; supported-progress budget checkpoints as the P6 monitor candidate | ADR-0011 |
 | ADR-0014 | accepted | Adopt `monitor.p6.v1` as the shipped supervision default per EXP-0003; costs accepted; separately gated kernel switch | ADR-0011 |
 | ADR-0015 | accepted | Decision decode repair ladder: observational-field recovery in place and operator-resumable malformed-output waits; compact pinned re-ask proposed for a later change | — |
-| ADR-0016 | accepted | Provider token accounting: recorded counters keep their selection roles; provider-reported usage calibrates admission; over-budget projections are refused and breaches journaled | — |
+| ADR-0016 | superseded | Provider token accounting: recorded counters keep their selection roles; provider-reported usage calibrates admission; over-budget projections are refused and breaches journaled | — |
 | ADR-0017 | accepted | An empty, length-limited decode spends one repair-budget re-ask at the reserved ceiling, journaled as a repair note; a second exhaustion stays terminal | — |
 | ADR-0018 | accepted | Apply the planning protocol by hand; the Plant CLI is retired and Current focus is the starting point for direction | ADR-0006 |
 | ADR-0019 | accepted | PHASE-0004 gates are independent; ARC-AGI-3 work proceeds before the deferred Timing and Omarchy acceptance runs | ADR-0007 |
+| ADR-0020 | accepted | Context fit switches from the word count to the calibrated real-size estimate at the first provider report, with fixed shares (must-have, 256-token bookkeeping, retrieved notes at most 25%, recent history); the worst-seen ratio never decreases; results across the change are not comparable | ADR-0016 |
 
 ## Delivery order
 

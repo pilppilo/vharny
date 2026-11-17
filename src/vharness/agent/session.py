@@ -77,6 +77,7 @@ from .context import (
     RETRIEVAL_EVENT_KINDS,
     SYSTEM_PROMPT,
     TOKEN_COUNTER,
+    TOKEN_ESTIMATOR,
     ContextOverflow,
     ContextBundle,
     ContextItem,
@@ -881,6 +882,10 @@ class Session:
                 ),
                 estimated_system_prompt_tokens=estimate_serialized_tokens(
                     SYSTEM_PROMPT, tokens_per_char
+                ),
+                # ADR-0020: fit in real size once a provider has reported usage.
+                fit_basis=(
+                    TOKEN_COUNTER if tokens_per_char is None else TOKEN_ESTIMATOR
                 ),
             )
 

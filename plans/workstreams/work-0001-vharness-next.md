@@ -5178,3 +5178,31 @@ remain append-only.
   the ARC-AGI-3 campaign manifest before any scored run. No live run without
   authorization; no Timing or Omarchy run without the operator's word and
   fresh staging; no merge into `next`.
+
+## 2026-11-17 05:40 UTC — ADR-0020: context fit in real size, with fixed shares
+
+- **Author:** Claude session, operator-approved (Linear COD-85).
+- **Goal:** Stop deciding context fit in a whitespace word count that cannot
+  see dense content, before the ARC-AGI-3 campaign manifest (COD-39) is
+  frozen.
+- **Work completed:** ADR-0020 (accepted) supersedes ADR-0016. Fit switches to
+  the calibrated estimate from COD-73 at the first provider report. Requests
+  are split into fixed shares (must-have, a 256-token bookkeeping share,
+  retrieved notes at most 25% of what is left, recent history the rest). The
+  model receives omitted items as counts too, and the ADR-0016 clauses that
+  continue are restated. Dependents updated in the same change: ADR-0016
+  status, ARCH-0001 context section and `depends_on`, and the index row.
+- **Evidence:** The COD-38 smoke journal (estimate 16,048 against 26,457
+  reported; 24K of 48K characters were manifest lists). A 200-decision run
+  with one dense early call keeps every request inside a 16,384-token budget:
+  must-have grows from 2,493 to 6,963 tokens and room for history and notes
+  falls from 13,635 to 9,165. A 100-decision version of that run is a test.
+- **Discoveries affecting later work:**
+  - The omitted-item list was still sent to the model after #27 and grew until
+    a 200-decision run was refused at decision 81. It is now sent as counts.
+  - The session re-reads the whole journal for every decision, so cost grows
+    with the square of the run length. A 200-decision test takes about four
+    minutes. Long campaign runs will feel this.
+- **Open questions:** None new. Results under ADR-0016 and ADR-0020 must not
+  be pooled (ADR-0020 §5).
+

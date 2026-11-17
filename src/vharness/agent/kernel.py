@@ -1033,11 +1033,11 @@ def render_request(request: DecisionInput) -> str:
             "manifest": {
                 "allocation": _jsonable(manifest.allocation),
                 "coefficients": _jsonable(manifest.coefficients),
-                # COD-73: counts, not the growing item lists; the journal keeps
-                # the full manifest for audit.
+                # COD-73, ADR-0020: counts, not the growing item lists; the
+                # journal keeps the full manifest for audit.
                 "included_by_band": _band_counts(manifest.included),
                 "journal_cursor": manifest.journal_cursor,
-                "omitted": [list(item) for item in manifest.omitted],
+                "omitted_by_reason": _band_counts(manifest.omitted),
                 "policy_version": manifest.policy_version,
                 "reserved_output_tokens": manifest.reserved_output_tokens,
                 "serialization_overhead_tokens": manifest.serialization_overhead_tokens,
@@ -1067,11 +1067,11 @@ def render_request(request: DecisionInput) -> str:
     )
 
 
-def _band_counts(included: tuple[tuple[str, str], ...]) -> dict[str, int]:
-    """How many included items each context band holds."""
+def _band_counts(pairs: tuple[tuple[str, str], ...]) -> dict[str, int]:
+    """Count (item id, label) pairs by label: band for included, reason for omitted."""
     counts: dict[str, int] = {}
-    for _item_id, band in included:
-        counts[band] = counts.get(band, 0) + 1
+    for _item_id, label in pairs:
+        counts[label] = counts.get(label, 0) + 1
     return dict(sorted(counts.items()))
 
 

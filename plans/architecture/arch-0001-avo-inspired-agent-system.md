@@ -5,8 +5,8 @@ type: architecture
 status: accepted
 owners: []
 created: 2026-09-04
-updated: 2026-11-16
-depends_on: [ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0019]
+updated: 2026-11-17
+depends_on: [ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0019, ADR-0020]
 supersedes: []
 related: [ADR-0019, ADR-0008, ROAD-0001, BENCH-0001, SCHEM-0001, PHASE-0001, PHASE-0002, PHASE-0003, PHASE-0004]
 ---
@@ -332,13 +332,16 @@ selection penalizes near-duplicates. Stable tie-breaking uses event sequence and
 ID, so the same journal and budget produce the same manifest. Source excerpts
 are preferred to summaries when both fit; every summary links its source span.
 
-Admission and accounting are separate from selection. The recorded
-serialized counts keep their selection role, and the manifest also records a
-coarse serialized-input estimate and its estimator identity. Once a provider
-has reported usage for a run, the worst observed tokens-per-character ratio
-projects each candidate request, and an over-budget projection is refused
-before dispatch; provider-reported input plus reserved output above the
-budget is journaled as a `token_budget_breach` negative signal rather than
+Fit is measured in the recorded word count until a provider reports usage,
+and from then on in the calibrated real-size estimate (ADR-0020): the worst
+observed tokens-per-character ratio plus a margin, with a prior of 1.25
+characters per token before any report. In calibrated mode each request is
+split into fixed shares: must-have content first, a fixed bookkeeping share
+for the manifest summary, retrieved notes capped at a quarter of the space
+left, and recent history taking the rest. Each manifest records its fit basis,
+estimator, calibration ratio and share limits. An over-budget projection is
+refused before dispatch; provider-reported input plus reserved output above
+the budget is journaled as a `token_budget_breach` negative signal rather than
 silently accepted.
 
 A knowledge item changes state only through explicit evidence: `hypothesis` to
