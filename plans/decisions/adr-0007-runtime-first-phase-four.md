@@ -2,10 +2,10 @@
 id: ADR-0007
 title: Deliver the operator runtime before PHASE-0004 campaigns
 type: decision
-status: accepted
+status: superseded
 owners: [operator]
 created: 2026-10-16
-updated: 2026-10-16
+updated: 2026-11-16
 depends_on: []
 supersedes: []
 related: [ADR-0006, ARCH-0001, ROAD-0001, PHASE-0004, BENCH-0001, SCHEM-0001]

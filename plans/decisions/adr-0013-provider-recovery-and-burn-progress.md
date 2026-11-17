@@ -5,8 +5,8 @@ type: decision
 status: accepted
 owners: [operator]
 created: 2026-11-06
-updated: 2026-11-06
-depends_on: [ADR-0007, ADR-0008]
+updated: 2026-11-16
+depends_on: [ADR-0019, ADR-0008]
 supersedes: [ADR-0011]
 related: [ARCH-0001, EXP-0002, EXP-0003, PHASE-0004, BENCH-0001, SCHEM-0001]
 ---

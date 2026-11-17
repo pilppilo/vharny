@@ -5,10 +5,10 @@ type: architecture
 status: accepted
 owners: []
 created: 2026-09-04
-updated: 2026-11-10
-depends_on: [ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0007]
+updated: 2026-11-16
+depends_on: [ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0019]
 supersedes: []
-related: [ADR-0007, ADR-0008, ROAD-0001, BENCH-0001, SCHEM-0001, PHASE-0001, PHASE-0002, PHASE-0003, PHASE-0004]
+related: [ADR-0019, ADR-0008, ROAD-0001, BENCH-0001, SCHEM-0001, PHASE-0001, PHASE-0002, PHASE-0003, PHASE-0004]
 ---
 
 # AVO-inspired long-horizon agent system

@@ -5,15 +5,16 @@ type: schematic
 status: current
 owners: []
 created: 2026-09-04
-updated: 2026-10-16
-depends_on: [ARCH-0001, ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0007]
+updated: 2026-11-16
+depends_on: [ARCH-0001, ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0019]
 supersedes: []
-related: [ROAD-0001, PHASE-0001, PHASE-0002, PHASE-0003, PHASE-0004, ADR-0007]
+related: [ROAD-0001, PHASE-0001, PHASE-0002, PHASE-0003, PHASE-0004, ADR-0019]
 ---
 
 # Vharness Next system and control flow
 
-This cross-document view represents ARCH-0001 and ADR-0001 through ADR-0007.
+This cross-document view represents ARCH-0001, ADR-0001 through ADR-0005, and
+ADR-0019, which supersedes ADR-0007.
 Arrows crossing the runtime boundary are proposals and receipts, never direct
 Vharness execution authority. The coordinator alone writes session state;
 runtime records live in a distinct store owned by the runtime worker.
@@ -100,6 +101,6 @@ local IPC to the coordinator; in-process workers return through its bounded
 inbox. Runtime storage is separate from the session database. Evaluation intake
 may be retained while paused or stopped but is consumed only if applicable and
 schedulable; Stopped remains terminal. Killing a process does not reverse its
-effects. Population/archive branching is deferred. PHASE-0004 delivers runtime
-use before campaign validation, while all four campaign families remain
-necessary for full verification.
+effects. Population/archive branching is deferred. PHASE-0004 treats runtime
+delivery and campaign validation as independent gates (ADR-0019), while all
+four campaign families remain necessary for full verification.

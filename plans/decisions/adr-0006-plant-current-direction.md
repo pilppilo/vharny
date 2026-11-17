@@ -2,10 +2,10 @@
 id: ADR-0006
 title: Use the Plant packet for current planning direction
 type: decision
-status: accepted
+status: superseded
 owners: []
 created: 2026-10-02
-updated: 2026-10-02
+updated: 2026-11-16
 depends_on: []
 supersedes: []
 related: [PHASE-0003, EXP-0001, WORK-0001]

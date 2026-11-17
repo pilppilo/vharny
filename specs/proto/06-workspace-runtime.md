@@ -2,7 +2,7 @@
 
 Operator-approved, 2026-10-16. This specifies the PHASE-0004 runtime-delivery
 gate; committed increments are evidence of partial implementation, not proof
-that this specification is complete. ADR-0007 governs runtime-first delivery,
+that this specification is complete. ADR-0019 (superseding ADR-0007) governs runtime delivery,
 and PHASE-0004 retains all four campaign families as requirements for full
 verification. This implementation map is subordinate to those documents.
 
@@ -384,9 +384,10 @@ without corresponding evidence.
 
 ## Scope boundaries and review
 
-ADR-0007 governs runtime-first PHASE-0004 delivery. PHASE-0004 is `implementing`
+ADR-0019, which supersedes ADR-0007 and makes the two PHASE-0004 gates
+independent, governs PHASE-0004 delivery. PHASE-0004 is `implementing`
 after its `accepted` → `ready` → `implementing` reassessment: PHASE-0003 is
-verified, ADR-0007 is accepted, and runtime implementation commits are present.
+verified, ADR-0007 was accepted, and runtime implementation commits are present.
 The runtime delivery gate permits useful operator work before campaigns; all
 four BENCH-0001 campaign families remain in scope and are required for full
 PHASE-0004 verification. The legacy entry point remains the default. No merge
