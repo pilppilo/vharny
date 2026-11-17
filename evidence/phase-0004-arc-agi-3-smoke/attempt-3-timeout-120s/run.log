@@ -1,0 +1,26 @@
+INFO:arc_agi.scorecard:Initialized ScorecardManager with idle_for=0:15:00 and max_open_for=3 days, 0:00:00
+2026-11-16 18:33:16 | INFO | Got anonymous API key: [redacted]
+2026-11-16 18:33:16 | INFO | You can register for an API key at https://three.arcprize.org
+2026-11-16 18:33:17 | INFO | Successfully fetched 25 environment(s) from API
+2026-11-16 18:33:17 | INFO | Created new scorecard: 54e6206b-33e2-49e7-b25a-0a176392208e
+2026-11-16 18:33:17 | INFO | Successfully fetched metadata for game dc22
+2026-11-16 18:33:18 | INFO | Successfully downloaded game dc22 (version: fdcac232) to /home/claude/arc-runs/attempt-3/arc-games/dc22/fdcac232
+2026-11-16 18:33:18 | INFO | Successfully loaded game class Dc22 from /home/claude/arc-runs/attempt-3/arc-games/dc22/fdcac232/dc22.py
+OBJECTIVE complete the game
+SESSION run-3ce7f6553761 mode=arc-agi-3
+GAME dc22-fdcac232 seed=0 mode=normal
+RUN-DIR /home/claude/arc-runs/attempt-3
+CHECK official ARC-AGI-3 scorecard
+MODEL decision failed detail=model transport failure
+MODEL decision=ActionChoice model=LongCat-2.5 calls=1
+ACTION step arguments={"action":1}
+RUNTIME receipt status=succeeded detail=proposal-97579e7999dd421182f1b93cf60fd6c4
+MODEL decision=ActionChoice model=LongCat-2.5 calls=1
+ACTION step arguments={"action":1}
+RUNTIME receipt status=succeeded detail=proposal-b854e68614c343bebecc1d764fa18f73
+MODEL decision failed detail=model transport failure
+MODEL decision failed detail=provider output exhausted
+MODEL repaired defect=output-exhausted kind=none field=output-ceiling
+ERROR run failed: provider output exhausted: empty or length-limited output
+TERMINAL failure; inspect the journal and adjust the bounded run
+exit code: 1

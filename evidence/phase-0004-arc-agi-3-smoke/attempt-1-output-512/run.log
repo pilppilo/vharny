@@ -1,0 +1,18 @@
+INFO:arc_agi.scorecard:Initialized ScorecardManager with idle_for=0:15:00 and max_open_for=3 days, 0:00:00
+2026-11-17 00:24:12 | INFO | Got anonymous API key: [redacted]
+2026-11-17 00:24:12 | INFO | You can register for an API key at https://three.arcprize.org
+2026-11-17 00:24:12 | INFO | Successfully fetched 25 environment(s) from API
+2026-11-17 00:24:12 | INFO | Created new scorecard: c8776501-25e1-4d09-af62-10b37c3c3a54
+2026-11-17 00:24:12 | INFO | Successfully fetched metadata for game dc22
+2026-11-17 00:24:13 | INFO | Successfully downloaded game dc22 (version: fdcac232) to /sessions/rcw-0116z7mrcu4exv7e8bhf16xo/arc-runs/dc22-longcat-2.5/arc-games/dc22/fdcac232
+2026-11-17 00:24:13 | INFO | Successfully loaded game class Dc22 from /sessions/rcw-0116z7mrcu4exv7e8bhf16xo/arc-runs/dc22-longcat-2.5/arc-games/dc22/fdcac232/dc22.py
+OBJECTIVE complete the game
+SESSION run-6b417db65b85 mode=arc-agi-3
+GAME dc22-fdcac232 seed=0 mode=normal
+RUN-DIR /sessions/rcw-0116z7mrcu4exv7e8bhf16xo/arc-runs/dc22-longcat-2.5
+CHECK official ARC-AGI-3 scorecard
+MODEL decision failed detail=provider output exhausted
+MODEL repaired defect=output-exhausted kind=none field=output-ceiling
+ERROR run failed: provider output exhausted: empty or length-limited output
+TERMINAL failure; inspect the journal and adjust the bounded run
+exit code: 1
