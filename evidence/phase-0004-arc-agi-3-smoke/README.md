@@ -38,14 +38,41 @@ a harness problem, not the model or vharny.
 - **Operator controls, live:** `pause` (status went to `paused` once the
   in-flight call finished), `resume`, two `message`s, `stop`. All five were
   admitted by the running coordinator (`command_admitted` = 5).
-- **Supervision:** the progress supervisor flagged repetition of action 1 and
-  escalated to the operator twice (stages 3 and 4). The operator answers asked
-  the model to stop repeating and request an evaluation, which it did. These
-  are operator steering, recorded in the journal; they are not a hint about
+- **This run is assisted.** Both operator messages were written by the agent
+  session running the test, not by a person, and neither answered a
+  supervisor question (`question_id` is `None` on both):
+  - the first, at sequence 20, was sent before the supervisor had asked
+    anything, and told the model to take one more action and request an
+    evaluation;
+  - the second, at sequence 148, came after the stage-3 escalation, but was
+    sent as a plain message, so that question is recorded as unanswered;
+  - the stage-4 escalation was never answered; the run was stopped instead.
+  The messages steered the model toward evaluation; they gave no hint about
   the game.
+- **Supervision:** the progress supervisor flagged repetition of action 1 and
+  escalated to the operator twice (stages 3 and 4).
 - **Scorecard (`scorecard.json`):** `completed: false`, `score: 0.0`,
   `levels_completed: 0` of `level_count: 6`, latest run `NOT_FINISHED`. The
   evaluator copied these numbers without recomputing them.
+
+## Known problems in these records
+
+A review of the journal after the run found problems that the scorecard
+result does not depend on, but that matter before any scored run:
+
+- **Prompt size (COD-73).** The kernel's estimate ran about 40% under the
+  provider's count on every request: 4,586 against 7,843 at the start and
+  16,048 against 26,457 at the end. More than half of the last request was the
+  kernel's own bookkeeping list rather than the game.
+- **State after an attempt restart (COD-74).** The supervisor abandoned the
+  first attempt at sequence 87. The next action (sequence 100) and the second
+  evaluation (sequence 185) record the `initial` state, although the game was
+  7 and 11 moves in.
+- **Supervisor action count (COD-75).** Escalations reported 8 actions when 11
+  had been taken, and later 4.
+- **Calls cut at 300 s, and wasted calls (COD-76).** One call ended at
+  300,047 ms despite the 600 s timeout, and two model calls answered guidance
+  that had already expired.
 
 ## What this shows about LongCat-2.5 on this task
 
