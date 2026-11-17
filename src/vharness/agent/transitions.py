@@ -281,10 +281,25 @@ def _command_transition_kind(command: OperatorCommand) -> str:
         raise TransitionError("command type has no transition kind") from exc
 
 
+#: ``attempt_started`` payload marker: the attempt starts from the observed state.
+OBSERVED_STARTING_STATE = "observed"
+
+
 def start_attempt(
-    state: SessionState, attempt_id: str, event_cursor: int = 1
+    state: SessionState,
+    attempt_id: str,
+    event_cursor: int = 1,
+    *,
+    from_observed: bool = False,
 ) -> SessionState:
-    """Start a new trajectory from the current committed lineage node."""
+    """Start a new trajectory from the current committed lineage node.
+
+    With ``from_observed`` the attempt's starting state is the state the
+    environment is actually in (``observed_state``), which differs from the
+    lineage head after an abandoned attempt in an environment that cannot be
+    restored. Without it, the lineage head's state is used, as journals
+    written before COD-74 recorded.
+    """
     if state.active_attempt is not None:
         raise TransitionError("an attempt is already active")
     if attempt_id in state.attempt_ids:
@@ -297,7 +312,9 @@ def start_attempt(
         attempt_id=attempt_id,
         objective_version=state.task.objective_version,
         base_node_id=state.lineage_head.node_id,
-        starting_state=state.lineage_head.state,
+        starting_state=(
+            observed_state(state) if from_observed else state.lineage_head.state
+        ),
     )
     return replace(
         state,
@@ -306,6 +323,23 @@ def start_attempt(
         attempt_ids=(*state.attempt_ids, attempt_id),
         attempt_history=(*state.attempt_history, AttemptHistory(attempt, event_cursor)),
     )
+
+
+def observed_state(state: SessionState) -> StateRef:
+    """The state the environment is in now, as far as the journal knows.
+
+    A restorable lineage head can be returned to, so it is the state a fresh
+    attempt starts from. A head that cannot be restored is only a record: the
+    environment stays wherever the latest attempt left it, so that attempt's
+    latest result state is returned instead.
+    """
+    head = state.lineage_head.state
+    if head.restorable:
+        return head
+    for item in reversed(state.attempt_history):
+        if item.attempt.result_state is not None:
+            return item.attempt.result_state
+    return head
 
 
 def abandon_attempt(state: SessionState, event_cursor: int) -> SessionState:
