@@ -346,6 +346,7 @@ def _handle_probe_provider(
         repair_budget=0,
         response_format=None,
         provider_timeout=arguments.provider_timeout,
+        provider_stream=arguments.provider_stream,
     )
     report: dict[str, object] = {
         "adapter": "openai-compatible",
@@ -354,6 +355,7 @@ def _handle_probe_provider(
         "api_key_env": settings.api_key_env,
         "api_key_available": bool(os.environ.get(settings.api_key_env)),
         "extra_headers_present": bool(provider_extra_headers()),
+        "stream": settings.provider_stream,
         "provider_call_made": False,
         "ready": False,
         "failure_class": None,
@@ -377,11 +379,17 @@ def _handle_probe_provider(
         max_tokens=settings.max_output_tokens,
         timeout=settings.provider_timeout,
         extra_headers=provider_extra_headers() or None,
+        stream=settings.provider_stream,
     )
     try:
         generation = generator.generate(PROBE_SYSTEM_PROMPT, PROBE_USER_PROMPT)
         report["provider_call_made"] = True
-        if generation.ok and generation.text.strip():
+        if generation.ok and generation.text.strip() and not generation.prompt_tokens:
+            # ADR-0020 calibration needs usage; a streamed reply without it
+            # would leave every run on the word count.
+            report["failure_class"] = "usage-missing"
+            report["error"] = "the provider returned no usage counts"
+        elif generation.ok and generation.text.strip():
             report["ready"] = True
             report["finish_reason"] = generation.finish_reason
             report["latency_seconds"] = round(generation.latency, 2)
@@ -679,6 +687,7 @@ def _workspace_settings(arguments: argparse.Namespace) -> RunSettings:
         model=arguments.model,
         response_format=arguments.response_format,
         provider_timeout=arguments.provider_timeout,
+        provider_stream=arguments.provider_stream,
         api_key_env=arguments.api_key_env,
         max_actions=arguments.max_actions,
         max_model_calls=arguments.max_model_calls,
@@ -1524,6 +1533,11 @@ def _build_parser() -> argparse.ArgumentParser:
         metavar="SECONDS",
         help="per-request HTTP timeout for the probe call",
     )
+    probe_parser.add_argument(
+        "--provider-stream",
+        action="store_true",
+        help="probe with a streamed reply, as runs with --provider-stream make",
+    )
     probe_parser.set_defaults(handler=_handle_probe_provider)
 
     resume_parser = commands.add_parser(
@@ -1663,7 +1677,16 @@ def _add_run_arguments(parser: argparse.ArgumentParser) -> None:
         default=120.0,
         metavar="SECONDS",
         help="per-request HTTP timeout for the provider endpoint; "
-        "reasoning models with large output budgets need more than the default",
+        "reasoning models with large output budgets need more than the default. "
+        "The client honours it, but a gateway may end a silent call sooner "
+        "(LongCat's ended calls at 300 s); use --provider-stream past that",
+    )
+    parser.add_argument(
+        "--provider-stream",
+        action="store_true",
+        help="stream provider replies, so long reasoning never leaves the "
+        "connection idle (some gateways cut idle calls at 300 s); the provider "
+        "must support streamed usage counts; check with probe-provider",
     )
     parser.add_argument("--max-actions", type=_nonnegative, default=6)
     parser.add_argument("--max-model-calls", type=_nonnegative, default=8)

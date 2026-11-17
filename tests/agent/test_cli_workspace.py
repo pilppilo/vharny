@@ -709,6 +709,7 @@ def test_workspace_settings_carry_response_format():
         model="test-model",
         response_format="json_object",
         provider_timeout=300.0,
+        provider_stream=True,
         api_key_env="TEST_KEY",
         max_actions=6,
         max_model_calls=8,
@@ -725,3 +726,4 @@ def test_workspace_settings_carry_response_format():
 
     assert settings.response_format == "json_object"
     assert settings.provider_timeout == 300.0
+    assert settings.provider_stream is True

@@ -393,6 +393,31 @@ def test_guidance_expiry_records_an_event(dependencies):
     assert all(pair[0] != "supervision" for pair in expired_manifest["included"])
 
 
+def test_expired_guidance_is_never_offered_to_the_model(dependencies):
+    """COD-76: once guidance expires, no decision request presents it as open.
+
+    In the ARC-AGI-3 smoke run the model answered closed guidance twice, and
+    each answer spent a model call only to be rejected.
+    """
+    supervisor = _supervisor(_guided(_guidance(expires_after_call=4)))
+    session = _session(
+        dependencies, capability=_capability(supervisor, cooldown_calls=4)
+    )
+    for _ in range(4):
+        session.step(ScriptedModel(_inspect(1)))
+    model = ScriptedModel(_inspect(1))
+    session.step(model)
+    assert "guidance_expired" in _kinds(session)
+    texts = [item.text for item in model.requests[-1].context.items]
+    assert not any(text.startswith("supervisor_guidance") for text in texts)
+    assert not any("repeated inspection without new" in text for text in texts)
+    received = [text for text in texts if " guidance_received" in text]
+    assert received and all("closed; needs no response" in text for text in received)
+    assert not any(
+        event.kind == "guidance_response_rejected" for event in session.events()
+    )
+
+
 def test_repeated_trigger_checkpoints_and_third_trigger_escalates(dependencies):
     supervisor = _supervisor(_guided(_guidance()))
     session = _session(dependencies, capability=_capability(supervisor))
