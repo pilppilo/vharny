@@ -524,6 +524,9 @@ class ModelAttempt:
     # The reasoning text is never recorded; the count is what distinguishes a
     # reasoning-only response from an empty one.
     reasoning_tokens: int | None = None
+    # COD-88: the answer limit this call requested, when the model grows it.
+    # None for models with one fixed limit, so their journals are unchanged.
+    output_limit: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -1095,14 +1098,22 @@ class _CoordinatorOwnedGenerator:
     def __init__(self, inner: TextGenerator) -> None:
         self._inner = inner
 
-    def generate(self, system: str, prompt: str) -> GeneratedText:
-        """Call the inner generator with retries forced off, then restore them."""
+    def generate(
+        self, system: str, prompt: str, max_tokens: int | None = None
+    ) -> GeneratedText:
+        """Call the inner generator with retries forced off, then restore them.
+
+        ``max_tokens``, when given, is this call's answer limit (COD-88).
+        """
         inner = self._inner
         saved: dict[str, object] = {}
-        for name in ("max_retries", "length_retries"):
+        overrides: dict[str, object] = {"max_retries": 0, "length_retries": 0}
+        if max_tokens is not None:
+            overrides["max_tokens"] = max_tokens
+        for name, value in overrides.items():
             if hasattr(inner, name):
                 saved[name] = getattr(inner, name)
-                setattr(inner, name, 0)
+                setattr(inner, name, value)
         try:
             return inner.generate(system, prompt)
         finally:
@@ -1160,6 +1171,7 @@ def _bounded_attempts(value: object) -> tuple[ModelAttempt, ...]:
                 reasoning_tokens=_bounded_integer(
                     getattr(raw, "reasoning_tokens", None)
                 ),
+                output_limit=_bounded_integer(getattr(raw, "output_limit", None)),
             )
         )
     return tuple(attempts)
@@ -1221,7 +1233,14 @@ class CompatibleModel:
         model_id: str | None = None,
         repair_budget: int = 1,
         reserved_output_tokens: int | None = None,
+        initial_output_tokens: int | None = None,
     ) -> None:
+        """Adapt ``generator``; ``initial_output_tokens`` turns on growth.
+
+        COD-88: with ``initial_output_tokens`` each decision starts at that
+        answer limit, which is also what the context reserves, and doubles it
+        on an exhausted reply up to the generator's ``max_tokens``.
+        """
         if repair_budget < 0:
             raise ContractError("repair_budget must not be negative")
         generator_output_tokens = getattr(generator, "max_tokens", _MISSING)
@@ -1244,13 +1263,27 @@ class CompatibleModel:
         self.reserved_output_tokens = _validate_reserved_output_tokens(
             generator_output_tokens
         )
+        self.max_output_tokens = self.reserved_output_tokens
+        self._grows = initial_output_tokens is not None
+        if initial_output_tokens is not None:
+            initial = _validate_reserved_output_tokens(initial_output_tokens)
+            if initial > self.max_output_tokens:
+                raise ContractError(
+                    "initial output tokens must not exceed the maximum output tokens"
+                )
+            self.reserved_output_tokens = initial
+        self._call_limit = self.reserved_output_tokens
         self._generator = _CoordinatorOwnedGenerator(generator)
         self.model_id = model_id or "compatible"
         self.provider_id = getattr(generator, "provider_id", "compatible")
         self.repair_budget = repair_budget
-        self.output_settings: Mapping[str, JsonValue] = {
+        output_settings: dict[str, JsonValue] = {
             "reserved_output_tokens": self.reserved_output_tokens,
         }
+        if self._grows:
+            # Added only when growth is on, so other model identities are unchanged.
+            output_settings["max_output_tokens"] = self.max_output_tokens
+        self.output_settings: Mapping[str, JsonValue] = output_settings
         self.retry_settings: Mapping[str, JsonValue] = {
             "max_retries": getattr(generator, "max_retries", 0),
             "length_retries": getattr(generator, "length_retries", 0),
@@ -1267,6 +1300,7 @@ class CompatibleModel:
         """
         prompt = render_request(request)
         attempts: list[ModelAttempt] = []
+        self._call_limit = self.reserved_output_tokens
         generation = self._invoke(SYSTEM_PROMPT, prompt, attempts)
         if generation.error:
             raise self._failure(
@@ -1286,35 +1320,27 @@ class CompatibleModel:
                 result = parse_agent_result(generation.text)
                 break
             except _ProviderOutputExhausted as exc:
-                if repairs >= self.repair_budget:
-                    raise self._failure(
-                        request,
-                        str(exc),
-                        attempts,
-                        failure_class=ModelFailureClass.OUTPUT_EXHAUSTED.value,
-                        repairs=tuple(repair_notes),
-                    ) from exc
-                repairs += 1
-                generation, note = self._repair_output_exhausted(
-                    request, generation, attempts
+                generation, repairs = self._recover_exhausted(
+                    request,
+                    prompt=prompt,
+                    prior=generation,
+                    attempts=attempts,
+                    repairs=repairs,
+                    repair_notes=repair_notes,
+                    message=str(exc),
                 )
-                repair_notes.append(note)
                 continue
             except (ContractError, json.JSONDecodeError, ValueError) as exc:
                 if _provider_output_exhausted(generation):
-                    if repairs >= self.repair_budget:
-                        raise self._failure(
-                            request,
-                            "provider output exhausted: length-limited output",
-                            attempts,
-                            failure_class=ModelFailureClass.OUTPUT_EXHAUSTED.value,
-                            repairs=tuple(repair_notes),
-                        ) from exc
-                    repairs += 1
-                    generation, note = self._repair_output_exhausted(
-                        request, generation, attempts
+                    generation, repairs = self._recover_exhausted(
+                        request,
+                        prompt=prompt,
+                        prior=generation,
+                        attempts=attempts,
+                        repairs=repairs,
+                        repair_notes=repair_notes,
+                        message="provider output exhausted: length-limited output",
                     )
-                    repair_notes.append(note)
                     continue
                 repaired = repair_observational_output(generation.text)
                 if repaired is not None:
@@ -1417,6 +1443,87 @@ class CompatibleModel:
         }
         return generation, result, note
 
+    def _recover_exhausted(  # pylint: disable=too-many-arguments
+        self,
+        request: DecisionInput,
+        *,
+        prompt: str,
+        prior: GeneratedText,
+        attempts: list[ModelAttempt],
+        repairs: int,
+        repair_notes: list[Mapping[str, str]],
+        message: str,
+    ) -> tuple[GeneratedText, int]:
+        """Answer an exhausted reply: grow the limit, else ADR-0017's re-ask.
+
+        A raise does not spend the repair budget; the re-ask does. Returns the
+        next generation and the updated repair count, or raises when neither
+        is left.
+        """
+        raised = self._raise_output_limit(request, prompt, prior, attempts, repairs)
+        if raised is not None:
+            generation, note = raised
+            repair_notes.append(note)
+            return generation, repairs
+        if repairs >= self.repair_budget:
+            raise self._failure(
+                request,
+                message,
+                attempts,
+                failure_class=ModelFailureClass.OUTPUT_EXHAUSTED.value,
+                repairs=tuple(repair_notes),
+            )
+        generation, note = self._repair_output_exhausted(request, prior, attempts)
+        repair_notes.append(note)
+        return generation, repairs + 1
+
+    def _raise_output_limit(
+        self,
+        request: DecisionInput,
+        prompt: str,
+        prior: GeneratedText,
+        attempts: list[ModelAttempt],
+        repairs: int,
+    ) -> tuple[GeneratedText, Mapping[str, str]] | None:
+        """Re-send the same request at double the answer limit (COD-88).
+
+        Returns None, leaving ADR-0017's re-ask to run, when growth is off, the
+        limit is already at the maximum or at what the token budget still
+        fits, or the remaining model calls must stay for the repair budget.
+        Each raise is one model call, recorded in the response's repair notes
+        and in the attempt's ``output_limit``.
+        """
+        if not self._grows:
+            return None
+        current = self._call_limit
+        target = min(
+            current * 2, self.max_output_tokens, _fitting_output_limit(request, prior)
+        )
+        if target <= current:
+            return None
+        remaining = _remaining_calls(request)
+        reserved_for_repairs = max(0, self.repair_budget - repairs)
+        if remaining is not None and len(attempts) + 1 + reserved_for_repairs > (
+            remaining
+        ):
+            return None
+        self._call_limit = target
+        generation = self._invoke(SYSTEM_PROMPT, prompt, attempts)
+        if generation.error:
+            raise self._failure(
+                request,
+                "model transport failed",
+                attempts,
+                failure_class=generation.failure_class,
+            ) from None
+        note: Mapping[str, str] = {
+            "failure_class": ModelFailureClass.OUTPUT_EXHAUSTED.value,
+            "result_kind": "none",
+            "field": "output-limit",
+            "marker": f"raised output limit {current} -> {target}; same request",
+        }
+        return generation, note
+
     def _repair_output_exhausted(
         self,
         request: DecisionInput,
@@ -1465,14 +1572,15 @@ class CompatibleModel:
     ) -> GeneratedText:
         started = time.monotonic()
         self.calls += 1
+        limit = self._call_limit if self._grows else None
         try:
-            generation = self._generator.generate(system, prompt)
+            generation = self._generator.generate(system, prompt, max_tokens=limit)
         except Exception as exc:  # pylint: disable=broad-exception-caught
-            return _failed_generation(exc, started, self.model_id, attempts)
+            return _failed_generation(exc, started, self.model_id, attempts, limit)
         generation, duration_ms = _sanitize_generation(
             generation, started, self.model_id
         )
-        attempts.append(_model_attempt(generation, duration_ms))
+        attempts.append(_model_attempt(generation, duration_ms, limit))
         return generation
 
     def _failure(
@@ -1511,6 +1619,33 @@ class CompatibleModel:
         )
 
 
+def _fitting_output_limit(request: DecisionInput, prior: GeneratedText) -> int:
+    """Return the largest answer limit the request's token budget still fits.
+
+    The raised call re-sends the same prompt, so its input is the size the
+    provider just reported, or the context manifest's estimate when it did not.
+    """
+    manifest = request.context.manifest
+    reported = _bounded_integer(getattr(prior, "prompt_tokens", None))
+    if reported is None:
+        estimated = (
+            manifest.estimated_input_tokens
+            or manifest.serialized_input_tokens
+            or manifest.tokens_used
+        )
+        reported = estimated + (manifest.system_prompt_tokens or 0)
+    return manifest.token_budget - reported
+
+
+def _remaining_calls(request: DecisionInput) -> int | None:
+    """Return the finite model calls left when the request was made, if any."""
+    budget = request.remaining_budgets.get("model_calls")
+    remaining = budget.get("remaining") if isinstance(budget, Mapping) else None
+    if isinstance(remaining, bool) or not isinstance(remaining, int):
+        return None
+    return remaining
+
+
 class _ProviderOutputExhausted(Exception):
     """Visible output is absent or provider-truncated, so JSON repair cannot help."""
 
@@ -1532,6 +1667,7 @@ def _failed_generation(
     started: float,
     model_id: str,
     attempts: list[ModelAttempt],
+    output_limit: int | None = None,
 ) -> _BoundedGeneration:
     """Keep transport failures bounded while retaining their measured duration."""
     duration_ms = max(0, int(round((time.monotonic() - started) * 1000)))
@@ -1542,6 +1678,7 @@ def _failed_generation(
             finish_reason="error",
             error=safe_error,
             duration_ms=duration_ms,
+            output_limit=output_limit,
         )
     )
     return _BoundedGeneration(
@@ -1613,7 +1750,9 @@ def _bounded_provider_error(error: object) -> str | None:
     return None if error is None else safe_provider_error(error)
 
 
-def _model_attempt(generation: _BoundedGeneration, duration_ms: int) -> ModelAttempt:
+def _model_attempt(
+    generation: _BoundedGeneration, duration_ms: int, output_limit: int | None = None
+) -> ModelAttempt:
     return ModelAttempt(
         output=generation.text,
         finish_reason=generation.finish_reason,
@@ -1622,6 +1761,7 @@ def _model_attempt(generation: _BoundedGeneration, duration_ms: int) -> ModelAtt
         completion_tokens=generation.completion_tokens,
         duration_ms=_bounded_integer(duration_ms),
         reasoning_tokens=generation.reasoning_tokens,
+        output_limit=output_limit,
     )
 
 

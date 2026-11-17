@@ -118,13 +118,31 @@ def _optional_flag(value: Mapping[str, object], key: str) -> bool:
     return flag
 
 
-def _validate_arc(settings: RunSettings) -> None:
-    """ARC runs play one game: no check command, no target, a positive limit.
+def _optional_positive_int(value: Mapping[str, object], key: str) -> int | None:
+    """A persisted positive integer that is absent when unset."""
+    item = value.get(key)
+    if item is None:
+        return None
+    if isinstance(item, bool) or not isinstance(item, int) or item < 1:
+        raise ContractError(f"run manifest {key} must be a positive integer")
+    return item
 
-    Also checks ``provider_stream``, the other optional run flag.
-    """
+
+def _validate_provider_options(settings: RunSettings) -> None:
+    """Check the optional provider settings: streaming and answer-limit growth."""
     if not isinstance(settings.provider_stream, bool):
         raise ContractError("provider_stream must be a boolean")
+    initial = settings.initial_output_tokens
+    if initial is None:
+        return
+    if isinstance(initial, bool) or not isinstance(initial, int) or initial < 1:
+        raise ContractError("initial_output_tokens must be a positive integer")
+    if initial > settings.max_output_tokens:
+        raise ContractError("initial_output_tokens must not exceed max_output_tokens")
+
+
+def _validate_arc(settings: RunSettings) -> None:
+    """ARC runs play one game: no check command, no target, a positive limit."""
     if settings.arc is None:
         return
     if not isinstance(settings.arc, ArcRunSettings):
@@ -234,6 +252,9 @@ class RunSettings:
     provider_timeout: float = DEFAULT_PROVIDER_TIMEOUT_SECONDS
     #: COD-76: stream replies so long reasoning never leaves the connection idle.
     provider_stream: bool = False
+    #: COD-88: start each decision at this answer limit and double it on an
+    #: exhausted reply, up to ``max_output_tokens``. None keeps one fixed limit.
+    initial_output_tokens: int | None = None
     transport_recovery: TransportRecoverySettings = TransportRecoverySettings()
     #: Variables child processes may see; ``None`` passes all but provider secrets.
     child_env_allow: tuple[str, ...] | None = None
@@ -276,6 +297,7 @@ class RunSettings:
         if not isinstance(self.transport_recovery, TransportRecoverySettings):
             raise ContractError("transport_recovery must be TransportRecoverySettings")
         _validate_child_env_allow(self.child_env_allow, self.api_key_env)
+        _validate_provider_options(self)
         _validate_arc(self)
 
     @property
@@ -311,8 +333,8 @@ class RunSettings:
     def to_payload(self) -> dict[str, object]:
         """Return the non-secret settings as a JSON-compatible object.
 
-        ``arc`` and ``provider_stream`` appear only when set, so other
-        manifests are unchanged.
+        ``arc``, ``provider_stream`` and ``initial_output_tokens`` appear only
+        when set, so other manifests are unchanged.
         """
         payload: dict[str, object] = {
             "objective": self.objective,
@@ -344,6 +366,8 @@ class RunSettings:
             payload["arc"] = self.arc.to_payload()
         if self.provider_stream:
             payload["provider_stream"] = True
+        if self.initial_output_tokens is not None:
+            payload["initial_output_tokens"] = self.initial_output_tokens
         return payload
 
     @classmethod
@@ -387,6 +411,9 @@ class RunSettings:
             shell=_optional_str(value, "shell"),
             provider_timeout=provider_timeout,
             provider_stream=_optional_flag(value, "provider_stream"),
+            initial_output_tokens=_optional_positive_int(
+                value, "initial_output_tokens"
+            ),
             transport_recovery=TransportRecoverySettings.from_payload(
                 value.get("transport_recovery")
             ),

@@ -1316,3 +1316,174 @@ def test_skipping_certain_probes_never_changes_a_selection(tmp_path, monkeypatch
         journal.close()
     assert len(results[0]) == 60
     assert results[0] == results[1]
+
+
+# --- COD-88: grow the answer limit only when a call runs out ---
+
+
+class _ReasoningGenerator:
+    """Reasons for ``needs`` tokens before answering; a smaller limit runs out."""
+
+    def __init__(self, needs: int, max_tokens: int, prompt_tokens: int = 3) -> None:
+        self.needs = needs
+        self.max_tokens = max_tokens
+        self.prompt_tokens = prompt_tokens
+        self.limits: list[int] = []
+        self.prompts: list[str] = []
+
+    def generate(self, system: str, prompt: str) -> FakeGeneration:
+        del system
+        self.limits.append(self.max_tokens)
+        self.prompts.append(prompt)
+        if self.max_tokens < self.needs:
+            return FakeGeneration(
+                "",
+                finish_reason="length",
+                prompt_tokens=self.prompt_tokens,
+                completion_tokens=self.max_tokens,
+                reasoning_tokens=self.max_tokens,
+            )
+        return FakeGeneration(
+            '{"kind": "LineageQuery"}', prompt_tokens=self.prompt_tokens
+        )
+
+
+def _decided(session: Session) -> dict:
+    events = session.events(limit=200)
+    return next(event for event in events if event.kind == "model_decided").payload
+
+
+def test_a_512_token_limit_spent_on_reasoning_grows_until_the_call_succeeds(
+    tmp_path,
+):
+    # The ARC-AGI-3 smoke run: 512 tokens ran out mid-reasoning.
+    generator = _ReasoningGenerator(needs=1500, max_tokens=32768)
+    model = CompatibleModel(generator, repair_budget=0, initial_output_tokens=512)
+    session, journal = _step_session(tmp_path, model)
+
+    assert generator.limits == [512, 1024, 2048]
+    assert len(set(generator.prompts)) == 1  # the same request, only more room
+    assert generator.max_tokens == 32768  # restored after each call
+    attempts = _decided(session)["attempts"]
+    assert [attempt["output_limit"] for attempt in attempts] == [512, 1024, 2048]
+    raises = [
+        event.payload
+        for event in session.events(limit=200)
+        if event.kind == "model_repaired"
+    ]
+    assert [payload["field"] for payload in raises] == ["output-limit"] * 2
+    assert "512 -> 1024" in raises[0]["marker"]
+    assert "1024 -> 2048" in raises[1]["marker"]
+    replay(session.events(limit=200))
+    journal.close()
+
+
+def test_the_context_reserves_the_starting_limit_not_the_maximum(tmp_path):
+    generator = _ReasoningGenerator(needs=10, max_tokens=32768)
+    model = CompatibleModel(generator, repair_budget=0, initial_output_tokens=512)
+    session, journal = _step_session(tmp_path, model)
+
+    assert model.reserved_output_tokens == 512
+    assert model.output_settings == {
+        "reserved_output_tokens": 512,
+        "max_output_tokens": 32768,
+    }
+    assembled = [
+        event
+        for event in session.events(limit=200)
+        if event.kind == "context_assembled"
+    ]
+    assert assembled[0].payload["manifest"]["reserved_output_tokens"] == 512
+    assert generator.limits == [512]
+    journal.close()
+
+
+def test_growth_stops_at_the_maximum_then_uses_the_re_ask(tmp_path):
+    generator = _ReasoningGenerator(needs=5000, max_tokens=1024)
+    model = CompatibleModel(generator, repair_budget=1, initial_output_tokens=512)
+    with pytest.raises(ModelCallError) as raised:
+        _step_session(tmp_path, model)
+
+    # One raise to the maximum, then ADR-0017's single re-ask at that limit.
+    assert generator.limits == [512, 1024, 1024]
+    assert "emit it now" in generator.prompts[2]
+    assert raised.value.failure_class == "output-exhausted"
+    assert [a.output_limit for a in raised.value.attempts] == [512, 1024, 1024]
+
+
+def test_growth_stops_at_what_the_token_budget_still_fits(tmp_path):
+    # 16,384-token budget, 15,600 reported prompt tokens: 784 fit, not 1024.
+    generator = _ReasoningGenerator(needs=700, max_tokens=4096, prompt_tokens=15600)
+    model = CompatibleModel(generator, repair_budget=0, initial_output_tokens=512)
+    session, journal = _step_session(tmp_path, model)
+
+    assert generator.limits == [512, 784]
+    assert [a["output_limit"] for a in _decided(session)["attempts"]] == [512, 784]
+    journal.close()
+
+
+def test_growth_never_spends_calls_the_model_call_budget_lacks(tmp_path):
+    generator = _ReasoningGenerator(needs=5000, max_tokens=32768)
+    model = CompatibleModel(generator, repair_budget=0, initial_output_tokens=512)
+    with pytest.raises(ModelCallError):
+        _step_session(tmp_path, model)
+
+    # The session's budget is 4 model calls: the first plus three raises.
+    assert generator.limits == [512, 1024, 2048, 4096]
+
+
+def test_without_growth_attempts_record_no_limit(tmp_path):
+    generator = _ReasoningGenerator(needs=10, max_tokens=256)
+    session, journal = _step_session(tmp_path, CompatibleModel(generator))
+
+    assert _decided(session)["attempts"][0]["output_limit"] is None
+    journal.close()
+
+
+def test_initial_output_limit_must_not_exceed_the_maximum():
+    generator = _ReasoningGenerator(needs=10, max_tokens=256)
+    with pytest.raises(ContractError, match="must not exceed"):
+        CompatibleModel(generator, initial_output_tokens=512)
+
+
+def test_a_grown_limit_is_what_the_budget_check_reserves(tmp_path):
+    session, journal = _model_session(tmp_path)
+
+    class GrownModel:
+        model_id = "grown"
+
+        def decide(self, request):
+            output = '{"kind": "LineageQuery"}'
+            return ModelResponse(
+                result=LineageQuery(),
+                output=output,
+                model_id=self.model_id,
+                finish_reason="stop",
+                attempts=(
+                    ModelAttempt(
+                        output="",
+                        finish_reason="length",
+                        prompt_tokens=10000,
+                        output_limit=256,
+                    ),
+                    ModelAttempt(
+                        output=output,
+                        finish_reason="stop",
+                        prompt_tokens=10000,
+                        output_limit=8000,
+                    ),
+                ),
+            )
+
+    session.step(GrownModel())
+
+    breaches = [
+        event.payload
+        for event in session.events(limit=200)
+        if event.kind == "token_budget_breach"
+    ]
+    # 10,000 + 256 fits the 16,384 budget; 10,000 + 8,000 does not.
+    assert len(breaches) == 1
+    assert breaches[0]["reserved_output_tokens"] == 8000
+    replay(session.events(limit=200))
+    journal.close()
