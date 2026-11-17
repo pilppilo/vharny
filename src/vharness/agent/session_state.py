@@ -5,8 +5,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from decimal import Decimal, InvalidOperation
-from typing import Mapping, cast
+from typing import cast
 
 from .errors import ContractError, IntegrityError
 from .models import (

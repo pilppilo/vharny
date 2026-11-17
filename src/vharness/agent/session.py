@@ -8,13 +8,15 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from decimal import Decimal
 import hashlib
 import math
 from time import perf_counter_ns
-from typing import Callable, Mapping, NoReturn
+from typing import Callable, NoReturn
 from uuid import uuid4
 
 from vharness.core import RETRYABLE_FAILURE_CLASSES, VERSION
@@ -86,6 +88,7 @@ from .context import (
     TokenAccounting,
     assemble_context,
     count_tokens,
+    estimate_rate,
     estimate_serialized_tokens,
 )
 from .kernel import (
@@ -343,6 +346,8 @@ class Session:
         self._evaluator = evaluator
         self._supervision = supervision
         self._evaluation_mode = evaluation_mode
+        #: COD-89: decoded journal events, extended only with new events.
+        self._event_cache: tuple[Event, ...] = ()
         self._inbox: list[OperatorCommand] = []
         self._receipts: dict[str, ExecutionReceipt] = {}
         self._commands: dict[str, OperatorCommand] = {}
@@ -548,6 +553,7 @@ class Session:
             supervision=supervision,
             evaluation_mode=evaluation_mode,
         )
+        session._event_cache = events  # already decoded and replayed
         for event in events:
             receipt = event.payload.get("receipt")
             if event.kind == "receipt_received" and isinstance(receipt, Mapping):
@@ -588,7 +594,7 @@ class Session:
         return build_operator_view(
             self._session_id,
             self._state,
-            _all_events(self._journal, self._session_id),
+            self._journal_events(),
         )
 
     def events(self, after_sequence: int = 0, limit: int = 100) -> tuple[Event, ...]:
@@ -642,9 +648,9 @@ class Session:
         """Evict unprotected local bytes; journal intent then availability."""
         if byte_budget < 0:
             raise ContractError("byte_budget must not be negative")
-        events = _all_events(self._journal, self._session_id)
+        events = self._journal_events()
         self._reconcile_retention(events)
-        events = _all_events(self._journal, self._session_id)
+        events = self._journal_events()
         inventory = self._artifacts.inventory()
         protected = self._workspace_protected_digests()
         planned = select_evictions(inventory, protected, byte_budget)
@@ -670,11 +676,11 @@ class Session:
 
     def counters(self) -> RunCounters:
         """Return BENCH-0001 diagnostic counters from the durable journal."""
-        return counters(_all_events(self._journal, self._session_id))
+        return counters(self._journal_events())
 
     def manifest(self) -> RunManifest:
         """Return immutable run identity captured at durable session creation."""
-        return manifest(_all_events(self._journal, self._session_id))
+        return manifest(self._journal_events())
 
     def enqueue(self, command: OperatorCommand) -> str:
         """Admit a command for the next bounded coordinator advancement."""
@@ -799,7 +805,7 @@ class Session:
             return None
         if self._state.active_attempt is None:
             self.begin_attempt()
-        events = _all_events(self._journal, self._session_id)
+        events = self._journal_events()
         remaining = remaining_budgets(self._state, events)
         (
             model_remaining,
@@ -815,7 +821,7 @@ class Session:
                 allow_supervisor_consult=allow_supervisor_consult,
             ):
                 return None
-            events = _all_events(self._journal, self._session_id)
+            events = self._journal_events()
             remaining = remaining_budgets(self._state, events)
             model_remaining = _remaining_model_calls(remaining)
         if not _model_call_budget_covers(model_remaining, model_call_bound):
@@ -887,6 +893,7 @@ class Session:
                 fit_basis=(
                     TOKEN_COUNTER if tokens_per_char is None else TOKEN_ESTIMATOR
                 ),
+                estimate_rate=estimate_rate(tokens_per_char),
             )
 
         context_started_ns = perf_counter_ns()
@@ -1189,7 +1196,7 @@ class Session:
         window = TransportRecoveryWindow(retryable_failures=0, failed_calls=0)
         objective_version = self._state.task.objective_version
         leading = True
-        for event in reversed(_all_events(self._journal, self._session_id)):
+        for event in reversed(self._journal_events()):
             if event.kind not in {"model_malformed", "model_decided"}:
                 continue
             if event.objective_version != objective_version:
@@ -1400,7 +1407,7 @@ class Session:
 
     def _model_terminal_record(self, request_id: str) -> Mapping[str, object] | None:
         """Return the durable terminal payload for one model request, if any."""
-        for event in _all_events(self._journal, self._session_id):
+        for event in self._journal_events():
             if event.kind in {"model_decided", "model_malformed"} and (
                 event.payload.get("request_id") == request_id
             ):
@@ -1585,7 +1592,7 @@ class Session:
                 None,
             )
         if isinstance(result, AttemptQuery):
-            events = _all_events(self._journal, self._session_id)
+            events = self._journal_events()
             history = next(
                 (
                     item
@@ -1601,7 +1608,7 @@ class Session:
             )
             return ((("attempt_inspected", state, {"attempt": evidence}, None),), None)
         if isinstance(result, KnowledgeQuery):
-            events = _all_events(self._journal, self._session_id)
+            events = self._journal_events()
             items = knowledge_items(state, events)
             if result.item_id is not None:
                 items = tuple(item for item in items if item.item_id == result.item_id)
@@ -1746,7 +1753,7 @@ class Session:
         self, state: SessionState, result: MemoryUpdate, source_event: int
     ) -> _Transition:
         """Derive one knowledge-recorded transition from a memory update."""
-        events = _all_events(self._journal, self._session_id)
+        events = self._journal_events()
         current = next(
             (
                 item
@@ -1790,7 +1797,7 @@ class Session:
         self, state: SessionState, result: ProgressClaimChange, source_event: int
     ) -> _Transition:
         """Derive one claim transition. Self-report and ID presence never support."""
-        events = _all_events(self._journal, self._session_id)
+        events = self._journal_events()
         fingerprint = (
             result.category.value,
             result.before,
@@ -1852,7 +1859,7 @@ class Session:
         attempt and starts a fresh one. A response with no active guidance is
         recorded as rejected and changes nothing else.
         """
-        events = _all_events(self._journal, self._session_id)
+        events = self._journal_events()
         active = active_guidance(events)
         if active is None:
             return (
@@ -1964,7 +1971,7 @@ class Session:
         # takes this rung.
         stage = escalation_stage(events)
         self._persist("supervision_triggered", self._state, trigger_payload(trigger))
-        persisted = _all_events(self._journal, self._session_id)
+        persisted = self._journal_events()
         if stage == 1:
             if not allow_supervisor_consult:
                 # ADR-0013: a checkpoint the remaining budget cannot review is
@@ -3104,7 +3111,7 @@ class Session:
         """
         if source_start < 1 or source_end < source_start:
             raise ContractError("episode source span is invalid")
-        events = _all_events(self._journal, self._session_id)
+        events = self._journal_events()
         if covering_checkpoint(events, source_end) is None:
             raise TransitionError("episode span has no covering checkpoint")
         for episode in episodes(events):
@@ -3255,7 +3262,7 @@ class Session:
         Only the guidance's applicability is closed; its completed supervisor
         call stays settled with its recorded usage.
         """
-        active = active_guidance(_all_events(self._journal, self._session_id))
+        active = active_guidance(self._journal_events())
         if active is None:
             return ()
         source, guidance = active
@@ -3470,6 +3477,19 @@ class Session:
             },
         )
 
+    def _journal_events(self) -> tuple[Event, ...]:
+        """Every journal event, decoding each one only once (COD-89).
+
+        Events are immutable and the journal is append-only, so the cache is
+        extended with whatever follows its last sequence, including events
+        another writer appended.
+        """
+        after = self._event_cache[-1].sequence if self._event_cache else 0
+        new = _events_after(self._journal, self._session_id, after)
+        if new:
+            self._event_cache = (*self._event_cache, *new)
+        return self._event_cache
+
     def _persist(
         self,
         kind: str,
@@ -3597,7 +3617,7 @@ class Session:
     ) -> ModelConfiguration:
         """Bind and verify all Phase-2 model settings before model work."""
         configuration = configuration_for(model, token_budget)
-        events = _all_events(self._journal, self._session_id)
+        events = self._journal_events()
         bound = next(
             (event for event in events if event.kind == "model_configuration_bound"),
             None,
@@ -3995,8 +4015,15 @@ def _new_id(prefix: str) -> str:
 
 def _all_events(journal: SqliteJournal, session_id: str) -> tuple[Event, ...]:
     """Read the complete journal without changing the bounded public API."""
+    return _events_after(journal, session_id, 0)
+
+
+def _events_after(
+    journal: SqliteJournal, session_id: str, after_sequence: int
+) -> tuple[Event, ...]:
+    """Read every event after ``after_sequence``, page by page."""
     events: list[Event] = []
-    cursor = 0
+    cursor = after_sequence
     while True:
         page = journal.events(session_id, after_sequence=cursor, limit=100)
         if not page:

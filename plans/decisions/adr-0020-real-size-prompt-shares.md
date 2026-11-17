@@ -133,7 +133,7 @@ the model as counts. Tests cover:
 
 - the switch at the first report;
 - the share arithmetic;
-- a 100-decision run with one dense early call, checking that the ratio
+- a 200-decision run with one dense early call, checking that the ratio
   never decreases and every request fits;
 - the calibrated refusal;
 - replay.

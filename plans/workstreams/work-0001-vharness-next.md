@@ -5206,3 +5206,21 @@ remain append-only.
 - **Open questions:** None new. Results under ADR-0016 and ADR-0020 must not
   be pooled (ADR-0020 §5).
 
+## 2026-11-17 06:50 UTC — Decisions no longer re-read the whole journal (COD-89)
+
+- **Author:** Claude session, operator-directed.
+- **Goal:** Remove the per-decision cost that grew with run length, before
+  long ARC-AGI-3 campaign games.
+- **Work completed:** The session keeps decoded journal events in memory and
+  reads only new ones. Context selection skips a candidate's full render when
+  a proven lower or upper bound already decides whether it fits. When bounds
+  are inconclusive on an inexact base, the base is measured once. Each context
+  item counts its words once. Selections are unchanged: a test runs 60
+  decisions with and without the shortcut and compares every manifest.
+- **Evidence:** 100 decisions took 42 s and now take 3.4 s; 200 decisions took
+  about 230 s and now take 21 s. The ADR-0020 long-run test is back to 200
+  decisions, as COD-85 asked.
+- **Discoveries affecting later work:** Selection still renders the request
+  for each candidate it cannot settle by bounds, so very long runs still grow
+  faster than linearly, but far more slowly.
+

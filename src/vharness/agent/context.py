@@ -7,11 +7,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
+import json
 import math
 from dataclasses import dataclass, field, replace
 from functools import partial
 from types import MappingProxyType
-from typing import Callable, Mapping
+from typing import Callable
 
 from .codec import canonical_json
 from .errors import ContractError
@@ -43,6 +46,18 @@ CALIBRATION_MARGIN = 1.1
 #: the space left after must-have context and reserved output; recent history
 #: gets the rest, including any share retrieved notes leave unused.
 RETRIEVED_SHARE = 0.25
+#: COD-89: skip probes that a lower bound proves would fail. Results are
+#: identical either way; tests turn it off to compare.
+SKIP_CERTAIN_MISSES = True
+#: How much the visible manifest's width can change when one item is added.
+#: It can grow by a band's first count (`"retrieved": 1, `, 16 characters)
+#: plus a digit on each of three numbers, and shrink by `unused` losing a
+#: digit. Both allowances keep a margin over those worst cases; a wider
+#: allowance only means more real probes, never a different result.
+MANIFEST_GROWTH_CHARS = 24
+MANIFEST_SHRINK_CHARS = 8
+#: Whitespace-separated words the visible manifest may gain per added item.
+MANIFEST_SLACK_WORDS = 4
 #: ADR-0020: fixed share kept for the request's bookkeeping (the manifest
 #: summary), which is filled in after the candidate items are measured.
 BOOKKEEPING_TOKENS = 256
@@ -107,6 +122,8 @@ class ContextItem:
     text: str
     source_event: int
     source_id: str
+    #: COD-89: the text's word count, counted once instead of on every probe.
+    tokens: int = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         for name, value in (
@@ -119,6 +136,7 @@ class ContextItem:
                 raise ContractError(f"context {name} must be a non-empty string")
         if self.source_event < 0:
             raise ContractError("context source_event must not be negative")
+        object.__setattr__(self, "tokens", count_tokens(self.text))
 
 
 @dataclass(frozen=True, slots=True)
@@ -206,6 +224,8 @@ class TokenAccounting:
     estimated_system_prompt_tokens: int = 0
     #: ADR-0020: TOKEN_ESTIMATOR once a provider has reported usage.
     fit_basis: str = TOKEN_COUNTER
+    #: Tokens per character behind ``estimated_input_tokens`` (COD-89 bounds).
+    estimate_rate: float = 0.0
 
     @property
     def total_tokens(self) -> int:
@@ -245,12 +265,14 @@ def estimate_serialized_tokens(text: str, tokens_per_char: float | None = None) 
     ``CALIBRATION_MARGIN`` to it. The provider's own count is still recorded
     after each call and reconciled; this estimate only bounds it beforehand.
     """
-    rate = (
-        1 / PRIOR_CHARS_PER_TOKEN
-        if tokens_per_char is None
-        else tokens_per_char * CALIBRATION_MARGIN
-    )
-    return math.ceil(len(text) * rate)
+    return math.ceil(len(text) * estimate_rate(tokens_per_char))
+
+
+def estimate_rate(tokens_per_char: float | None) -> float:
+    """Tokens per character the estimate charges: prior, or calibrated + margin."""
+    if tokens_per_char is None:
+        return 1 / PRIOR_CHARS_PER_TOKEN
+    return tokens_per_char * CALIBRATION_MARGIN
 
 
 # pylint: disable=too-many-locals,too-many-arguments,too-many-statements
@@ -291,7 +313,7 @@ def assemble_context(
         state=state,
         events=events,
     )
-    required = sum(count_tokens(item.text) for item in mandatory) + overhead
+    required = sum(item.tokens for item in mandatory) + overhead
     if request_token_counter is None and required > token_budget:
         return ContextOverflow(
             missing_item_ids=tuple(item.item_id for item in mandatory),
@@ -301,8 +323,47 @@ def assemble_context(
     remaining = token_budget - required
     exact_accounting: TokenAccounting | None = None
 
+    # COD-89: exact totals from real probes, and proven upper bounds from
+    # skipped ones, keyed by the candidate's item ids.
+    exact: dict[tuple[str, ...], TokenAccounting] = {}
+    upper: dict[tuple[str, ...], int] = {}
+
+    def settled(candidate: tuple[ContextItem, ...], ceiling: int) -> bool | None:
+        """Decide fit from bounds when they are conclusive, else None."""
+        if not SKIP_CERTAIN_MISSES or not exact:
+            return None
+        key = tuple(item.item_id for item in candidate)
+        base = exact.get(key[:-1])
+        reference = base or next(iter(exact.values()))
+        if base is not None and (
+            base.total_tokens + _min_growth(candidate[-1], base) > ceiling
+        ):
+            return False
+        base_upper = base.total_tokens if base is not None else upper.get(key[:-1])
+        if base_upper is None:
+            return None
+        bound = base_upper + _max_growth(candidate[-1], reference)
+        if bound <= ceiling:
+            upper[key] = bound
+            return True
+        return None
+
     def fits(candidate: tuple[ContextItem, ...], ceiling: int = token_budget) -> bool:
         """Ask the caller's serializer whether this exact candidate fits."""
+        decided = settled(candidate, ceiling)
+        if decided is None and SKIP_CERTAIN_MISSES and len(candidate) > 1:
+            base_key = tuple(item.item_id for item in candidate[:-1])
+            if base_key not in exact:
+                # Bounds were inconclusive on an inexact base: measure the base
+                # once, so later candidates on it can be settled exactly.
+                measure(candidate[:-1])
+                decided = settled(candidate, ceiling)
+        if decided is not None:
+            return decided
+        return measure(candidate).total_tokens <= ceiling
+
+    def measure(candidate: tuple[ContextItem, ...]) -> TokenAccounting:
+        """Render and count one candidate request, and remember the result."""
         text = "\n".join(item.text for item in candidate)
         provisional = _manifest(
             state,
@@ -318,9 +379,10 @@ def assemble_context(
         )
         counter = request_token_counter
         if counter is None:  # pragma: no cover - only called in exact mode
-            return True
+            raise ContractError("measuring a candidate needs a request token counter")
         accounting = counter(candidate, text, provisional)
-        return accounting.total_tokens <= ceiling
+        exact[tuple(item.item_id for item in candidate)] = accounting
+        return accounting
 
     share_limits: Mapping[str, int] = MappingProxyType({})
     retrieved_fits: Callable[[tuple[ContextItem, ...]], bool] | None = None
@@ -356,7 +418,7 @@ def assemble_context(
         prefix=mandatory if request_token_counter is not None else (),
         fits=retrieved_fits,
     )
-    retrieved_tokens = sum(count_tokens(item.text) for item in retrieved)
+    retrieved_tokens = sum(item.tokens for item in retrieved)
     remaining -= retrieved_tokens
     recent, omitted_recent = _select_recent(
         events,
@@ -366,24 +428,18 @@ def assemble_context(
         fits=recent_fits,
         receipt_content=content_map,
     )
-    recent_tokens = sum(count_tokens(item.text) for item in recent)
+    recent_tokens = sum(item.tokens for item in recent)
     remaining -= recent_tokens
     items = (*mandatory, *retrieved, *recent)
     filtered, preferred = _prefer_sources_to_summaries(items, (), events)
     dropped = {item.item_id for item in items} - {item.item_id for item in filtered}
-    remaining += sum(
-        count_tokens(item.text) for item in items if item.item_id in dropped
-    )
+    remaining += sum(item.tokens for item in items if item.item_id in dropped)
     items = filtered
     omitted = (*omitted_retrieved, *omitted_recent, *preferred)
-    retrieved_tokens = sum(
-        count_tokens(item.text) for item in items if item.band == "retrieved"
-    )
-    recent_tokens = sum(
-        count_tokens(item.text) for item in items if item.band == "recent"
-    )
+    retrieved_tokens = sum(item.tokens for item in items if item.band == "retrieved")
+    recent_tokens = sum(item.tokens for item in items if item.band == "recent")
     text = "\n".join(item.text for item in items)
-    mandatory_tokens = sum(count_tokens(item.text) for item in mandatory)
+    mandatory_tokens = sum(item.tokens for item in mandatory)
     manifest = _manifest(
         state,
         cursor,
@@ -897,7 +953,7 @@ def _select_recent(
         if event.event_id in retrieved_sources:
             omitted.append((item.item_id, "duplicate"))
             continue
-        cost = count_tokens(item.text)
+        cost = item.tokens
         if band_used + cost > RECENT_BAND_MAX_TOKENS:
             omitted.append((item.item_id, "band_cap"))
             continue
@@ -1178,17 +1234,17 @@ def _manifest(
 ) -> ContextManifest:
     """Build one manifest shape for fit probes and the returned bundle."""
     mandatory = (
-        sum(count_tokens(item.text) for item in items if item.band == "mandatory")
+        sum(item.tokens for item in items if item.band == "mandatory")
         if mandatory_tokens is None
         else mandatory_tokens
     )
     retrieved = (
-        sum(count_tokens(item.text) for item in items if item.band == "retrieved")
+        sum(item.tokens for item in items if item.band == "retrieved")
         if retrieved_tokens is None
         else retrieved_tokens
     )
     recent = (
-        sum(count_tokens(item.text) for item in items if item.band == "recent")
+        sum(item.tokens for item in items if item.band == "recent")
         if recent_tokens is None
         else recent_tokens
     )
@@ -1202,7 +1258,7 @@ def _manifest(
         included=tuple((item.item_id, item.band) for item in items),
         omitted=omitted,
         tokens_used=context_tokens,
-        item_tokens=tuple((item.item_id, count_tokens(item.text)) for item in items),
+        item_tokens=tuple((item.item_id, item.tokens) for item in items),
         allocation=MappingProxyType(
             {
                 "overhead": overhead_tokens,
@@ -1228,6 +1284,41 @@ def _manifest(
         serialization_overhead_tokens=serialization_overhead_tokens,
         estimated_input_tokens=estimated_input_tokens,
     )
+
+
+def _min_growth(item: ContextItem, before: TokenAccounting) -> int:
+    """A lower bound on how much adding ``item`` grows the measured total.
+
+    The request is ``json.dumps`` output, and context items are joined with a
+    newline, which serializes without whitespace. So in the word count the
+    item adds at least its own words minus one (a merged boundary word). In
+    the calibrated estimate it adds at least its escaped length, less
+    ``MANIFEST_SHRINK_CHARS`` for manifest numbers losing width, at the
+    estimate's rate.
+    """
+    if before.fit_basis == TOKEN_ESTIMATOR:
+        escaped = len(json.dumps(item.text)) - 2
+        return max(
+            0,
+            math.floor((escaped - MANIFEST_SHRINK_CHARS) * before.estimate_rate) - 1,
+        )
+    return max(0, item.tokens - 1)
+
+
+def _max_growth(item: ContextItem, reference: TokenAccounting) -> int:
+    """An upper bound on how much adding ``item`` grows the measured total.
+
+    The mirror of ``_min_growth``: the item's escaped length plus its newline
+    separator and ``MANIFEST_GROWTH_CHARS`` at the estimate's rate, or its words plus
+    the manifest's word slack.
+    """
+    if reference.fit_basis == TOKEN_ESTIMATOR:
+        escaped = len(json.dumps(item.text)) - 2
+        return (
+            math.ceil((escaped + 2 + MANIFEST_GROWTH_CHARS) * reference.estimate_rate)
+            + 1
+        )
+    return item.tokens + MANIFEST_SLACK_WORDS
 
 
 def _shares(

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 
 import hashlib
 from dataclasses import dataclass, replace
@@ -1247,17 +1248,13 @@ def test_share_limits_split_the_budget():
 
 
 def test_one_dense_call_raises_the_estimate_for_the_rest_of_a_long_run(tmp_path):
-    """ADR-0020: the worst-seen ratio never comes back down over a long run.
-
-    100 decisions keep the test fast; ADR-0020 records a 200-decision run with
-    the same pattern.
-    """
-    session, journal = _model_session(tmp_path, model_calls=110)
+    """ADR-0020: the worst-seen ratio never comes back down over 200 decisions."""
+    session, journal = _model_session(tmp_path, model_calls=210)
     model = _RatioModel({2: 0.9}, default=0.3)
-    for _ in range(100):
+    for _ in range(200):
         session.step(model)
     manifests = _manifests_of(session)
-    assert len(manifests) == 100
+    assert len(manifests) == 200
     events = list(session.events(limit=100_000))
     assert not [e for e in events if e.kind == "context_overflow"]
     ratios = [m["estimate_tokens_per_char"] for m in manifests[1:]]
@@ -1274,3 +1271,48 @@ def test_one_dense_call_raises_the_estimate_for_the_rest_of_a_long_run(tmp_path)
     assert 0 < left < last["token_budget"]
     replay(events)
     journal.close()
+
+
+def _selections(session) -> list[tuple]:
+    """Each decision's selected and omitted items, by event sequence (ids differ)."""
+    events = list(session.events(limit=100_000))
+    sequence = {f"event:{e.event_id}": e.sequence for e in events}
+
+    def stable(item_id: str):
+        if item_id in sequence:
+            return sequence[item_id]
+        return re.sub(r"[0-9a-f]{32}", "<id>", item_id)  # random attempt ids
+
+    picks = []
+    for event in events:
+        if event.kind != "model_decided":
+            continue
+        manifest = event.payload["manifest"]
+        picks.append(
+            (
+                tuple((stable(i), band) for i, band in manifest["included"]),
+                tuple((stable(i), why) for i, why in manifest["omitted"]),
+                manifest["estimated_input_tokens"],
+                manifest["allocation"]["unused"],
+            )
+        )
+    return picks
+
+
+def test_skipping_certain_probes_never_changes_a_selection(tmp_path, monkeypatch):
+    """COD-89: bounds only skip probes whose answer they prove."""
+    from vharness.agent import context as context_module
+
+    results = []
+    for skip in (True, False):
+        monkeypatch.setattr(context_module, "SKIP_CERTAIN_MISSES", skip)
+        run_dir = tmp_path / f"skip-{skip}"
+        run_dir.mkdir()
+        session, journal = _model_session(run_dir, model_calls=70)
+        model = _RatioModel({2: 0.9}, default=0.3)
+        for _ in range(60):
+            session.step(model)
+        results.append(_selections(session))
+        journal.close()
+    assert len(results[0]) == 60
+    assert results[0] == results[1]

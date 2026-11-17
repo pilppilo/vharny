@@ -6,12 +6,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import hashlib
 import json
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import Mapping, Sequence
+from typing import Sequence
 
 from .codec import canonical_json, parse_json
 from .errors import ContractError, IntegrityError
