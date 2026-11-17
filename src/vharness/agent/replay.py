@@ -43,6 +43,7 @@ from .session_state import (
     usage_from_payload,
 )
 from .transitions import (
+    OBSERVED_STARTING_STATE,
     OperationKind,
     ReconciliationStatus,
     SessionState,
@@ -199,8 +200,17 @@ def _reduce_existing(previous: SessionState, event: Event) -> SessionState:
     if event.kind == "attempt_started":
         attempt = attempt_from_payload(_mapping(payload, "attempt"))
         _same_objective(event, previous)
+        basis = payload.get("starting_state")
+        if basis not in (None, OBSERVED_STARTING_STATE):
+            raise IntegrityError("attempt_started starting_state is unknown")
         try:
-            state = start_attempt(previous, attempt.attempt_id, event.sequence)
+            # Without the marker the event predates COD-74: lineage-head rule.
+            state = start_attempt(
+                previous,
+                attempt.attempt_id,
+                event.sequence,
+                from_observed=basis == OBSERVED_STARTING_STATE,
+            )
         except TransitionError as exc:
             raise IntegrityError("attempt_started is not a legal transition") from exc
         if state.active_attempt != attempt:

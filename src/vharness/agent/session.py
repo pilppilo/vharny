@@ -151,6 +151,7 @@ from .ports import Environment, Evaluator, ReconciliationKind, Runtime
 from .replay import projection_payload, reduce_event, replay
 from .session_state import evaluation_receipt_from_payload, receipt_from_payload
 from .transitions import (
+    OBSERVED_STARTING_STATE,
     SessionState,
     ActionOperation,
     EvaluationOperation,
@@ -1886,7 +1887,9 @@ class Session:
         if attempt is None:
             raise TransitionError("no active attempt to replan")
         abandoned = abandon_attempt(state, abandon_sequence)
-        started = start_attempt(abandoned, _new_id("attempt"), abandon_sequence + 1)
+        started = start_attempt(
+            abandoned, _new_id("attempt"), abandon_sequence + 1, from_observed=True
+        )
         return (
             (
                 "attempt_abandoned",
@@ -1897,7 +1900,7 @@ class Session:
             (
                 "attempt_started",
                 started,
-                {"attempt": started.active_attempt},
+                _attempt_started_payload(started),
                 None,
             ),
         )
@@ -2339,9 +2342,12 @@ class Session:
         """Start one scripted phase-one trajectory from the current committed head."""
         self._require_schedulable()
         state = start_attempt(
-            self._state, attempt_id or _new_id("attempt"), self._cursor + 1
+            self._state,
+            attempt_id or _new_id("attempt"),
+            self._cursor + 1,
+            from_observed=True,
         )
-        self._persist("attempt_started", state, {"attempt": state.active_attempt})
+        self._persist("attempt_started", state, _attempt_started_payload(state))
         if state.active_attempt is None:  # pragma: no cover - transition guarantee
             raise IntegrityError("attempt transition did not create an attempt")
         return state.active_attempt
@@ -4166,3 +4172,11 @@ def _validate_action_arguments(  # pylint: disable=too-many-statements
             and value > maximum
         ):
             raise ContractError(f"action argument {name!r} must be <= {maximum}")
+
+
+def _attempt_started_payload(state: SessionState) -> dict[str, object]:
+    """``attempt_started`` payload; the marker tells replay which rule applies."""
+    return {
+        "attempt": state.active_attempt,
+        "starting_state": OBSERVED_STARTING_STATE,
+    }
