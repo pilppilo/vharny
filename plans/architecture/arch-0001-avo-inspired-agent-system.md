@@ -6,7 +6,7 @@ status: accepted
 owners: []
 created: 2026-09-04
 updated: 2026-11-17
-depends_on: [ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0019, ADR-0020]
+depends_on: [ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0019, ADR-0020, ADR-0021]
 supersedes: []
 related: [ADR-0019, ADR-0008, ROAD-0001, BENCH-0001, SCHEM-0001, PHASE-0001, PHASE-0002, PHASE-0003, PHASE-0004]
 ---
@@ -429,6 +429,15 @@ model call and a second recorded attempt, and it is journaled as a
 exhaustion settles as terminal `output-exhausted` with both attempts retained.
 The ceiling and the reservation stay one contract, provider adapters never
 retry on their own, and no benchmark identity selects the retry.
+
+With answer-limit growth on (`--initial-output-tokens`, ADR-0021), the
+reservation is the starting limit. A call that runs out is first re-asked for
+the answer at the same limit, once per decision and outside the repair budget.
+If that also runs out, the limit doubles, and each raised call carries the
+same instruction. Growth stops at the maximum, at what the token budget still
+fits, or where the remaining model calls are needed for the repair budget;
+ADR-0017's budgeted re-ask then runs last. Each attempt records the limit it
+asked for, and the provider budget check uses the largest one.
 
 Provider transport failures resolve through typed recovery
 outcomes: only explicitly transient connection, timeout, rate-limit, and

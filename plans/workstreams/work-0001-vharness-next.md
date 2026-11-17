@@ -5224,3 +5224,39 @@ remain append-only.
   for each candidate it cannot settle by bounds, so very long runs still grow
   faster than linearly, but far more slowly.
 
+
+## 2026-11-17 23:30 UTC — ADR-0021: ask for the answer before raising the limit
+
+- **Author:** Claude session, operator-approved (Linear COD-91).
+- **Goal:** Stop spending most of a reasoning model's time on calls that run
+  out, before the ARC-AGI-3 campaign manifest (COD-39) is frozen.
+- **Work completed:**
+  - Earlier today: streamed replies (COD-76, `--provider-stream`) and
+    opt-in answer-limit growth (COD-88, `--initial-output-tokens`) were merged.
+  - A LongCat-2.5 trial on development games `ls20` and `ft09` was recorded
+    in `evidence/phase-0004-longcat-trial/`.
+  - ADR-0021 (accepted) records growth and changes its order. With growth on,
+    a call that runs out is first re-asked for the answer at the same limit,
+    outside the repair budget. Raises then double the limit and keep asking.
+    ADR-0017's budgeted re-ask stays last.
+  - Dependents updated in the same change: the ARCH-0001 recovery paragraph
+    and `depends_on`, and the index row.
+- **Evidence:**
+  - **Streaming:** calls up to 526 s finished; before, they were cut at 300 s.
+  - **Growth from 4,096 tokens:** calls that ran out took 91.2 min and calls
+    that answered took 7.2 min. The model restarts its reasoning on every
+    raise.
+  - **The answer-now re-ask:** it rescued a decision after every raise had
+    failed.
+  - **Tests:** a run-out call whose re-ask answers makes no raise; a re-ask
+    that runs out leads to raises that keep asking.
+- **Discoveries affecting later work:**
+  - **Early endings:** one decision that runs out at every limit ends the
+    game (both trial runs); COD-86's "budget exhausted" outcome is the place
+    to change that.
+  - **Pace:** LongCat-2.5 takes about 10 to 12 minutes per game action.
+  - **Key files:** a provider key with a Windows line ending fails as a
+    "connection error" (COD-90).
+- **Open questions:** Re-run one development game with this order and compare
+  the time in calls that ran out (COD-91's last criterion). That needs the
+  operator's LongCat key again.

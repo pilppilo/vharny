@@ -1273,6 +1273,7 @@ class CompatibleModel:
                 )
             self.reserved_output_tokens = initial
         self._call_limit = self.reserved_output_tokens
+        self._asked_now = False
         self._generator = _CoordinatorOwnedGenerator(generator)
         self.model_id = model_id or "compatible"
         self.provider_id = getattr(generator, "provider_id", "compatible")
@@ -1301,6 +1302,7 @@ class CompatibleModel:
         prompt = render_request(request)
         attempts: list[ModelAttempt] = []
         self._call_limit = self.reserved_output_tokens
+        self._asked_now = False
         generation = self._invoke(SYSTEM_PROMPT, prompt, attempts)
         if generation.error:
             raise self._failure(
@@ -1322,7 +1324,6 @@ class CompatibleModel:
             except _ProviderOutputExhausted as exc:
                 generation, repairs = self._recover_exhausted(
                     request,
-                    prompt=prompt,
                     prior=generation,
                     attempts=attempts,
                     repairs=repairs,
@@ -1334,7 +1335,6 @@ class CompatibleModel:
                 if _provider_output_exhausted(generation):
                     generation, repairs = self._recover_exhausted(
                         request,
-                        prompt=prompt,
                         prior=generation,
                         attempts=attempts,
                         repairs=repairs,
@@ -1447,24 +1447,39 @@ class CompatibleModel:
         self,
         request: DecisionInput,
         *,
-        prompt: str,
         prior: GeneratedText,
         attempts: list[ModelAttempt],
         repairs: int,
         repair_notes: list[Mapping[str, str]],
         message: str,
     ) -> tuple[GeneratedText, int]:
-        """Answer an exhausted reply: grow the limit, else ADR-0017's re-ask.
+        """Answer an exhausted reply (ADR-0021 order when growth is on).
 
-        A raise does not spend the repair budget; the re-ask does. Returns the
-        next generation and the updated repair count, or raises when neither
-        is left.
+        With growth on: first the answer-now re-ask at the same limit, then
+        raises that each carry the same instruction, both outside the repair
+        budget. Last, and always: ADR-0017's budgeted re-ask. Returns the next
+        generation and the updated repair count, or raises when none is left.
         """
-        raised = self._raise_output_limit(request, prompt, prior, attempts, repairs)
-        if raised is not None:
-            generation, note = raised
-            repair_notes.append(note)
+        limit = self._call_limit
+        if (
+            self._grows
+            and not self._asked_now
+            and self._calls_allow(request, attempts, repairs)
+        ):
+            self._asked_now = True
+            generation = self._ask_for_answer(request, prior, attempts)
+            repair_notes.append(
+                _exhausted_note(
+                    "output-ceiling",
+                    f"answer-now re-ask at output limit {limit} before any "
+                    "raise; no new context",
+                )
+            )
             return generation, repairs
+        raised = self._raise_output_limit(request, prior, attempts, repairs)
+        if raised is not None:
+            repair_notes.append(raised[1])
+            return raised[0], repairs
         if repairs >= self.repair_budget:
             raise self._failure(
                 request,
@@ -1473,25 +1488,40 @@ class CompatibleModel:
                 failure_class=ModelFailureClass.OUTPUT_EXHAUSTED.value,
                 repairs=tuple(repair_notes),
             )
-        generation, note = self._repair_output_exhausted(request, prior, attempts)
-        repair_notes.append(note)
+        generation = self._ask_for_answer(request, prior, attempts)
+        repair_notes.append(
+            _exhausted_note(
+                "output-ceiling",
+                "bounded re-ask at the reserved ceiling; no new context",
+            )
+        )
         return generation, repairs + 1
+
+    def _calls_allow(
+        self, request: DecisionInput, attempts: list[ModelAttempt], repairs: int
+    ) -> bool:
+        """Whether one more unbudgeted call leaves the repair budget its calls."""
+        remaining = _remaining_calls(request)
+        reserved_for_repairs = max(0, self.repair_budget - repairs)
+        return remaining is None or (
+            len(attempts) + 1 + reserved_for_repairs <= remaining
+        )
 
     def _raise_output_limit(
         self,
         request: DecisionInput,
-        prompt: str,
         prior: GeneratedText,
         attempts: list[ModelAttempt],
         repairs: int,
     ) -> tuple[GeneratedText, Mapping[str, str]] | None:
-        """Re-send the same request at double the answer limit (COD-88).
+        """Re-ask for the answer at double the answer limit (COD-88, ADR-0021).
 
         Returns None, leaving ADR-0017's re-ask to run, when growth is off, the
         limit is already at the maximum or at what the token budget still
         fits, or the remaining model calls must stay for the repair budget.
-        Each raise is one model call, recorded in the response's repair notes
-        and in the attempt's ``output_limit``.
+        The raised call carries the answer-now instruction: a reasoning model
+        restarts its reasoning on a fresh call, so re-sending the bare request
+        at a larger limit mostly buys a longer restart (LongCat trial).
         """
         if not self._grows:
             return None
@@ -1499,56 +1529,31 @@ class CompatibleModel:
         target = min(
             current * 2, self.max_output_tokens, _fitting_output_limit(request, prior)
         )
-        if target <= current:
-            return None
-        remaining = _remaining_calls(request)
-        reserved_for_repairs = max(0, self.repair_budget - repairs)
-        if remaining is not None and len(attempts) + 1 + reserved_for_repairs > (
-            remaining
-        ):
+        if target <= current or not self._calls_allow(request, attempts, repairs):
             return None
         self._call_limit = target
-        generation = self._invoke(SYSTEM_PROMPT, prompt, attempts)
-        if generation.error:
-            raise self._failure(
-                request,
-                "model transport failed",
-                attempts,
-                failure_class=generation.failure_class,
-            ) from None
-        note: Mapping[str, str] = {
-            "failure_class": ModelFailureClass.OUTPUT_EXHAUSTED.value,
-            "result_kind": "none",
-            "field": "output-limit",
-            "marker": f"raised output limit {current} -> {target}; same request",
-        }
+        generation = self._ask_for_answer(request, prior, attempts)
+        note = _exhausted_note(
+            "output-limit",
+            f"raised output limit {current} -> {target}; answer-now re-ask",
+        )
         return generation, note
 
-    def _repair_output_exhausted(
+    def _ask_for_answer(
         self,
         request: DecisionInput,
         prior: GeneratedText,
         attempts: list[ModelAttempt],
-    ) -> tuple[GeneratedText, Mapping[str, str]]:
-        """Re-ask a decision whose visible output was absent at the ceiling.
+    ) -> GeneratedText:
+        """Re-ask a decision whose visible answer was absent or cut off.
 
-        ADR-0017: one bounded re-ask at the same reserved output ceiling, so
-        the ceiling and the reservation stay one contract. The re-ask carries
-        the prior attempt's finish reason and reported reasoning count and no
-        new context.
+        ADR-0017: the re-ask carries the prior attempt's finish reason and
+        reported reasoning count, asks for the answer now, and adds no new
+        context. It is sent at the current answer limit.
         """
-        reasoning = getattr(prior, "reasoning_tokens", None)
-        reasoning_text = "unknown" if reasoning is None else str(reasoning)
-        prompt = (
-            f"{render_request(request)}\n"
-            "previous_attempt=empty or length-limited output\n"
-            f"finish_reason={prior.finish_reason or 'unknown'}\n"
-            f"reasoning_tokens={reasoning_text}\n"
-            "error=the visible answer was cut off or absent; return one object "
-            "whose kind is a result schema name such as ActionChoice, and emit "
-            "it now without extending your reasoning"
+        generation = self._invoke(
+            SYSTEM_PROMPT, _answer_now_prompt(request, prior), attempts
         )
-        generation = self._invoke(SYSTEM_PROMPT, prompt, attempts)
         if generation.error:
             raise self._failure(
                 request,
@@ -1556,13 +1561,7 @@ class CompatibleModel:
                 attempts,
                 failure_class=generation.failure_class,
             ) from None
-        note: Mapping[str, str] = {
-            "failure_class": ModelFailureClass.OUTPUT_EXHAUSTED.value,
-            "result_kind": "none",
-            "field": "output-ceiling",
-            "marker": "bounded re-ask at the reserved ceiling; no new context",
-        }
-        return generation, note
+        return generation
 
     def _invoke(
         self,
@@ -1617,6 +1616,31 @@ class CompatibleModel:
             ),
             duration_ms=_attempts_duration(attempts),
         )
+
+
+def _answer_now_prompt(request: DecisionInput, prior: GeneratedText) -> str:
+    """ADR-0017's re-ask: the same request, the prior ending, answer now."""
+    reasoning = getattr(prior, "reasoning_tokens", None)
+    reasoning_text = "unknown" if reasoning is None else str(reasoning)
+    return (
+        f"{render_request(request)}\n"
+        "previous_attempt=empty or length-limited output\n"
+        f"finish_reason={prior.finish_reason or 'unknown'}\n"
+        f"reasoning_tokens={reasoning_text}\n"
+        "error=the visible answer was cut off or absent; return one object "
+        "whose kind is a result schema name such as ActionChoice, and emit "
+        "it now without extending your reasoning"
+    )
+
+
+def _exhausted_note(field_name: str, marker: str) -> Mapping[str, str]:
+    """A ``model_repaired`` note for an output-exhausted recovery call."""
+    return {
+        "failure_class": ModelFailureClass.OUTPUT_EXHAUSTED.value,
+        "result_kind": "none",
+        "field": field_name,
+        "marker": marker,
+    }
 
 
 def _fitting_output_limit(request: DecisionInput, prior: GeneratedText) -> int:
