@@ -6,11 +6,15 @@ fake game that replays recorded frames and answers a scripted scorecard.
 
 from __future__ import annotations
 
+import asyncio
 import copy
 import json
 from dataclasses import dataclass, field, replace
+from datetime import datetime, timedelta
 from io import StringIO
 from pathlib import Path
+from threading import Event
+from types import SimpleNamespace
 from typing import Any, Mapping
 
 import pytest
@@ -21,6 +25,7 @@ from vharness.agent import (
     ScriptedModel,
     SessionStatus,
 )
+from vharness.agent import session as session_module
 from vharness.agent.adapters import arc_agi_setup
 from vharness.agent.adapters.arc_agi import (
     RESET_DESCRIPTION,
@@ -29,13 +34,21 @@ from vharness.agent.adapters.arc_agi import (
 )
 from vharness.agent.adapters.arc_agi_setup import ARC_EVALUATION_CONTRACT
 from vharness.agent.adapters.arc_agi_toolkit import ArcToolkitInfo
-from vharness.agent.application import Application, RunDirectory, RunSettings
+from vharness.agent.application import (
+    Application,
+    RunDirectory,
+    RunSettings,
+    build_model,
+)
 from vharness.agent.cli import main
 from vharness.agent.context import POLICY_VERSION, SYSTEM_PROMPT, TOKEN_COUNTER
 from vharness.agent.control import ACCEPTED, command_frame
 from vharness.agent.errors import ContractError
 from vharness.agent.models import EvaluationMode, Pause, Resume, Stop
+from vharness.agent.replay import replay
 from vharness.agent.run_settings import ArcRunSettings
+from vharness.agent.usage_ledger import UsageLedger
+from vharness.generators import openai_compat
 
 FIXTURE = Path(__file__).parent / "fixtures" / "arc_agi" / "dc22-random-seed0.json"
 RECORDING: dict[str, Any] = json.loads(FIXTURE.read_text(encoding="utf-8"))
@@ -235,6 +248,107 @@ def test_a_run_plays_the_game_and_the_scorecard_decides(tmp_path, games):
     manifest = json.loads((tmp_path / "run" / "run.json").read_text())
     assert manifest["settings"]["arc"]["game_id"] == GAME_ID
     assert manifest["evaluation_mode"] == "external-check"
+
+
+@pytest.mark.parametrize("used, warn", [(799_999, False), (800_000, True)])
+def test_arc_model_sees_remaining_run_budgets(tmp_path, games, monkeypatch, used, warn):
+    run_dir = tmp_path / "run"
+    model = ScriptedModel((ActionChoice("step", "try", {"action": 4}),))
+    settings = _settings(run_dir, max_tokens=1_000_000, max_wall_clock_seconds=100)
+    app = Application.create(
+        settings, run_dir, session_id="arc-limits", model=model, poll_seconds=0
+    )
+    try:
+        created = datetime.fromisoformat(app.session.events(limit=1)[0].recorded_at)
+
+        class DecisionClock(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return (created + timedelta(seconds=80)).astimezone(tz)
+
+        monkeypatch.setattr(session_module, "datetime", DecisionClock)
+        monkeypatch.setattr(
+            UsageLedger, "conservative_tokens", property(lambda _: used)
+        )
+        app.tick()
+    finally:
+        app.close()
+
+    remaining = model.requests[0].remaining_budgets
+    assert remaining["tokens"] == 1_000_000 - used
+    assert remaining["wall_clock_seconds"] == 20
+    warnings = ["At least 80% of the run's time budget is used."]
+    if warn:
+        warnings.insert(0, "At least 80% of the run's token budget is used.")
+    assert list(remaining["warnings"]) == warnings
+
+
+@pytest.mark.parametrize("stream", [False, True])
+def test_arc_deadline_cancels_in_flight_provider_call(
+    tmp_path, games, monkeypatch, stream
+):
+    started, cancelled, closed = Event(), Event(), Event()
+
+    async def wait_for_answer():
+        started.set()
+        try:
+            await asyncio.sleep(10)
+        except asyncio.CancelledError:
+            cancelled.set()
+            raise
+
+    class SlowStream:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_exc):
+            closed.set()
+
+        def __aiter__(self):
+            return self
+
+        async def __anext__(self):
+            await wait_for_answer()
+            raise StopAsyncIteration
+
+    class SlowProvider:
+        def __init__(self, **_options):
+            self.chat = SimpleNamespace(completions=SimpleNamespace(create=self.create))
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_exc):
+            if not stream:
+                closed.set()
+
+        async def create(self, **options):
+            assert options.get("stream", False) is stream
+            if stream:
+                return SlowStream()
+            return await wait_for_answer()
+
+    monkeypatch.setenv("TEST_KEY", "test")
+    monkeypatch.setattr(openai_compat, "AsyncOpenAI", SlowProvider)
+    run_dir = tmp_path / "run"
+    settings = _settings(run_dir, max_wall_clock_seconds=1, provider_stream=stream)
+    model, close_model = build_model(settings)
+    app = Application.create(
+        settings, run_dir, session_id="arc-deadline", model=model, poll_seconds=0.01
+    )
+    try:
+        assert app.run().status is SessionStatus.STOPPED
+        events = app.session.events(limit=1000)
+        assert [
+            e.payload["resource"] for e in events if e.kind == "budget_exhausted"
+        ] == ["time"]
+        assert not any(e.kind == "model_decided" for e in events)
+        assert replay(events).status is SessionStatus.STOPPED
+    finally:
+        app.close()
+        assert close_model is not None
+        close_model()
+    assert started.is_set() and cancelled.is_set() and closed.is_set()
 
 
 def test_the_kernel_sees_only_the_contract_and_observation(tmp_path, games):

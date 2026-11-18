@@ -33,7 +33,7 @@ from ..core import (
     VERSION,
     ModelFailureClass,
 )
-from ..generators.openai_compat import OpenAICompatible
+from ..generators.openai_compat import OpenAICompatible, provider_deadline
 from .adapters.arc_agi_setup import ARC_EVALUATION_CONTRACT, build_arc_dependencies
 from .adapters.child_environment import ChildEnvironment
 from .adapters.process_runtime import ProcessRuntime
@@ -484,6 +484,7 @@ class Application:
         supervisor_close: Callable[[], None] | None = None,
         recovery: TransportRecoverySettings | None = None,
         deadline: float | None = None,
+        cancel_provider_at_deadline: bool = False,
     ) -> None:
         self._session = session
         self._model = model
@@ -501,6 +502,7 @@ class Application:
         self._recovery = recovery or TransportRecoverySettings()
         self._retry: _RetryWake | None = None
         self._deadline = deadline
+        self._cancel_provider_at_deadline = cancel_provider_at_deadline
         self._server: ControlServer | None = None
         self._survivors: tuple[Mapping[str, object], ...] = ()
         self.last_error: str | None = None
@@ -652,6 +654,7 @@ class Application:
             supervisor_close=supervisor_close,
             recovery=settings.transport_recovery,
             deadline=_run_deadline(journal, session_id, settings),
+            cancel_provider_at_deadline=settings.arc is not None,
         )
 
     # -- read-only accessors --
@@ -905,7 +908,15 @@ class Application:
             self._session.receive_evaluation(request, receipt)
             return
         if pending.kind == "supervision":
-            response = self._run_worker(lambda: self._advise(pending))
+            try:
+                response = self._run_worker(
+                    lambda: self._advise(pending),
+                    enforce_deadline=self._cancel_provider_at_deadline,
+                )
+            except BudgetExhausted as exc:
+                self._session.receive_guidance(None)
+                self._session.stop_for_budget(exc)
+                return
             self._session.receive_guidance(response)
             return
         raise IntegrityError(f"unknown pending dispatch kind {pending.kind!r}")
@@ -929,7 +940,17 @@ class Application:
         self, call: Callable[[], T], *, enforce_deadline: bool = False
     ) -> T:
         """Run one blocking call on the pool while still admitting controls."""
-        future = self._pool.submit(call)
+
+        def invoke() -> T:
+            if not (enforce_deadline and self._cancel_provider_at_deadline):
+                return call()
+            token = provider_deadline.set(self._deadline)
+            try:
+                return call()
+            finally:
+                provider_deadline.reset(token)
+
+        future = self._pool.submit(invoke)
         while True:
             self._drain_controls()
             if (

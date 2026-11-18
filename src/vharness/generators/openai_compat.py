@@ -9,6 +9,7 @@ connection busy. Usage is requested in the final chunk.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import random
@@ -16,10 +17,17 @@ import sqlite3
 import threading
 import time
 from collections.abc import Iterable, Mapping
+from contextvars import ContextVar
 from dataclasses import dataclass
 from typing import TypedDict
 
-from openai import APIConnectionError, APIStatusError, APITimeoutError, OpenAI
+from openai import (
+    APIConnectionError,
+    APIStatusError,
+    APITimeoutError,
+    AsyncOpenAI,
+    OpenAI,
+)
 from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
 from openai.types.chat.completion_create_params import ResponseFormat
 
@@ -31,6 +39,12 @@ DEFAULT_MAX_TOKENS = 1024
 DEFAULT_TEMPERATURE = 0.0
 RESPONSE_FORMAT_JSON_OBJECT = "json_object"
 _VALID_RESPONSE_FORMATS = (RESPONSE_FORMAT_JSON_OBJECT,)
+
+
+# Set by the ARC coordinator only, inside its provider worker.
+provider_deadline: ContextVar[float | None] = ContextVar(
+    "provider_deadline", default=None
+)
 
 
 class _StreamCut(Exception):
@@ -104,26 +118,41 @@ def _collect_stream(chunks: Iterable[object]) -> _StreamedResponse:
     A stream that closes without a finish reason was cut in transit; its partial
     text is never returned as an answer.
     """
-    parts: list[str] = []
-    finish: str | None = None
-    usage: object | None = None
-    saw_choice = False
+    collector = _StreamCollector()
     for chunk in chunks:
+        collector.add(chunk)
+    return collector.response()
+
+
+class _StreamCollector:
+    def __init__(self) -> None:
+        self.parts: list[str] = []
+        self.finish: str | None = None
+        self.usage: object | None = None
+        self.saw_choice = False
+
+    def add(self, chunk: object) -> None:
         chunk_usage = getattr(chunk, "usage", None)
         if chunk_usage is not None:
-            usage = chunk_usage
+            self.usage = chunk_usage
         for choice in getattr(chunk, "choices", None) or ():
-            saw_choice = True
+            self.saw_choice = True
             text = getattr(getattr(choice, "delta", None), "content", None)
             if text:
-                parts.append(text)
+                self.parts.append(text)
             reason = getattr(choice, "finish_reason", None)
             if reason:
-                finish = reason
-    if saw_choice and finish is None:
-        raise _StreamCut("the stream ended before a finish reason")
-    choices = (_Choice(_Message("".join(parts)), finish),) if saw_choice else ()
-    return _StreamedResponse(choices, usage)
+                self.finish = reason
+
+    def response(self) -> _StreamedResponse:
+        if self.saw_choice and self.finish is None:
+            raise _StreamCut("the stream ended before a finish reason")
+        choices = (
+            (_Choice(_Message("".join(self.parts)), self.finish),)
+            if self.saw_choice
+            else ()
+        )
+        return _StreamedResponse(choices, self.usage)
 
 
 @register_builtin
@@ -171,12 +200,13 @@ class OpenAICompatible(Generator):
             "completion_tokens": 0,
             "latencies": [],
         }
+        self._extra_headers = dict(extra_headers) if extra_headers else None
         self._client = OpenAI(
             base_url=base_url,
             api_key=api_key,
             timeout=timeout,
             max_retries=0,
-            default_headers=dict(extra_headers) if extra_headers else None,
+            default_headers=self._extra_headers,
         )
         self._cache_path = cache_path
         self._cache_lock = threading.Lock()
@@ -266,6 +296,9 @@ class OpenAICompatible(Generator):
             {"role": "system", "content": system},
             {"role": "user", "content": prompt},
         ]
+        deadline = provider_deadline.get()
+        if deadline is not None:
+            return asyncio.run(self._request_until(messages, max_tokens, deadline))
         if not self.stream:
             return self._client.chat.completions.create(
                 model=self.model,
@@ -287,6 +320,51 @@ class OpenAICompatible(Generator):
             return _collect_stream(stream)
         finally:
             stream.close()
+
+    async def _request_until(
+        self,
+        messages: list[ChatCompletionMessageParam],
+        max_tokens: int,
+        deadline: float,
+    ) -> ChatCompletion | _StreamedResponse:
+        """Cancel the HTTP exchange at the run deadline, including stream reads."""
+        remaining = deadline - time.time()
+        return await asyncio.wait_for(
+            self._request_async(messages, max_tokens), timeout=remaining
+        )
+
+    async def _request_async(
+        self, messages: list[ChatCompletionMessageParam], max_tokens: int
+    ) -> ChatCompletion | _StreamedResponse:
+        async with AsyncOpenAI(
+            base_url=self.base_url,
+            api_key=self._client.api_key,
+            timeout=self._client.timeout,
+            max_retries=0,
+            default_headers=self._extra_headers,
+        ) as client:
+            if not self.stream:
+                return await client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    temperature=self.temperature,
+                    max_tokens=max_tokens,
+                    **self._response_format_kwargs(),
+                )
+            stream = await client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=self.temperature,
+                max_tokens=max_tokens,
+                stream=True,
+                stream_options={"include_usage": True},
+                **self._response_format_kwargs(),
+            )
+            async with stream:
+                collector = _StreamCollector()
+                async for chunk in stream:
+                    collector.add(chunk)
+                return collector.response()
 
     def generate(self, system: str, prompt: str) -> Generation:
         key = self._cache_key(system, prompt)
@@ -366,7 +444,7 @@ class OpenAICompatible(Generator):
             return Generation(
                 text=raw,
                 model=self.model,
-                finish_reason=finish,
+                finish_reason=finish or "",
                 latency=total_latency,
                 prompt_tokens=total_prompt_tokens,
                 completion_tokens=total_completion_tokens,

@@ -850,6 +850,8 @@ class Session:
         model_id = configuration.model_id
         request_id = _new_id("decision")
         remaining = remaining_budgets(self._state, events)
+        if self._state.task.environment_id.startswith("arc-agi-3:"):
+            remaining = self._arc_decision_budgets(remaining, events)
         observation = observation_payload(
             self._state,
             events,
@@ -979,6 +981,31 @@ class Session:
             ),
         )
         return DecisionHandle(request, reservation, context_manifest, visible_input)
+
+    def _arc_decision_budgets(
+        self, remaining: Mapping[str, JsonValue], events: tuple[Event, ...]
+    ) -> Mapping[str, JsonValue]:
+        """Show whole-run limits at the start of an ARC puzzle decision."""
+        limits = self._state.task.budgets
+        result = dict(remaining)
+        warnings: list[str] = []
+        if limits.tokens is not None:
+            used = self._state.ledger.conservative_tokens
+            result["tokens"] = max(0, limits.tokens - used)
+            if 5 * used >= 4 * limits.tokens:
+                warnings.append("At least 80% of the run's token budget is used.")
+        if limits.wall_clock_seconds is not None:
+            created = datetime.fromisoformat(events[0].recorded_at)
+            elapsed = (datetime.now(timezone.utc) - created).total_seconds()
+            elapsed = max(0.0, elapsed)
+            result["wall_clock_seconds"] = round(
+                max(0.0, limits.wall_clock_seconds - elapsed), 3
+            )
+            if elapsed >= 0.8 * limits.wall_clock_seconds:
+                warnings.append("At least 80% of the run's time budget is used.")
+        if warnings:
+            result["warnings"] = tuple(warnings)
+        return result
 
     def _decision_token_bound(
         self,
