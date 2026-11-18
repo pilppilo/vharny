@@ -107,7 +107,50 @@ duration. "length" means the call ran out.
 
 Game actions: `1, 1, 1, 2, 2, 2`.
 
+## Re-run of `ls20` with the ADR-0021 order (COD-91)
+
+`rerun-ls20/` is the same game with the same settings, at commit `9e9f2d4`
+(main after #33). With growth on, a call that runs out is now first re-asked
+for the answer at the same limit, and the raises that follow keep asking for
+it (ADR-0021).
+
+Both runs made 31 model calls:
+
+| | Trial (bare raises) | Re-run (answer now first) |
+| --- | --- | --- |
+| Decisions answered / failed | 7 / 4 | 11 / 1 |
+| Game actions | 6 | 10, all `succeeded` |
+| Time in answering calls | 7.2 min | 7.5 min |
+| Time in calls that ran out or failed | 67.1 min | 28.1 min |
+| Output tokens in those calls | 282,624 | 114,688 |
+| Wall-clock span | 75 min | 36 min |
+
+The re-run's one failure was a provider transport error after 8 s
+(sequence 27); the run recovered.
+
+How the decisions ended:
+
+- **Fit the starting limit:** 3 of 11 decisions answered within 4,096 tokens.
+- **The same-limit re-ask answered:** 2 decisions. Sequence 68 took 5 s and
+  125 tokens; sequence 131 took 11 s and 514 tokens.
+- **A raised call answered, still asking for the answer:** 6 decisions. Often
+  the answer came quickly: sequence 99 took 6 s and 160 tokens at 16,384;
+  sequence 80 took 23 s and 430 tokens at 32,768.
+- **The same-limit re-ask ran out too:** in 6 of the 8 decisions that ran out
+  at first. LongCat does not reliably stop reasoning when asked.
+
+The run stopped at sequence 154, waiting for an operator answer to the
+supervisor's third repetition alert, when the cloud environment restarted and
+ended the process.
+
+This is one run of each order. Reasoning lengths vary from try to try, so the
+comparison is indicative, not controlled. The direction is clear, though: the
+run that kept asking for the answer spent less than half the time and tokens
+on calls that ran out, and lost one decision instead of four.
+
 ## Files in each game folder
+
+The folders are `ls20/`, `ft09/` and `rerun-ls20/`; each holds:
 
 - `manifest.json`: the run directory's `run.json` (settings, no secrets).
 - `session.sqlite3`: the full session journal (self-contained copy).

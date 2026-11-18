@@ -1,0 +1,673 @@
+{
+ "actions": [
+  {
+   "action": "step",
+   "arguments": {
+    "action": 1
+   },
+   "at": "2026-11-17T23:51:08.109657+00:00"
+  },
+  {
+   "action": "step",
+   "arguments": {
+    "action": 1
+   },
+   "at": "2026-11-18T00:01:04.428902+00:00"
+  },
+  {
+   "action": "step",
+   "arguments": {
+    "action": 1
+   },
+   "at": "2026-11-18T00:04:13.148635+00:00"
+  },
+  {
+   "action": "step",
+   "arguments": {
+    "action": 2
+   },
+   "at": "2026-11-18T00:05:34.686184+00:00"
+  },
+  {
+   "action": "step",
+   "arguments": {
+    "action": 1
+   },
+   "at": "2026-11-18T00:09:07.345673+00:00"
+  },
+  {
+   "action": "step",
+   "arguments": {
+    "action": 2
+   },
+   "at": "2026-11-18T00:17:01.734526+00:00"
+  },
+  {
+   "action": "step",
+   "arguments": {
+    "action": 1
+   },
+   "at": "2026-11-18T00:20:53.599634+00:00"
+  },
+  {
+   "action": "step",
+   "arguments": {
+    "action": 2
+   },
+   "at": "2026-11-18T00:21:58.017022+00:00"
+  },
+  {
+   "action": "step",
+   "arguments": {
+    "action": 1
+   },
+   "at": "2026-11-18T00:23:11.201843+00:00"
+  },
+  {
+   "action": "step",
+   "arguments": {
+    "action": 3
+   },
+   "at": "2026-11-18T00:27:14.142028+00:00"
+  }
+ ],
+ "decisions": [
+  {
+   "at": "2026-11-17T23:51:08.108527+00:00",
+   "attempts": [
+    {
+     "completion_tokens": 487,
+     "duration_ms": 11547,
+     "error": null,
+     "finish_reason": "stop",
+     "output_limit": 4096,
+     "prompt_tokens": 7301,
+     "reasoning_tokens": 425
+    }
+   ],
+   "result": null,
+   "sequence": 8
+  },
+  {
+   "at": "2026-11-18T00:01:04.428459+00:00",
+   "attempts": [
+    {
+     "completion_tokens": 4096,
+     "duration_ms": 58005,
+     "error": null,
+     "finish_reason": "length",
+     "output_limit": 4096,
+     "prompt_tokens": 8634,
+     "reasoning_tokens": 4095
+    },
+    {
+     "completion_tokens": 4096,
+     "duration_ms": 68920,
+     "error": null,
+     "finish_reason": "length",
+     "output_limit": 4096,
+     "prompt_tokens": 8692,
+     "reasoning_tokens": 4095
+    },
+    {
+     "completion_tokens": 8192,
+     "duration_ms": 117682,
+     "error": null,
+     "finish_reason": "length",
+     "output_limit": 8192,
+     "prompt_tokens": 8692,
+     "reasoning_tokens": 8191
+    },
+    {
+     "completion_tokens": 16384,
+     "duration_ms": 252444,
+     "error": null,
+     "finish_reason": "length",
+     "output_limit": 16384,
+     "prompt_tokens": 8692,
+     "reasoning_tokens": 16383
+    },
+    {
+     "completion_tokens": 6642,
+     "duration_ms": 99184,
+     "error": null,
+     "finish_reason": "stop",
+     "output_limit": 32768,
+     "prompt_tokens": 8693,
+     "reasoning_tokens": 6606
+    }
+   ],
+   "result": null,
+   "sequence": 15
+  },
+  {
+   "at": "2026-11-18T00:04:13.147689+00:00",
+   "attempts": [
+    {
+     "completion_tokens": 4096,
+     "duration_ms": 53905,
+     "error": null,
+     "finish_reason": "length",
+     "output_limit": 4096,
+     "prompt_tokens": 8842,
+     "reasoning_tokens": 4095
+    },
+    {
+     "completion_tokens": 4096,
+     "duration_ms": 64567,
+     "error": null,
+     "finish_reason": "length",
+     "output_limit": 4096,
+     "prompt_tokens": 8900,
+     "reasoning_tokens": 4095
+    },
+    {
+     "completion_tokens": 3722,
+     "duration_ms": 60136,
+     "error": null,
+     "finish_reason": "stop",
+     "output_limit": 8192,
+     "prompt_tokens": 8900,
+     "reasoning_tokens": 3642
+    }
+   ],
+   "result": null,
+   "sequence": 33
+  },
+  {
+   "at": "2026-11-18T00:05:34.685191+00:00",
+   "attempts": [
+    {
+     "completion_tokens": 2193,
+     "duration_ms": 43799,
+     "error": null,
+     "finish_reason": "stop",
+     "output_limit": 4096,
+     "prompt_tokens": 9385,
+     "reasoning_tokens": 2095
+    }
+   ],
+   "result": null,
+   "sequence": 47
+  },
+  {
+   "at": "2026-11-18T00:08:00.246510+00:00",
+   "attempts": [
+    {
+     "completion_tokens": 4096,
+     "duration_ms": 67619,
+     "error": null,
+     "finish_reason": "length",
+     "output_limit": 4096,
+     "prompt_tokens": 9416,
+     "reasoning_tokens": 4095
+    },
+    {
+     "completion_tokens": 4096,
+     "duration_ms": 65587,
+     "error": null,
+     "finish_reason": "length",
+     "output_limit": 4096,
+     "prompt_tokens": 9474,
+     "reasoning_tokens": 4095
+    },
+    {
+     "completion_tokens": 625,
+     "duration_ms": 12238,
+     "error": null,
+     "finish_reason": "stop",
+     "output_limit": 8192,
+     "prompt_tokens": 9474,
+     "reasoning_tokens": 510
+    }
+   ],
+   "result": null,
+   "sequence": 57
+  },
+  {
+   "at": "2026-11-18T00:09:07.344912+00:00",
+   "attempts": [
+    {
+     "completion_tokens": 4096,
+     "duration_ms": 61609,
+     "error": null,
+     "finish_reason": "length",
+     "output_limit": 4096,
+     "prompt_tokens": 9147,
+     "reasoning_tokens": 4095
+    },
+    {
+     "completion_tokens": 125,
+     "duration_ms": 5449,
+     "error": null,
+     "finish_reason": "stop",
+     "output_limit": 4096,
+     "prompt_tokens": 9205,
+     "reasoning_tokens": 78
+    }
+   ],
+   "result": null,
+   "sequence": 68
+  },
+  {
+   "at": "2026-11-18T00:17:01.733639+00:00",
+   "attempts": [
+    {
+     "completion_tokens": 4096,
+     "duration_ms": 62583,
+     "error": null,
+     "finish_reason": "length",
+     "output_limit": 4096,
+     "prompt_tokens": 9199,
+     "reasoning_tokens": 4095
+    },
+    {
+     "completion_tokens": 4096,
+     "duration_ms": 54947,
+     "error": null,
+     "finish_reason": "length",
+     "output_limit": 4096,
+     "prompt_tokens": 9257,
+     "reasoning_tokens": 4095
+    },
+    {
+     "completion_tokens": 8192,
+     "duration_ms": 111169,
+     "error": null,
+     "finish_reason": "length",
+     "output_limit": 8192,
+     "prompt_tokens": 9257,
+     "reasoning_tokens": 8191
+    },
+    {
+     "completion_tokens": 16384,
+     "duration_ms": 222094,
+     "error": null,
+     "finish_reason": "length",
+     "output_limit": 16384,
+     "prompt_tokens": 9257,
+     "reasoning_tokens": 16383
+    },
+    {
+     "completion_tokens": 430,
+     "duration_ms": 23475,
+     "error": null,
+     "finish_reason": "stop",
+     "output_limit": 32768,
+     "prompt_tokens": 9258,
+     "reasoning_tokens": 374
+    }
+   ],
+   "result": null,
+   "sequence": 80
+  },
+  {
+   "at": "2026-11-18T00:20:53.598436+00:00",
+   "attempts": [
+    {
+     "completion_tokens": 4096,
+     "duration_ms": 59945,
+     "error": null,
+     "finish_reason": "length",
+     "output_limit": 4096,
+     "prompt_tokens": 9382,
+     "reasoning_tokens": 4095
+    },
+    {
+     "completion_tokens": 4096,
+     "duration_ms": 63271,
+     "error": null,
+     "finish_reason": "length",
+     "output_limit": 4096,
+     "prompt_tokens": 9440,
+     "reasoning_tokens": 4095
+    },
+    {
+     "completion_tokens": 8192,
+     "duration_ms": 102628,
+     "error": null,
+     "finish_reason": "length",
+     "output_limit": 8192,
+     "prompt_tokens": 9440,
+     "reasoning_tokens": 8191
+    },
+    {
+     "completion_tokens": 160,
+     "duration_ms": 5904,
+     "error": null,
+     "finish_reason": "stop",
+     "output_limit": 16384,
+     "prompt_tokens": 9440,
+     "reasoning_tokens": 103
+    }
+   ],
+   "result": null,
+   "sequence": 99
+  },
+  {
+   "at": "2026-11-18T00:21:58.015096+00:00",
+   "attempts": [
+    {
+     "completion_tokens": 3666,
+     "duration_ms": 64323,
+     "error": null,
+     "finish_reason": "stop",
+     "output_limit": 4096,
+     "prompt_tokens": 9508,
+     "reasoning_tokens": 3581
+    }
+   ],
+   "result": null,
+   "sequence": 116
+  },
+  {
+   "at": "2026-11-18T00:23:11.200549+00:00",
+   "attempts": [
+    {
+     "completion_tokens": 4096,
+     "duration_ms": 62522,
+     "error": null,
+     "finish_reason": "length",
+     "output_limit": 4096,
+     "prompt_tokens": 9553,
+     "reasoning_tokens": 4095
+    },
+    {
+     "completion_tokens": 514,
+     "duration_ms": 10567,
+     "error": null,
+     "finish_reason": "stop",
+     "output_limit": 4096,
+     "prompt_tokens": 9611,
+     "reasoning_tokens": 449
+    }
+   ],
+   "result": null,
+   "sequence": 131
+  },
+  {
+   "at": "2026-11-18T00:27:14.140158+00:00",
+   "attempts": [
+    {
+     "completion_tokens": 4096,
+     "duration_ms": 65903,
+     "error": null,
+     "finish_reason": "length",
+     "output_limit": 4096,
+     "prompt_tokens": 9589,
+     "reasoning_tokens": 4095
+    },
+    {
+     "completion_tokens": 4096,
+     "duration_ms": 62780,
+     "error": null,
+     "finish_reason": "length",
+     "output_limit": 4096,
+     "prompt_tokens": 9647,
+     "reasoning_tokens": 4095
+    },
+    {
+     "completion_tokens": 7462,
+     "duration_ms": 114150,
+     "error": null,
+     "finish_reason": "stop",
+     "output_limit": 8192,
+     "prompt_tokens": 9647,
+     "reasoning_tokens": 7395
+    }
+   ],
+   "result": null,
+   "sequence": 147
+  }
+ ],
+ "evaluations": [],
+ "event_counts": {
+  "action_intended": 10,
+  "artifact_read": 62,
+  "attempt_abandoned": 1,
+  "attempt_started": 2,
+  "checkpoint_suppressed": 3,
+  "context_assembled": 12,
+  "guidance_accepted": 1,
+  "guidance_received": 1,
+  "model_configuration_bound": 1,
+  "model_decided": 11,
+  "model_intended": 12,
+  "model_malformed": 1,
+  "model_repaired": 19,
+  "operator_escalated": 1,
+  "question_recorded": 1,
+  "receipt_received": 10,
+  "session_created": 1,
+  "supervision_enabled": 1,
+  "supervision_triggered": 3,
+  "supervisor_intended": 1
+ },
+ "last_event": {
+  "at": "2026-11-18T00:27:14.204072+00:00",
+  "kind": "question_recorded"
+ },
+ "model_failures": [
+  {
+   "at": "2026-11-18T00:01:12.471189+00:00",
+   "attempts": [
+    {
+     "completion_tokens": null,
+     "duration_ms": 7961,
+     "error": "provider transport failure",
+     "finish_reason": "",
+     "output_limit": 4096,
+     "prompt_tokens": null,
+     "reasoning_tokens": null
+    }
+   ],
+   "failure_class": "transient-connection",
+   "sequence": 27
+  }
+ ],
+ "output_limit_raises": [
+  {
+   "at": "2026-11-18T00:01:04.428970+00:00",
+   "field": "output-ceiling",
+   "marker": "answer-now re-ask at output limit 4096 before any raise; no new context",
+   "sequence": 17
+  },
+  {
+   "at": "2026-11-18T00:01:04.428992+00:00",
+   "field": "output-limit",
+   "marker": "raised output limit 4096 -> 8192; answer-now re-ask",
+   "sequence": 18
+  },
+  {
+   "at": "2026-11-18T00:01:04.429007+00:00",
+   "field": "output-limit",
+   "marker": "raised output limit 8192 -> 16384; answer-now re-ask",
+   "sequence": 19
+  },
+  {
+   "at": "2026-11-18T00:01:04.429021+00:00",
+   "field": "output-limit",
+   "marker": "raised output limit 16384 -> 32768; answer-now re-ask",
+   "sequence": 20
+  },
+  {
+   "at": "2026-11-18T00:04:13.148763+00:00",
+   "field": "output-ceiling",
+   "marker": "answer-now re-ask at output limit 4096 before any raise; no new context",
+   "sequence": 35
+  },
+  {
+   "at": "2026-11-18T00:04:13.148793+00:00",
+   "field": "output-limit",
+   "marker": "raised output limit 4096 -> 8192; answer-now re-ask",
+   "sequence": 36
+  },
+  {
+   "at": "2026-11-18T00:08:00.247263+00:00",
+   "field": "output-ceiling",
+   "marker": "answer-now re-ask at output limit 4096 before any raise; no new context",
+   "sequence": 59
+  },
+  {
+   "at": "2026-11-18T00:08:00.247285+00:00",
+   "field": "output-limit",
+   "marker": "raised output limit 4096 -> 8192; answer-now re-ask",
+   "sequence": 60
+  },
+  {
+   "at": "2026-11-18T00:09:07.345740+00:00",
+   "field": "output-ceiling",
+   "marker": "answer-now re-ask at output limit 4096 before any raise; no new context",
+   "sequence": 70
+  },
+  {
+   "at": "2026-11-18T00:17:01.734596+00:00",
+   "field": "output-ceiling",
+   "marker": "answer-now re-ask at output limit 4096 before any raise; no new context",
+   "sequence": 82
+  },
+  {
+   "at": "2026-11-18T00:17:01.734617+00:00",
+   "field": "output-limit",
+   "marker": "raised output limit 4096 -> 8192; answer-now re-ask",
+   "sequence": 83
+  },
+  {
+   "at": "2026-11-18T00:17:01.734633+00:00",
+   "field": "output-limit",
+   "marker": "raised output limit 8192 -> 16384; answer-now re-ask",
+   "sequence": 84
+  },
+  {
+   "at": "2026-11-18T00:17:01.734646+00:00",
+   "field": "output-limit",
+   "marker": "raised output limit 16384 -> 32768; answer-now re-ask",
+   "sequence": 85
+  },
+  {
+   "at": "2026-11-18T00:20:53.599706+00:00",
+   "field": "output-ceiling",
+   "marker": "answer-now re-ask at output limit 4096 before any raise; no new context",
+   "sequence": 101
+  },
+  {
+   "at": "2026-11-18T00:20:53.599727+00:00",
+   "field": "output-limit",
+   "marker": "raised output limit 4096 -> 8192; answer-now re-ask",
+   "sequence": 102
+  },
+  {
+   "at": "2026-11-18T00:20:53.599742+00:00",
+   "field": "output-limit",
+   "marker": "raised output limit 8192 -> 16384; answer-now re-ask",
+   "sequence": 103
+  },
+  {
+   "at": "2026-11-18T00:23:11.201953+00:00",
+   "field": "output-ceiling",
+   "marker": "answer-now re-ask at output limit 4096 before any raise; no new context",
+   "sequence": 133
+  },
+  {
+   "at": "2026-11-18T00:27:14.142138+00:00",
+   "field": "output-ceiling",
+   "marker": "answer-now re-ask at output limit 4096 before any raise; no new context",
+   "sequence": 149
+  },
+  {
+   "at": "2026-11-18T00:27:14.142180+00:00",
+   "field": "output-limit",
+   "marker": "raised output limit 4096 -> 8192; answer-now re-ask",
+   "sequence": 150
+  }
+ ],
+ "receipts": [
+  {
+   "at": "2026-11-17T23:51:08.164650+00:00",
+   "error": null,
+   "status": "succeeded"
+  },
+  {
+   "at": "2026-11-18T00:01:04.482495+00:00",
+   "error": null,
+   "status": "succeeded"
+  },
+  {
+   "at": "2026-11-18T00:04:13.203587+00:00",
+   "error": null,
+   "status": "succeeded"
+  },
+  {
+   "at": "2026-11-18T00:05:34.742721+00:00",
+   "error": null,
+   "status": "succeeded"
+  },
+  {
+   "at": "2026-11-18T00:09:07.400826+00:00",
+   "error": null,
+   "status": "succeeded"
+  },
+  {
+   "at": "2026-11-18T00:17:01.788846+00:00",
+   "error": null,
+   "status": "succeeded"
+  },
+  {
+   "at": "2026-11-18T00:20:53.655018+00:00",
+   "error": null,
+   "status": "succeeded"
+  },
+  {
+   "at": "2026-11-18T00:21:58.075339+00:00",
+   "error": null,
+   "status": "succeeded"
+  },
+  {
+   "at": "2026-11-18T00:23:11.260376+00:00",
+   "error": null,
+   "status": "succeeded"
+  },
+  {
+   "at": "2026-11-18T00:27:14.198493+00:00",
+   "error": null,
+   "status": "succeeded"
+  }
+ ],
+ "settings": {
+  "api_key_env": "LONGCAT_API_KEY",
+  "arc": {
+   "call_timeout_seconds": 30.0,
+   "game_id": "ls20-9607627b",
+   "operation_mode": "normal",
+   "seed": 0
+  },
+  "base_url": "https://api.longcat.chat/openai/v1",
+  "check_command": null,
+  "check_timeout_seconds": 600.0,
+  "child_env_allow": null,
+  "initial_output_tokens": 4096,
+  "max_actions": 15,
+  "max_evaluations": 1,
+  "max_model_calls": 40,
+  "max_output_tokens": 32768,
+  "max_steps": 200,
+  "model": "LongCat-2.5",
+  "objective": "complete the game",
+  "provider_stream": true,
+  "provider_timeout": 600.0,
+  "repair_budget": 1,
+  "response_format": null,
+  "shell": "/bin/bash",
+  "target": null,
+  "token_budget": 65536,
+  "transport_recovery": {
+   "max_retries": 2,
+   "retry_delays_seconds": [
+    2.0,
+    8.0
+   ],
+   "version": 1
+  },
+  "workspace": "/home/claude/arc-runs/rerun-ls20/arc-games"
+ }
+}
