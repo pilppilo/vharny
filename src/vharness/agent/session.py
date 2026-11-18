@@ -191,6 +191,7 @@ from .transitions import (
     settle_model_call,
 )
 from .supervision import (
+    MONITOR_POLICY_P7_VERSION,
     EVIDENCE_ACTIONS,
     Guidance,
     GuidanceDecision,
@@ -1968,6 +1969,12 @@ class Session:
             events,
             upcoming,
             capability.policy,
+            # ADR-0023: only the board policy reads observations; p6 is unchanged.
+            artifacts=(
+                self._artifacts
+                if capability.policy.version == MONITOR_POLICY_P7_VERSION
+                else None
+            ),
             model_call_budget=self._state.task.budgets.model_calls,
         )
         if trigger is None:

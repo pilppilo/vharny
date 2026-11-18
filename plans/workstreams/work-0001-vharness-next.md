@@ -30,7 +30,7 @@ remain append-only.
 - **Rung-4 target mode (open until freeze):** The 2026-09-27 record (Starting Point machine for smoke/conformance; retired walkthrough-published box for the scored campaign; walkthrough material reference-only, never entering scored sessions) governs rung-4 scored-campaign target selection until the operator confirms the mode at manifest freeze; the confirmed mode is recorded there.
 - **PHASE-0003 evidence boundary:** The 2026-10-15 transition/closeout entries retain its exit matrix and full-gate evidence. Its paired recovery sample is seeded scripted fixtures per EXP-0001, no live supervised pair; the two evidence-tooling defects remain at `coordination/diagnostics/phase-0003-closeout-20261015/defect-evidence-tooling.md`. Run2 (2026-10-28) was the stagnation monitor's first live test and it failed to fire; PHASE-0003's `verified` records its predeclared seeded exit criteria, not live benefit (per ADR-0008's signal-menu ruling).
 - **Revision:** The protocol, schema, and templates derive from Plant source `c4f886e71f96b0b15a226be241155a8573579e01` (Plant `c4f886e`); under ADR-0018 the CLI is retired and `plans/.plant-lock.json` is removed. EXP-0002 ran and completed 2026-10-30 (`c6d091c`, `286e58b`; implementation `ce2b2a2`/`b289d40`/`328a7d2`, bundle `evidence/exp-0002-signal-coverage/`). ADR-0010 adopted 2026-10-31 (`1bd4b5d`). ADR-0011 adopted 2026-11-01; its kernel switch landed at `409fc3e` (full gate `42d030b`), a sibling farmland session independently landed the same switch and closed the hardening specifications at `5d1cf6a`, and ADR-0014 later superseded it. ADR-0012 adopted 2026-11-02; implemented and fully gated 2026-11-03 (`81360b3`). Defect fixes: `cf405c7` (evidence fingerprints journaled on the deferred runtime dispatch; run-3 24/24 gap closed) and `50b9c4f` (replay validator accepts the P5 burn cause; gate `burn-cause-gate-20261102`). The 2026-11-06 change lands ADR-0013 (`proposed`) and EXP-0003 (`draft`) with index rows. The operator accepted ADR-0013 and approved EXP-0003 execution on 2026-11-06 (claim `claim-20261106T183542-9cd9bd69`); ADR-0011 remains the effective shipped default until a separately governed P6 adoption. The 2026-11-06 late-UTC change implements and fully gates the ADR-0013 transport recovery (`99d8a96` series, full gate passed at `9caba6e` with four retained failed attempts, record `coordination/diagnostics/transport-recovery-gate-20261106/`), then implements (`07bc01a`/`07e945e`) and executes the approved EXP-0003 offline: 220 executions plus the sha-pinned run2 replay, admissible with zero pre-registration deviations; run4 replay recorded missing-input. The 2026-11-08 change implements the ADR-0013 supervision clause 3: an unreviewable checkpoint escalates as a blocking operator question instead of a bare `supervisor_failed` (operator decision 2026-11-08, implementation `47d67a6`), and its checkpoint clause 4 journals the due-but-cooldown-suppressed checkpoint disposition with the ledger state replay reproduces (implementation `d494c57`). The 2026-11-16 change merges six Linear fixes to `main` (`4e44cef`, `3a86292`, `b878369`, `9951274`); COD-13 at `9951274` withholds the provider key and `VHARNESS_*`/`OPENAI_*` variables from runtime children and adds them to the runtime identity, so sessions created before it cannot resume.
-- **Next action:** Operator 2026-11-08: no Omarchy work until HTB (Timing) is green and the operator says done. Operator 2026-11-16: run14 is dropped (its staging was stale after `9951274`, and its artifacts are not in this repository copy); no Timing run is staged. Operator 2026-11-16 (ADR-0019): Omarchy and HTB are not the next runs; the next work was the ARC-AGI-3 integration (Linear COD-33, done 2026-11-17), then its campaign manifest. Before the manifest freeze (COD-39), in order: ADR-0022 (COD-92, a decision that never answers no longer ends the run); move labels for the supervisor (COD-93, a new policy version with its own ADR); token, time and cost limits with a budget-exhausted outcome (COD-86); and the answer-now-first latency replay (COD-94, which needs the operator's LongCat key). Any new Timing or Omarchy attempt needs fresh staging against the current `main` and the operator's word. The attempt-8 ladder decision (stage-3+ form; the unreachable progress reset — ARCH-0001 changes, not tuning) stays open. No live run without authorization; no attempt 5 in the attempt-4 series (§8 binds); no merge into `next`.
+- **Next action:** Operator 2026-11-08: no Omarchy work until HTB (Timing) is green and the operator says done. Operator 2026-11-16: run14 is dropped (its staging was stale after `9951274`, and its artifacts are not in this repository copy); no Timing run is staged. Operator 2026-11-16 (ADR-0019): Omarchy and HTB are not the next runs; the next work was the ARC-AGI-3 integration (Linear COD-33, done 2026-11-17), then its campaign manifest. Before the manifest freeze (COD-39), in order: ADR-0022 (COD-92, done) and ADR-0023 (COD-93, done: board-move labels under `monitor.p7.v1` for ARC runs; its divisor still needs checking on other development games); token, time and cost limits with a budget-exhausted outcome (COD-86); and the answer-now-first latency replay (COD-94, which needs the operator's LongCat key). Any new Timing or Omarchy attempt needs fresh staging against the current `main` and the operator's word. The attempt-8 ladder decision (stage-3+ form; the unreachable progress reset — ARCH-0001 changes, not tuning) stays open. No live run without authorization; no attempt 5 in the attempt-4 series (§8 binds); no merge into `next`.
 
 ## 2026-09-04 00:00 UTC — Planning session
 
@@ -5305,4 +5305,41 @@ remain append-only.
   - COD-93 changes the shipped monitor policy, so it needs its own ADR and a
     new policy version, kept additive for environments without move labels.
   - COD-94 needs the operator's LongCat key.
+
+## 2026-11-18 02:00 UTC — ADR-0023: repetition on a board from what each move did
+
+- **Author:** operator (first implementation and ADR draft), revised by a
+  Claude session at the operator's request (Linear COD-93).
+- **Goal:** Stop the supervisor from flagging forward progress on a board, and
+  make it see the loops it missed in the `ls20` re-run.
+- **Work completed:**
+  - `board_moves.py` labels each move on the current level forward, return or
+    weak, by distance against the level's largest move.
+  - `monitor.p7.v1` keeps p6's numbers, but counts a repeat only for weak
+    moves (as the action) and for returns (as one fingerprint naming the
+    untried legal actions).
+  - The application selects p7 for ARC-AGI-3 runs only. p6 stays the default,
+    so p6-bound runs still reopen.
+  - ADR-0023 (accepted). Dependents: ARCH-0001's signals paragraph and
+    `depends_on`, and the index row.
+- **Revisions to the first draft:**
+  - **Default:** p6 remains the default. Renaming it would have stopped
+    p6-bound runs from reopening.
+  - **Weak moves:** they keep counting as repeats of their action. The draft
+    dropped all `step` repeats on a board.
+  - **Longer loops:** returns are found against every earlier board, not only
+    the one two moves back.
+  - **Reads:** observations are cached by content digest.
+- **Evidence:**
+  - **The `ls20` replay.** No trigger after the three forward moves. A
+    repetition trigger at move 6 that names actions 3 and 4 as untried. The
+    labels for the whole trace are first, forward ×2, return ×6, weak.
+  - **Small-board tests.** A four-move loop is a return. Three repeats of a
+    move against a wall count as three repeats. A new level starts fresh.
+  - **Selection.** Only ARC runs get p7.
+- **Open questions:**
+  - The divisor of 4 comes from one game. Check it on the other development
+    games before scored runs.
+  - A level where no move has yet done anything is caught only by the budget
+    checkpoint.
 

@@ -57,6 +57,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, AbstractSet, Protocol, Sequence
 from uuid import uuid4
 
+from .board_moves import BoardLevel, BoardStep, MoveLabel, current_level
 from .codec import MAX_JSON_BYTES, canonical_json, parse_json_object
 from .errors import ContractError
 from .memory import (
@@ -77,6 +78,8 @@ if TYPE_CHECKING:  # pragma: no cover - typing only, avoids a kernel import cycl
 MONITOR_POLICY_VERSION = "monitor.p6.v1"
 MONITOR_POLICY_P5_VERSION = "monitor.p5.v1"
 MONITOR_POLICY_P1_VERSION = "monitor.p1.v1"
+#: ADR-0023: the p6 composition with board-move labels, for board games (ARC).
+MONITOR_POLICY_P7_VERSION = "monitor.p7.v1"
 
 SUPERVISOR_SYSTEM_PROMPT = (
     "You are an advisory progress supervisor for an autonomous agent. You "
@@ -194,6 +197,17 @@ def monitor_policy_p5() -> MonitorPolicy:
         burn_trigger=True,
         checkpoint_trigger=False,
     )
+
+
+def monitor_policy_p7() -> MonitorPolicy:
+    """Return the ADR-0023 board-game policy: p6 plus board-move labels.
+
+    The triggers and their numbers are p6's. What differs is what counts as a
+    repeat on a board: a move that changed the board is not a repeat of its
+    action, a move back to an earlier board is, and a weak move still counts
+    as a repeat of its action. Runs without board observations behave as p6.
+    """
+    return MonitorPolicy(version=MONITOR_POLICY_P7_VERSION)
 
 
 def monitor_policy_p1() -> MonitorPolicy:
@@ -742,6 +756,152 @@ def last_trigger_call(events: Sequence[Event]) -> int | None:
     return last
 
 
+_STEP_FINGERPRINT_PREFIX = f"{ACTION_FINGERPRINT_PREFIX}:step:"
+_BOARD_PROVENANCE = "arc-agi-3-result"
+_BOARD_CACHE_LIMIT = 4096
+#: Parsed observations by artifact digest. Artifacts are content-addressed, so
+#: a digest always names the same observation.
+_board_cache: dict[str, Mapping[str, object] | None] = {}
+
+
+def _board_observation(
+    receipt: Mapping[str, object], artifacts: EvidenceArtifacts
+) -> Mapping[str, object] | None:
+    """Return a successful board receipt's observation, cached by digest."""
+    ref = _artifact_ref(receipt.get("raw_artifact"))
+    if ref is None or ref.provenance != _BOARD_PROVENANCE:
+        return None
+    if ref.digest not in _board_cache:
+        if len(_board_cache) >= _BOARD_CACHE_LIMIT:
+            _board_cache.clear()
+        observation = parse_json_object(artifacts.read(ref)).get("observation")
+        _board_cache[ref.digest] = (
+            observation if isinstance(observation, Mapping) else None
+        )
+    return _board_cache[ref.digest]
+
+
+def _board_step(
+    sequence: int,
+    arguments: Mapping[str, JsonValue],
+    observation: Mapping[str, object],
+) -> BoardStep | None:
+    """Build one board step from an observation, or None if it has no board."""
+    grid = observation.get("grid")
+    if not isinstance(grid, (list, tuple)) or not grid:
+        return None
+    rows = tuple(row for row in grid if isinstance(row, str))
+    if len(rows) != len(grid):
+        return None
+    levels = observation.get("levels_completed")
+    legal = observation.get("legal_actions")
+    return BoardStep(
+        sequence=sequence,
+        arguments=arguments,
+        board=rows,
+        levels_completed=(
+            levels if isinstance(levels, int) and not isinstance(levels, bool) else None
+        ),
+        full_reset=observation.get("full_reset") is True,
+        legal_actions=tuple(
+            item
+            for item in (legal if isinstance(legal, (list, tuple)) else ())
+            if isinstance(item, int) and not isinstance(item, bool)
+        ),
+    )
+
+
+def board_level(
+    events: Sequence[Event], artifacts: EvidenceArtifacts
+) -> BoardLevel | None:
+    """Return the labelled moves of the current board level (ADR-0023).
+
+    Only successful ``step`` receipts that carry a board observation count.
+    None when the journal holds no board observation, which is how runs of
+    other environments keep p6 behavior under p7.
+    """
+    arguments: dict[str, Mapping[str, JsonValue]] = {}
+    steps: list[BoardStep] = []
+    for event in events:
+        if event.kind == "action_intended":
+            proposal = event.payload.get("proposal")
+            if isinstance(proposal, Mapping) and proposal.get("action_name") == "step":
+                proposal_id = proposal.get("proposal_id")
+                args = proposal.get("arguments")
+                if isinstance(proposal_id, str) and isinstance(args, Mapping):
+                    arguments[proposal_id] = args
+            continue
+        if event.kind != "receipt_received":
+            continue
+        receipt = event.payload.get("receipt")
+        if not isinstance(receipt, Mapping) or receipt.get("status") != "succeeded":
+            continue
+        proposal_id = receipt.get("proposal_id")
+        if not isinstance(proposal_id, str) or proposal_id not in arguments:
+            continue
+        observation = _board_observation(receipt, artifacts)
+        if observation is None:
+            continue
+        step = _board_step(event.sequence, arguments[proposal_id], observation)
+        if step is not None:
+            steps.append(step)
+    return current_level(steps)
+
+
+def board_fingerprints(level: BoardLevel, since_sequence: int) -> tuple[str, ...]:
+    """Return the repeat fingerprints of the level's moves in the window.
+
+    A weak move repeats its action; a return repeats one shared fingerprint
+    that names the untried legal actions; forward and first moves repeat
+    nothing.
+    """
+    returns = (
+        "board:return-to-an-earlier-board; "
+        f"Untried legal actions: {list(level.untried_actions)}"
+    )
+    fingerprints: list[str] = []
+    for move in level.moves:
+        if move.step.sequence < since_sequence:
+            continue
+        if move.label is MoveLabel.WEAK:
+            fingerprints.append(action_fingerprint("step", move.step.arguments))
+        elif move.label is MoveLabel.RETURN:
+            fingerprints.append(returns)
+    return tuple(fingerprints)
+
+
+def _window_counts(
+    events: Sequence[Event],
+    window: Sequence[DecisionFacts],
+    policy: MonitorPolicy,
+    artifacts: EvidenceArtifacts | None,
+) -> Counter[str]:
+    """Count the window's repeat fingerprints under ``policy``.
+
+    Under ``monitor.p7.v1`` with board observations, ``step`` action
+    fingerprints give way to the board-move fingerprints (ADR-0023).
+    """
+    level = (
+        board_level(events, artifacts)
+        if policy.version == MONITOR_POLICY_P7_VERSION and artifacts is not None
+        else None
+    )
+    counts: Counter[str] = Counter()
+    for fact in window:
+        counts.update(
+            fingerprint
+            for fingerprint in fact.fingerprints
+            if level is None or not fingerprint.startswith(_STEP_FINGERPRINT_PREFIX)
+        )
+        if policy.evidence_fingerprints:
+            counts.update(fact.evidence_fingerprints)
+    if level is not None:
+        segments = decision_segments(events)[-policy.window_calls :]
+        since = segments[0][0].sequence if segments and segments[0] else 0
+        counts.update(board_fingerprints(level, since))
+    return counts
+
+
 def evaluate_supervision(
     events: Sequence[Event],
     call: int,
@@ -762,6 +922,9 @@ def evaluate_supervision(
     checkpoint-enabled policy requires ``model_call_budget`` (the run's main
     model-call budget) and refuses to evaluate without one, so the trigger
     never degrades silently.
+
+    Under ``monitor.p7.v1``, ``artifacts`` also supplies the board
+    observations that label moves (ADR-0023).
     """
     if call < 1:
         raise ContractError("supervision call must be positive")
@@ -775,11 +938,7 @@ def evaluate_supervision(
     if previous_trigger is not None and call - previous_trigger < policy.cooldown_calls:
         return None
     window = history[-policy.window_calls :]
-    counts: Counter[str] = Counter()
-    for fact in window:
-        counts.update(fact.fingerprints)
-        if policy.evidence_fingerprints:
-            counts.update(fact.evidence_fingerprints)
+    counts = _window_counts(events, window, policy, artifacts)
     if counts:
         fingerprint, count = sorted(
             counts.items(), key=lambda item: (-item[1], item[0])
