@@ -104,6 +104,9 @@ class Generation:
     # Provider-reported reasoning tokens, when the endpoint reports them.
     # Reasoning text itself is never retained (BENCH-0001 evidence rule).
     reasoning_tokens: int | None = None
+    # COD-86: prompt tokens the provider served from its prompt cache, when it
+    # reports them. None means unreported, never zero.
+    cached_prompt_tokens: int | None = None
 
     @property
     def ok(self) -> bool:

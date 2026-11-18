@@ -71,8 +71,10 @@ task budgets and the run identity, each only when set.
 The coordinator checks it on every tick. If the deadline passes while a
 decision is waiting for the model, the decision is recorded as failed and
 discarded, its reserved calls and tokens stay charged, and the run stops with
-`time`. The provider call itself is not cancelled: it may keep its worker busy
-until it returns, which delays shutdown by up to the provider timeout.
+`time`. In an ARC run the provider call is also cancelled at the deadline,
+including a streamed reply (`78ef989`). In other runs it is not cancelled: it
+may keep its worker busy until it returns, which delays shutdown by up to the
+provider timeout.
 
 Elapsed time is chosen over active time because a campaign limit bounds real
 time and spend, and elapsed time is simple to audit. The campaign manifest
@@ -110,15 +112,46 @@ budgets' `tokens` and `wall_clock_seconds`, and a reservation's `tokens`.
 Journals, projections and retained evidence recorded before this change keep
 their digests. The codec supports this for any field marked `OMIT_IF_NONE`.
 
+### 5. A cost limit
+
+`--max-cost USD` limits the dollars of provider spend for the whole run. It
+needs `--rate-card FILE`: a JSON object with `input_per_million`,
+`output_per_million`, optional `cached_input_per_million` and `label`, in
+dollars per million tokens. Rates are operator-supplied, never discovered:
+provider list prices can be promotional and the provider's billing record stays
+authoritative. The card's contents, not its path, are recorded in the run
+manifest and the run identity, each only when set, so a reopened run prices at
+the same rates.
+
+- **Pricing a call.** Uncached prompt tokens at the input rate, cached prompt
+  tokens at the cached rate, answer tokens (reasoning included) at the output
+  rate. The cache split comes from `prompt_tokens_details.cached_tokens`. If any
+  call of a decision does not report it, or reports more than the prompt, every
+  prompt token is priced as uncached, an upper bound.
+- **Reserving.** A decision reserves its worst case as in §3, priced with no
+  cache hits. A supervisor consult reserves its prompt estimate plus its answer
+  limit. A call is refused with `cost` if the reservation does not fit.
+- **Settling.** A call whose cost could not be priced keeps its reserved worst
+  case, as unknown token usage keeps its reservation.
+- **Non-model operations.** The ledger refuses any reservation while any
+  settled operation has an unknown cost. Actions and evaluations incur no
+  provider spend, so when a cost limit is set they reserve and settle at zero.
+  This applies only when `limits.cost` is set, so journals without a cost limit
+  replay as before.
+
+Provider prices change. Use a token or time limit as the primary bound when the
+rate is promotional; the dollar limit is only as good as the card.
+
 ## Not decided here
 
-- **Cost:** `BudgetLimits.cost` still has no CLI flag, because provider prices
-  are not recorded anywhere yet.
-- **Remaining tokens and time:** the model's remaining budgets don't show
-  them yet, so there is no warning at 80%.
-- **Cancelling an in-flight call** when the deadline passes.
-
-All three stay open in COD-86.
+- **Remaining budgets and warnings outside ARC runs.** An ARC decision shows
+  the remaining tokens, time and cost, with a warning once 80% of any of them
+  is used (`78ef989`, and §5 for cost). Other runs don't show them yet.
+- **Cancelling an in-flight call outside ARC runs** (see §2).
+- **Whether LongCat reports cache hits.** §5 prices cached prompt tokens from
+  `prompt_tokens_details.cached_tokens`. LongCat's docs don't name a usage
+  field for cache hits, and no recorded run kept one, so until a live call
+  shows it every prompt token may be priced as uncached.
 
 ## Dependents updated in the same change
 
@@ -126,6 +159,8 @@ All three stay open in COD-86.
 - ADR-0013 §6 gains a note pointing here.
 - The index row.
 - WORK-0001.
+- §5 (cost) added in a later change on the same day, with this section,
+  the index row and WORK-0001 updated.
 
 ## Alternatives considered
 

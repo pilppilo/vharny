@@ -33,7 +33,7 @@ from ..core import (
     VERSION,
     ModelFailureClass,
 )
-from ..generators.openai_compat import OpenAICompatible
+from ..generators.openai_compat import OpenAICompatible, provider_deadline
 from .adapters.arc_agi_setup import ARC_EVALUATION_CONTRACT, build_arc_dependencies
 from .adapters.child_environment import ChildEnvironment
 from .adapters.process_runtime import ProcessRuntime
@@ -374,6 +374,7 @@ def build_model(settings: RunSettings) -> tuple[Model, Callable[[], None] | None
         model_id=endpoint.model,
         repair_budget=settings.repair_budget,
         initial_output_tokens=settings.initial_output_tokens,
+        rate_card=settings.rate_card,
     )
     return model, generator.close
 
@@ -407,7 +408,9 @@ def build_supervisor(
         extra_headers=provider_extra_headers() or None,
         stream=settings.provider_stream,
     )
-    supervisor = ModelSupervisor(generator, model_id=model_name)
+    supervisor = ModelSupervisor(
+        generator, model_id=model_name, rate_card=settings.rate_card
+    )
     # ADR-0023: board games get board-move labels; every other run keeps p6.
     capability = (
         SupervisionCapability(supervisor, policy=monitor_policy_p7())
@@ -448,6 +451,11 @@ def run_identity(
         safe["max_wall_clock_seconds"] = settings.max_wall_clock_seconds
     if settings.max_tokens is not None:
         safe["max_tokens"] = settings.max_tokens
+    if settings.max_cost is not None:
+        safe["max_cost"] = str(settings.max_cost)
+    if settings.rate_card is not None:
+        # Set-only, like the limits above, so other run identities are unchanged.
+        safe["rate_card"] = settings.rate_card.to_payload()
     if settings.initial_output_tokens is not None:
         # COD-88: growth changes what each call asks for; set-only, as above.
         safe["initial_output_tokens"] = settings.initial_output_tokens
@@ -484,6 +492,7 @@ class Application:
         supervisor_close: Callable[[], None] | None = None,
         recovery: TransportRecoverySettings | None = None,
         deadline: float | None = None,
+        cancel_provider_at_deadline: bool = False,
     ) -> None:
         self._session = session
         self._model = model
@@ -501,6 +510,7 @@ class Application:
         self._recovery = recovery or TransportRecoverySettings()
         self._retry: _RetryWake | None = None
         self._deadline = deadline
+        self._cancel_provider_at_deadline = cancel_provider_at_deadline
         self._server: ControlServer | None = None
         self._survivors: tuple[Mapping[str, object], ...] = ()
         self.last_error: str | None = None
@@ -652,6 +662,7 @@ class Application:
             supervisor_close=supervisor_close,
             recovery=settings.transport_recovery,
             deadline=_run_deadline(journal, session_id, settings),
+            cancel_provider_at_deadline=settings.arc is not None,
         )
 
     # -- read-only accessors --
@@ -905,7 +916,15 @@ class Application:
             self._session.receive_evaluation(request, receipt)
             return
         if pending.kind == "supervision":
-            response = self._run_worker(lambda: self._advise(pending))
+            try:
+                response = self._run_worker(
+                    lambda: self._advise(pending),
+                    enforce_deadline=self._cancel_provider_at_deadline,
+                )
+            except BudgetExhausted as exc:
+                self._session.receive_guidance(None)
+                self._session.stop_for_budget(exc)
+                return
             self._session.receive_guidance(response)
             return
         raise IntegrityError(f"unknown pending dispatch kind {pending.kind!r}")
@@ -929,7 +948,17 @@ class Application:
         self, call: Callable[[], T], *, enforce_deadline: bool = False
     ) -> T:
         """Run one blocking call on the pool while still admitting controls."""
-        future = self._pool.submit(call)
+
+        def invoke() -> T:
+            if not (enforce_deadline and self._cancel_provider_at_deadline):
+                return call()
+            token = provider_deadline.set(self._deadline)
+            try:
+                return call()
+            finally:
+                provider_deadline.reset(token)
+
+        future = self._pool.submit(invoke)
         while True:
             self._drain_controls()
             if (
@@ -1018,6 +1047,7 @@ def _create_session(
             evaluations=settings.max_evaluations,
             wall_clock_seconds=settings.max_wall_clock_seconds,
             tokens=settings.max_tokens,
+            cost=settings.max_cost,
         ),
         environment_id=environment.describe().environment_id,
         evaluation_contract_id=dependencies.evaluation_contract_id,

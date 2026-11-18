@@ -33,6 +33,7 @@ from .memory import (
     ProgressCategory,
 )
 from .models import (
+    OMIT_IF_NONE,
     ActionDefinition,
     CommittedNode,
     JsonValue,
@@ -40,6 +41,7 @@ from .models import (
     UsageMeasurement,
     frozen_mapping,
 )
+from .pricing import RateCard
 from .supervision import GuidanceDecision
 
 _MISSING = object()
@@ -527,6 +529,11 @@ class ModelAttempt:
     # COD-88: the answer limit this call requested, when the model grows it.
     # None for models with one fixed limit, so their journals are unchanged.
     output_limit: int | None = None
+    # COD-86: prompt tokens the provider served from its cache, when reported.
+    # Left out of the encoding while unset, so older journals keep their digests.
+    cached_prompt_tokens: int | None = field(
+        default=None, metadata={OMIT_IF_NONE: True}
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -556,6 +563,7 @@ class _BoundedGeneration:
     latency: float | None
     failure_class: str | None = None
     reasoning_tokens: int | None = None
+    cached_prompt_tokens: int | None = None
 
 
 class Model(Protocol):
@@ -1172,6 +1180,9 @@ def _bounded_attempts(value: object) -> tuple[ModelAttempt, ...]:
                     getattr(raw, "reasoning_tokens", None)
                 ),
                 output_limit=_bounded_integer(getattr(raw, "output_limit", None)),
+                cached_prompt_tokens=_bounded_integer(
+                    getattr(raw, "cached_prompt_tokens", None)
+                ),
             )
         )
     return tuple(attempts)
@@ -1226,7 +1237,7 @@ def bounded_model_duration(value: object) -> int | None:
 class CompatibleModel:
     """Adapt a text generator. Every transport and repair call is counted."""
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         generator: TextGenerator,
         *,
@@ -1234,13 +1245,19 @@ class CompatibleModel:
         repair_budget: int = 1,
         reserved_output_tokens: int | None = None,
         initial_output_tokens: int | None = None,
+        rate_card: RateCard | None = None,
     ) -> None:
         """Adapt ``generator``; ``initial_output_tokens`` turns on growth.
 
         COD-88: with ``initial_output_tokens`` each decision starts at that
         answer limit, which is also what the context reserves, and doubles it
         on an exhausted reply up to the generator's ``max_tokens``.
+
+        COD-86: with a ``rate_card`` each measurement carries a dollar cost
+        priced from its reported tokens. Without one cost stays unknown, so
+        existing journals and identities are unchanged.
         """
+        self.rate_card = rate_card
         if repair_budget < 0:
             raise ContractError("repair_budget must not be negative")
         generator_output_tokens = getattr(generator, "max_tokens", _MISSING)
@@ -1614,15 +1631,36 @@ class CompatibleModel:
     def _usage(
         self, request: DecisionInput, attempts: list[ModelAttempt]
     ) -> UsageMeasurement:
+        input_tokens = _optional_attempt_total(
+            attempts, lambda item: item.prompt_tokens
+        )
+        output_tokens = _optional_attempt_total(
+            attempts, lambda item: item.completion_tokens
+        )
+        cached_tokens = _optional_attempt_total(
+            attempts, lambda item: item.cached_prompt_tokens
+        )
+        if (
+            cached_tokens is not None
+            and input_tokens is not None
+            and cached_tokens > input_tokens
+        ):
+            # An impossible report is not trusted: price every prompt token as
+            # uncached, which is the upper bound.
+            cached_tokens = None
+        # An attempt with no cache report leaves the split unknown, so every
+        # prompt token is priced as uncached: an upper bound.
+        cost = (
+            self.rate_card.cost(input_tokens, output_tokens, cached_tokens)
+            if self.rate_card is not None
+            else None
+        )
         return UsageMeasurement(
             measurement_id=f"{request.request_id}-usage",
             model_calls=len(attempts),
-            input_tokens=_optional_attempt_total(
-                attempts, lambda item: item.prompt_tokens
-            ),
-            output_tokens=_optional_attempt_total(
-                attempts, lambda item: item.completion_tokens
-            ),
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cost=cost,
             duration_ms=_attempts_duration(attempts),
         )
 
@@ -1744,6 +1782,9 @@ def _sanitize_generation(
     prompt_tokens = _bounded_integer(getattr(generation, "prompt_tokens", None))
     completion_tokens = _bounded_integer(getattr(generation, "completion_tokens", None))
     reasoning_tokens = _bounded_integer(getattr(generation, "reasoning_tokens", None))
+    cached_prompt_tokens = _bounded_integer(
+        getattr(generation, "cached_prompt_tokens", None)
+    )
     if error is not None:
         # The response was lost: any token counts riding on a failed
         # generation are not trustworthy usage, so the cost stays unknown
@@ -1751,6 +1792,7 @@ def _sanitize_generation(
         prompt_tokens = None
         completion_tokens = None
         reasoning_tokens = None
+        cached_prompt_tokens = None
     bounded = _BoundedGeneration(
         text=_bounded_text(
             getattr(generation, "text", None),
@@ -1775,6 +1817,7 @@ def _sanitize_generation(
             getattr(generation, "failure_class", None)
         ),
         reasoning_tokens=reasoning_tokens,
+        cached_prompt_tokens=cached_prompt_tokens,
     )
     return bounded, duration_ms
 
@@ -1795,6 +1838,7 @@ def _model_attempt(
         duration_ms=_bounded_integer(duration_ms),
         reasoning_tokens=generation.reasoning_tokens,
         output_limit=output_limit,
+        cached_prompt_tokens=generation.cached_prompt_tokens,
     )
 
 

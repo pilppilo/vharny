@@ -24,6 +24,7 @@ import sys
 import tempfile
 import uuid
 from dataclasses import dataclass, replace
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Callable, Mapping, TextIO
 from urllib.parse import urlsplit, urlunsplit
@@ -42,6 +43,7 @@ from .application import (
 )
 from .artifacts import ArtifactStore
 from .codec import MAX_JSON_BYTES
+from .pricing import RateCard, load_rate_card
 from .run_settings import (
     ARC_OPERATION_MODES,
     DEFAULT_ARC_CALL_TIMEOUT_SECONDS,
@@ -697,6 +699,8 @@ def _workspace_settings(arguments: argparse.Namespace) -> RunSettings:
         max_steps=arguments.max_steps,
         max_wall_clock_seconds=arguments.max_wall_clock_seconds,
         max_tokens=arguments.max_tokens,
+        max_cost=getattr(arguments, "max_cost", None),
+        rate_card=_rate_card(arguments),
         token_budget=arguments.token_budget,
         max_output_tokens=arguments.max_output_tokens,
         repair_budget=arguments.repair_budget,
@@ -1733,6 +1737,23 @@ def _add_run_arguments(parser: argparse.ArgumentParser) -> None:
         "whose worst case (prompt estimate plus largest answer, per possible "
         "call) would exceed this many billed tokens",
     )
+    parser.add_argument(
+        "--max-cost",
+        type=_positive_decimal,
+        default=None,
+        metavar="USD",
+        help="stop the run with a budget-exhausted outcome before a model call "
+        "whose worst case, priced at --rate-card, would exceed this many "
+        "dollars; requires --rate-card",
+    )
+    parser.add_argument(
+        "--rate-card",
+        default=None,
+        metavar="FILE",
+        help="JSON file of provider rates in dollars per million tokens "
+        "(input_per_million, output_per_million, cached_input_per_million, "
+        "label); its contents are recorded in the run manifest",
+    )
     parser.add_argument("--max-evaluations", type=_nonnegative, default=2)
     parser.add_argument("--max-steps", type=_positive, default=12)
     parser.add_argument(
@@ -2435,6 +2456,21 @@ def _positive(value: str) -> int:
     if parsed < 1:
         raise argparse.ArgumentTypeError("must be positive")
     return parsed
+
+
+def _positive_decimal(value: str) -> Decimal:
+    try:
+        parsed = Decimal(value)
+    except InvalidOperation as exc:
+        raise argparse.ArgumentTypeError("must be a decimal number") from exc
+    if not parsed.is_finite() or parsed <= 0:
+        raise argparse.ArgumentTypeError("must be a positive number")
+    return parsed
+
+
+def _rate_card(arguments: argparse.Namespace) -> RateCard | None:
+    path = getattr(arguments, "rate_card", None)
+    return None if path is None else load_rate_card(path)
 
 
 def _positive_seconds(value: str) -> float:

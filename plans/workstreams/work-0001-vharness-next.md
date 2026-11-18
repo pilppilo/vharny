@@ -5,7 +5,7 @@ type: workstream
 status: active
 owners: []
 created: 2026-09-04
-updated: 2026-11-16
+updated: 2026-11-18
 depends_on: []
 supersedes: []
 related: [ARCH-0001, ROAD-0001, BENCH-0001, ADR-0005, ADR-0006, ADR-0008, ADR-0009, ADR-0018, ADR-0019, PHASE-0001, PHASE-0002, PHASE-0003, PHASE-0004]
@@ -30,7 +30,7 @@ remain append-only.
 - **Rung-4 target mode (open until freeze):** The 2026-09-27 record (Starting Point machine for smoke/conformance; retired walkthrough-published box for the scored campaign; walkthrough material reference-only, never entering scored sessions) governs rung-4 scored-campaign target selection until the operator confirms the mode at manifest freeze; the confirmed mode is recorded there.
 - **PHASE-0003 evidence boundary:** The 2026-10-15 transition/closeout entries retain its exit matrix and full-gate evidence. Its paired recovery sample is seeded scripted fixtures per EXP-0001, no live supervised pair; the two evidence-tooling defects remain at `coordination/diagnostics/phase-0003-closeout-20261015/defect-evidence-tooling.md`. Run2 (2026-10-28) was the stagnation monitor's first live test and it failed to fire; PHASE-0003's `verified` records its predeclared seeded exit criteria, not live benefit (per ADR-0008's signal-menu ruling).
 - **Revision:** The protocol, schema, and templates derive from Plant source `c4f886e71f96b0b15a226be241155a8573579e01` (Plant `c4f886e`); under ADR-0018 the CLI is retired and `plans/.plant-lock.json` is removed. EXP-0002 ran and completed 2026-10-30 (`c6d091c`, `286e58b`; implementation `ce2b2a2`/`b289d40`/`328a7d2`, bundle `evidence/exp-0002-signal-coverage/`). ADR-0010 adopted 2026-10-31 (`1bd4b5d`). ADR-0011 adopted 2026-11-01; its kernel switch landed at `409fc3e` (full gate `42d030b`), a sibling farmland session independently landed the same switch and closed the hardening specifications at `5d1cf6a`, and ADR-0014 later superseded it. ADR-0012 adopted 2026-11-02; implemented and fully gated 2026-11-03 (`81360b3`). Defect fixes: `cf405c7` (evidence fingerprints journaled on the deferred runtime dispatch; run-3 24/24 gap closed) and `50b9c4f` (replay validator accepts the P5 burn cause; gate `burn-cause-gate-20261102`). The 2026-11-06 change lands ADR-0013 (`proposed`) and EXP-0003 (`draft`) with index rows. The operator accepted ADR-0013 and approved EXP-0003 execution on 2026-11-06 (claim `claim-20261106T183542-9cd9bd69`); ADR-0011 remains the effective shipped default until a separately governed P6 adoption. The 2026-11-06 late-UTC change implements and fully gates the ADR-0013 transport recovery (`99d8a96` series, full gate passed at `9caba6e` with four retained failed attempts, record `coordination/diagnostics/transport-recovery-gate-20261106/`), then implements (`07bc01a`/`07e945e`) and executes the approved EXP-0003 offline: 220 executions plus the sha-pinned run2 replay, admissible with zero pre-registration deviations; run4 replay recorded missing-input. The 2026-11-08 change implements the ADR-0013 supervision clause 3: an unreviewable checkpoint escalates as a blocking operator question instead of a bare `supervisor_failed` (operator decision 2026-11-08, implementation `47d67a6`), and its checkpoint clause 4 journals the due-but-cooldown-suppressed checkpoint disposition with the ledger state replay reproduces (implementation `d494c57`). The 2026-11-16 change merges six Linear fixes to `main` (`4e44cef`, `3a86292`, `b878369`, `9951274`); COD-13 at `9951274` withholds the provider key and `VHARNESS_*`/`OPENAI_*` variables from runtime children and adds them to the runtime identity, so sessions created before it cannot resume.
-- **Next action:** Operator 2026-11-08: no Omarchy work until HTB (Timing) is green and the operator says done. Operator 2026-11-16: run14 is dropped (its staging was stale after `9951274`, and its artifacts are not in this repository copy); no Timing run is staged. Operator 2026-11-16 (ADR-0019): Omarchy and HTB are not the next runs; the next work was the ARC-AGI-3 integration (Linear COD-33, done 2026-11-17), then its campaign manifest. Before the manifest freeze (COD-39), in order: ADR-0022 (COD-92, done) and ADR-0023 (COD-93, done: board-move labels under `monitor.p7.v1` for ARC runs; its divisor still needs checking on other development games); token and time limits with a budget-exhausted outcome (COD-86, ADR-0024; cost, an 80% warning for tokens and time, and call cancellation remain); and the answer-now-first latency replay (COD-94, which needs the operator's LongCat key). Any new Timing or Omarchy attempt needs fresh staging against the current `main` and the operator's word. The attempt-8 ladder decision (stage-3+ form; the unreachable progress reset — ARCH-0001 changes, not tuning) stays open. No live run without authorization; no attempt 5 in the attempt-4 series (§8 binds); no merge into `next`.
+- **Next action:** Operator 2026-11-08: no Omarchy work until HTB (Timing) is green and the operator says done. Operator 2026-11-16: run14 is dropped (its staging was stale after `9951274`, and its artifacts are not in this repository copy); no Timing run is staged. Operator 2026-11-16 (ADR-0019): Omarchy and HTB are not the next runs; the next work was the ARC-AGI-3 integration (Linear COD-33, done 2026-11-17), then its campaign manifest. Before the manifest freeze (COD-39), in order: ADR-0022 (COD-92, done) and ADR-0023 (COD-93, done: board-move labels under `monitor.p7.v1` for ARC runs; its divisor still needs checking on other development games); token, time and cost limits with a budget-exhausted outcome (COD-86, ADR-0024; ARC runs show remaining budgets with 80% warnings and cancel the provider call at the deadline; the cost limit (§5) is local patches on `78ef989`, not yet merged; whether LongCat reports cached tokens still needs a live call); and the answer-now-first latency replay (COD-94, which needs the operator's LongCat key). Any new Timing or Omarchy attempt needs fresh staging against the current `main` and the operator's word. The attempt-8 ladder decision (stage-3+ form; the unreachable progress reset — ARCH-0001 changes, not tuning) stays open. No live run without authorization; no attempt 5 in the attempt-4 series (§8 binds); no merge into `next`.
 
 ## 2026-09-04 00:00 UTC — Planning session
 
@@ -5385,3 +5385,70 @@ remain append-only.
   - An in-flight provider call is not cancelled at the deadline.
   - Remaining tokens and time are not yet shown to the model.
 
+## 2026-11-18 06:30 UTC — ADR-0024 §5: a whole-run cost limit
+
+- **Goal:** Close COD-86's cost item: price provider calls and stop a run that
+  would exceed a dollar limit.
+- **Work completed:**
+  - **`--max-cost USD --rate-card FILE`.** The card is JSON in dollars per
+    million tokens (input, cached input, output, label). Its contents, not its
+    path, go into the run manifest and, set-only, the run identity.
+  - **Pricing.** Each model and supervisor measurement is priced from reported
+    tokens. The provider's `prompt_tokens_details.cached_tokens` is now parsed
+    and carried on each attempt, omitted while unset. A missing or impossible
+    cache split prices all prompt tokens as uncached.
+  - **Reserving.** Decisions and supervisor consults reserve a worst-case cost
+    with no cache hits. Under a cost limit, actions and evaluations reserve and
+    settle at zero, so the ledger never holds an unknown cost; an operation
+    with no usage report keeps its reserved actions, calls and tokens.
+  - **Warning.** ARC decisions show remaining cost and warn at 80%.
+  - ADR-0024 §5, its "Not decided here" corrected for `78ef989`, and the index
+    row.
+- **Evidence:** Three local commits on `78ef989` (not pushed). New pricing,
+  cost-limit and ARC warning tests; full suite 1258 passed, 7 skipped. Two
+  `test_workspace_evaluator.py` process-group tests fail the same way without
+  these commits in the sandbox used.
+- **Discoveries affecting later work:**
+  - The ledger refuses any reservation while any settled operation has an
+    unknown cost, so a cost limit needs every operation priced.
+  - LongCat's own pay-as-you-go page (checked 2026-11-18) lists LongCat-2.5 at
+    $0.30 uncached input, $0.006 cached input and $1.20 output per million
+    tokens (¥2 / ¥0.04 / ¥8), headed "Discounted Price (limited-time)" with no
+    end date and no regular price. Failed requests are not billed. Keep a
+    token or time limit as the primary bound.
+  - LongCat's API reference gives `https://api.longcat.chat/openai/v1`, which
+    the 2026-11 LongCat trial already used. Older runs and
+    `tools/phase2_live_software_evidence.py` / `tools/phase3_failure_traces.py`
+    used `api.longcat.ai`; the docs are served from both domains, and billing
+    follows the API key, so the rates apply to both.
+- **Open questions:**
+  - Whether LongCat reports `cached_tokens`. Its docs don't say, and no
+    recorded run kept the field, because it wasn't parsed until now. Without
+    it every prompt token is priced as uncached, so cost is overstated.
+- **Suggested next action:** One live LongCat call with a repeated prompt, to
+  see whether `prompt_tokens_details.cached_tokens` comes back.
+
+## 2026-11-18 16:30 UTC — Sizing `--max-cost` from the LongCat trial
+
+- **Goal:** Replace "operator's choice" for the campaign's cost limit with a
+  rule derived from recorded usage, and keep the data and reasons.
+- **Work completed:**
+  - `tools/price_recorded_runs.py` prices recorded runs at a rate card.
+  - `campaigns/rate-cards/longcat-2.5-2026-11-18.json`: the confirmed
+    LongCat-2.5 rates. Rate cards are dated and never edited.
+  - `evidence/phase-0004-longcat-trial/cost-sizing.md`: the priced trial and
+    the proposed rule, `--max-cost` per game = $0.15 x action limit + $0.40.
+- **Evidence:** The trial runs cost $0.448 (`ls20`), $0.124 (`ft09`) and
+  $0.254 (`rerun-ls20`). The current order costs $0.025 per game action; 75%
+  to 100% of each run's cost went on calls that ran out or failed. The worst
+  decision cost $0.128. A full-context decision reserves $0.354.
+- **Discoveries affecting later work:**
+  - Output tokens drive cost; prompt tokens are 9% to 33%. The cache split
+    can lower cost by at most about a third.
+  - The model-call limit already caps spend at about $0.059 per call, so the
+    cost limit is a backstop for raised call limits and rate changes.
+- **Open questions:** Sample of 3 runs, 2 games, 24 decisions. Whether
+  LongCat reports `cached_tokens`.
+- **Suggested next action:** Pass `--rate-card` on every run; re-derive the
+  rule from the first campaign games (95th percentile cost per action) and
+  carry it into campaign manifest decision 5 (PR #9).

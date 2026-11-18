@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
+from decimal import Decimal
 from enum import Enum
 import hashlib
 
@@ -500,6 +501,41 @@ def intend_model_call(
     )
 
 
+def _costed(
+    state: SessionState,
+    reservation: ResourceReservation,
+    measurement: UsageMeasurement | None,
+) -> UsageMeasurement | None:
+    """Make an operation's cost known when the run has a cost limit (COD-86).
+
+    Actions and evaluations incur no provider spend, so their cost is zero. A
+    model call whose cost could not be priced keeps its reserved worst case,
+    as unknown token usage keeps its reservation (ADR-0024). Without a cost
+    limit the measurement is returned untouched, so other journals replay
+    exactly as before.
+    """
+    if state.task.budgets.cost is None:
+        return measurement
+    if measurement is not None and measurement.cost is not None:
+        return measurement
+    fallback = reservation.cost if reservation.model_calls else Decimal(0)
+    if fallback is None:
+        return measurement
+    if measurement is None:
+        # Only the cost becomes known. Every other resource keeps its reserved
+        # amount, and token usage stays unknown, so the action, call,
+        # evaluation and token limits count this operation exactly as they
+        # would without a cost limit.
+        return UsageMeasurement(
+            measurement_id=f"{reservation.operation_id}-cost",
+            actions=reservation.actions,
+            model_calls=reservation.model_calls,
+            evaluations=reservation.evaluations,
+            cost=fallback,
+        )
+    return replace(measurement, cost=fallback)
+
+
 def settle_model_call(
     state: SessionState,
     reservation: ResourceReservation,
@@ -513,6 +549,7 @@ def settle_model_call(
         raise TransitionError("model terminal reservation does not match intent")
     if operation.settled:
         raise TransitionError("model terminal is already recorded")
+    measurement = _costed(state, reservation, measurement)
     ledger = state.ledger.settle(reservation, measurement)
     measurement_ids = state.measurement_ids
     if measurement is not None and measurement.measurement_id not in measurement_ids:
@@ -631,6 +668,9 @@ def record_evaluation_usage(
     operation = _evaluation_operation(state, request_id)
     if operation.status is EvaluationOperationStatus.NOT_SUBMITTED:
         raise TransitionError("evaluation usage follows not-submitted operation")
+    costed = _costed(state, operation.reservation, usage)
+    assert costed is not None
+    usage = costed
     ledger = state.ledger.record_measurement(request_id, usage)
     measurement_ids = state.measurement_ids
     if usage.measurement_id not in measurement_ids:
@@ -741,8 +781,13 @@ def receive_action_receipt(
         raise TransitionError("revision-capable runtime receipt lacks state revision")
     receipt_ids = (*state.receipt_ids, receipt.receipt_id)
     ledger = state.ledger
-    if receipt.usage is not None:
-        ledger = ledger.record_measurement(receipt.proposal_id, receipt.usage)
+    receipt_usage = (
+        None
+        if receipt.usage is None
+        else _costed(state, operation.reservation, receipt.usage)
+    )
+    if receipt_usage is not None:
+        ledger = ledger.record_measurement(receipt.proposal_id, receipt_usage)
     measurement_ids = state.measurement_ids
     if (
         receipt.usage is not None
@@ -780,7 +825,9 @@ def receive_action_receipt(
         )
     return replace(
         state,
-        ledger=state.ledger.settle(operation.reservation, receipt.usage),
+        ledger=state.ledger.settle(
+            operation.reservation, _costed(state, operation.reservation, receipt.usage)
+        ),
         operations=_replace_operation(
             state,
             replace(
@@ -875,7 +922,9 @@ def _terminalize_evaluation(
     result = replace(
         state,
         operations=_replace_operation(state, updated),
-        ledger=state.ledger.settle(operation.reservation, usage),
+        ledger=state.ledger.settle(
+            operation.reservation, _costed(state, operation.reservation, usage)
+        ),
     )
     if state.pending_proposal_id != operation.request.request_id:
         return result

@@ -31,7 +31,7 @@ from .evidence import (
     counters,
     manifest,
 )
-from .journal import SearchFilter, SqliteJournal
+from .journal import SearchFilter, SearchHit, SqliteJournal
 from .models import (
     ActionProposal,
     ArtifactRef,
@@ -149,10 +149,12 @@ from .memory import (
     protected_digests,
     remaining_budgets,
     select_evictions,
+    WorkingMemory,
     working_memory,
 )
 from .operator import OperatorView, build_operator_view
 from .ports import Environment, Evaluator, ReconciliationKind, Runtime
+from .pricing import RateCard
 from .replay import projection_payload, reduce_event, replay
 from .session_state import evaluation_receipt_from_payload, receipt_from_payload
 from .transitions import (
@@ -850,6 +852,8 @@ class Session:
         model_id = configuration.model_id
         request_id = _new_id("decision")
         remaining = remaining_budgets(self._state, events)
+        if self._state.task.environment_id.startswith("arc-agi-3:"):
+            remaining = self._arc_decision_budgets(remaining, events)
         observation = observation_payload(
             self._state,
             events,
@@ -857,14 +861,7 @@ class Session:
         )
         latest_receipt = latest_receipt_payload(events)
         receipt_content = self._receipt_content_map(events)
-        query = f"{working.task.objective} {working.current_plan}"
-        if working.operator_direction:
-            query = f"{query} {working.operator_direction}"
-        hits = self._journal.search(
-            self._session_id,
-            query,
-            filters=SearchFilter(kinds=RETRIEVAL_EVENT_KINDS),
-        )
+        hits = self._retrieval_hits(working)
 
         def make_request(context: ContextBundle) -> DecisionInput:
             return DecisionInput(
@@ -956,6 +953,9 @@ class Session:
             tokens=self._decision_token_bound(
                 model, context_manifest, tokens_per_char, reserved_output_tokens
             ),
+            cost=self._decision_cost_bound(
+                model, context_manifest, tokens_per_char, reserved_output_tokens
+            ),
         )
         intended = intend_model_call(
             self._state,
@@ -980,6 +980,53 @@ class Session:
         )
         return DecisionHandle(request, reservation, context_manifest, visible_input)
 
+    def _retrieval_hits(self, working: WorkingMemory) -> tuple[SearchHit, ...]:
+        """Search the journal for context relevant to the current plan."""
+        query = f"{working.task.objective} {working.current_plan}"
+        if working.operator_direction:
+            query = f"{query} {working.operator_direction}"
+        return self._journal.search(
+            self._session_id,
+            query,
+            filters=SearchFilter(kinds=RETRIEVAL_EVENT_KINDS),
+        )
+
+    def _arc_decision_budgets(
+        self, remaining: Mapping[str, JsonValue], events: tuple[Event, ...]
+    ) -> Mapping[str, JsonValue]:
+        """Show whole-run limits at the start of an ARC puzzle decision."""
+        limits = self._state.task.budgets
+        result = dict(remaining)
+        warnings: list[str] = []
+        if limits.tokens is not None:
+            used = self._state.ledger.conservative_tokens
+            result["tokens"] = max(0, limits.tokens - used)
+            if 5 * used >= 4 * limits.tokens:
+                warnings.append("At least 80% of the run's token budget is used.")
+        if limits.cost is not None:
+            spent = self._state.ledger.known_cost + sum(
+                (
+                    item.cost or Decimal(0)
+                    for item in self._state.ledger.active_reservations
+                ),
+                Decimal(0),
+            )
+            result["cost"] = format(max(Decimal(0), limits.cost - spent), "f")
+            if 5 * spent >= 4 * limits.cost:
+                warnings.append("At least 80% of the run's cost budget is used.")
+        if limits.wall_clock_seconds is not None:
+            created = datetime.fromisoformat(events[0].recorded_at)
+            elapsed = (datetime.now(timezone.utc) - created).total_seconds()
+            elapsed = max(0.0, elapsed)
+            result["wall_clock_seconds"] = round(
+                max(0.0, limits.wall_clock_seconds - elapsed), 3
+            )
+            if elapsed >= 0.8 * limits.wall_clock_seconds:
+                warnings.append("At least 80% of the run's time budget is used.")
+        if warnings:
+            result["warnings"] = tuple(warnings)
+        return result
+
     def _decision_token_bound(
         self,
         model: Model,
@@ -995,16 +1042,34 @@ class Session:
         """
         if self._state.task.budgets.tokens is None:
             return None
-        calls = getattr(model, "max_calls_per_decision", None)
-        if not isinstance(calls, int) or isinstance(calls, bool) or calls < 1:
-            calls = _model_call_bound(model)
-        answer = getattr(model, "max_output_tokens", None)
-        if not isinstance(answer, int) or isinstance(answer, bool):
-            answer = reserved_output_tokens
-        prompt = (
-            context_manifest.estimated_input_tokens or 0
-        ) + estimate_serialized_tokens(SYSTEM_PROMPT, tokens_per_char)
-        return calls * (prompt + max(answer, reserved_output_tokens))
+        calls, prompt, answer = _decision_call_shape(
+            model, context_manifest, tokens_per_char, reserved_output_tokens
+        )
+        return calls * (prompt + answer)
+
+    def _decision_cost_bound(
+        self,
+        model: Model,
+        context_manifest: ContextManifest,
+        tokens_per_char: float | None,
+        reserved_output_tokens: int,
+    ) -> Decimal | None:
+        """Return a decision's worst-case dollar cost under a cost limit.
+
+        COD-86: the same call shape as the token bound, priced at the model's
+        rate card with no cache hits. ``None`` without a cost limit, so other
+        journals are unchanged, and ``None`` with a limit but no rate card, so
+        the ledger refuses the call instead of guessing.
+        """
+        if self._state.task.budgets.cost is None:
+            return None
+        rate_card = getattr(model, "rate_card", None)
+        if not isinstance(rate_card, RateCard):
+            return None
+        calls, prompt, answer = _decision_call_shape(
+            model, context_manifest, tokens_per_char, reserved_output_tokens
+        )
+        return calls * rate_card.worst_case(prompt, answer)
 
     def _supervisor_token_bound(
         self, visible: str, events: tuple[Event, ...]
@@ -1012,6 +1077,30 @@ class Session:
         """Return a supervisor consult's worst-case billed tokens, if limited."""
         if self._state.task.budgets.tokens is None:
             return None
+        prompt, answer = self._supervisor_call_shape(visible, events)
+        return prompt + answer
+
+    def _supervisor_cost_bound(
+        self, visible: str, events: tuple[Event, ...]
+    ) -> Decimal | None:
+        """Return a supervisor consult's worst-case dollar cost, if limited."""
+        if self._state.task.budgets.cost is None:
+            return None
+        capability = self._supervision
+        rate_card = (
+            getattr(capability.supervisor, "rate_card", None)
+            if capability is not None
+            else None
+        )
+        if not isinstance(rate_card, RateCard):
+            return None
+        prompt, answer = self._supervisor_call_shape(visible, events)
+        return rate_card.worst_case(prompt, answer)
+
+    def _supervisor_call_shape(
+        self, visible: str, events: tuple[Event, ...]
+    ) -> tuple[int, int]:
+        """Return a consult's estimated prompt tokens and largest answer."""
         tokens_per_char = _observed_tokens_per_char(events)
         capability = self._supervision
         answer = (
@@ -1021,11 +1110,10 @@ class Session:
         )
         if not isinstance(answer, int) or isinstance(answer, bool):
             answer = RESERVED_OUTPUT_TOKENS
-        return (
-            estimate_serialized_tokens(visible, tokens_per_char)
-            + estimate_serialized_tokens(SUPERVISOR_SYSTEM_PROMPT, tokens_per_char)
-            + answer
-        )
+        prompt = estimate_serialized_tokens(
+            visible, tokens_per_char
+        ) + estimate_serialized_tokens(SUPERVISOR_SYSTEM_PROMPT, tokens_per_char)
+        return prompt, answer
 
     def _finalize_request(
         self,
@@ -2121,6 +2209,7 @@ class Session:
             objective_version=self._state.task.objective_version,
             model_calls=1,
             tokens=self._supervisor_token_bound(visible, events),
+            cost=self._supervisor_cost_bound(visible, events),
         )
         try:
             intended = intend_model_call(
@@ -2514,7 +2603,12 @@ class Session:
             operation_id=proposal_id,
             objective_version=session_state.task.objective_version,
             actions=1,
-            cost=reservation_cost,
+            cost=(
+                Decimal(0)
+                if reservation_cost is None
+                and session_state.task.budgets.cost is not None
+                else reservation_cost
+            ),
         )
         intended = intend_action(
             session_state,
@@ -2659,6 +2753,7 @@ class Session:
             operation_id=request.request_id,
             objective_version=request.objective_version,
             evaluations=1,
+            cost=Decimal(0) if session_state.task.budgets.cost is not None else None,
         )
         pending = intend_evaluation(
             session_state,
@@ -3883,6 +3978,25 @@ class Session:
             },
         )
         return measured.data
+
+
+def _decision_call_shape(
+    model: Model,
+    context_manifest: ContextManifest,
+    tokens_per_char: float | None,
+    reserved_output_tokens: int,
+) -> tuple[int, int, int]:
+    """Return a decision's most calls, prompt estimate and largest answer."""
+    calls = getattr(model, "max_calls_per_decision", None)
+    if not isinstance(calls, int) or isinstance(calls, bool) or calls < 1:
+        calls = _model_call_bound(model)
+    answer = getattr(model, "max_output_tokens", None)
+    if not isinstance(answer, int) or isinstance(answer, bool):
+        answer = reserved_output_tokens
+    prompt = (
+        context_manifest.estimated_input_tokens or 0
+    ) + estimate_serialized_tokens(SYSTEM_PROMPT, tokens_per_char)
+    return calls, prompt, max(answer, reserved_output_tokens)
 
 
 def _model_call_bound(model: Model) -> int:
