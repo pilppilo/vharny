@@ -8,8 +8,11 @@ authoritative.
 
 from __future__ import annotations
 
+import json
+from collections.abc import Mapping
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
+from pathlib import Path
 
 from .errors import ContractError
 
@@ -82,3 +85,72 @@ class RateCard:
         cost = self.cost(input_tokens, output_tokens)
         assert cost is not None
         return cost
+
+    def to_payload(self) -> dict[str, str]:
+        """Return the card as strings, with unset optional fields left out."""
+        payload = {
+            "input_per_million": str(self.input_per_million),
+            "output_per_million": str(self.output_per_million),
+        }
+        if self.cached_input_per_million is not None:
+            payload["cached_input_per_million"] = str(self.cached_input_per_million)
+        if self.label:
+            payload["label"] = self.label
+        return payload
+
+    @classmethod
+    def from_payload(cls, value: Mapping[str, object]) -> RateCard:
+        """Decode a card, refusing unknown keys and malformed rates."""
+        unknown = set(value) - _PAYLOAD_KEYS
+        if unknown:
+            raise ContractError(f"rate card has unknown keys: {sorted(unknown)}")
+        for key in ("input_per_million", "output_per_million"):
+            if key not in value:
+                raise ContractError(f"rate card requires {key}")
+        label = value.get("label", "")
+        if not isinstance(label, str):
+            raise ContractError("rate card label must be a string")
+        cached = value.get("cached_input_per_million")
+        return cls(
+            input_per_million=_decimal(value["input_per_million"], "input rate"),
+            output_per_million=_decimal(value["output_per_million"], "output rate"),
+            cached_input_per_million=(
+                None if cached is None else _decimal(cached, "cached input rate")
+            ),
+            label=label,
+        )
+
+
+_PAYLOAD_KEYS = frozenset(
+    {"input_per_million", "output_per_million", "cached_input_per_million", "label"}
+)
+
+
+def _decimal(value: object, name: str) -> Decimal:
+    """Parse a rate from a string or a number without going through a float."""
+    if isinstance(value, bool) or not isinstance(value, (str, int, Decimal)):
+        raise ContractError(f"{name} must be a decimal string or number")
+    try:
+        return Decimal(value) if not isinstance(value, Decimal) else value
+    except InvalidOperation as exc:
+        raise ContractError(f"{name} is not a decimal number") from exc
+
+
+def load_rate_card(path: str | Path) -> RateCard:
+    """Read a rate card from a JSON file.
+
+    Numbers are parsed as decimals, never floats, so 0.006 stays 0.006. The
+    file is read once at launch and its contents are recorded in the run
+    manifest, so a reopened run prices at the same rates.
+    """
+    try:
+        text = Path(path).read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ContractError(f"cannot read rate card {str(path)!r}: {exc}") from exc
+    try:
+        data = json.loads(text, parse_float=Decimal)
+    except json.JSONDecodeError as exc:
+        raise ContractError(f"rate card is not valid JSON: {exc}") from exc
+    if not isinstance(data, dict):
+        raise ContractError("rate card must be a JSON object")
+    return RateCard.from_payload(data)

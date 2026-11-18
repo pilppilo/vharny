@@ -110,15 +110,43 @@ budgets' `tokens` and `wall_clock_seconds`, and a reservation's `tokens`.
 Journals, projections and retained evidence recorded before this change keep
 their digests. The codec supports this for any field marked `OMIT_IF_NONE`.
 
+### 5. A cost limit
+
+`--max-cost USD` limits the dollars of provider spend for the whole run. It
+needs `--rate-card FILE`: a JSON object with `input_per_million`,
+`output_per_million`, optional `cached_input_per_million` and `label`, in
+dollars per million tokens. Rates are operator-supplied, never discovered:
+provider list prices can be promotional and the provider's billing record stays
+authoritative. The card's contents, not its path, are recorded in the run
+manifest and the run identity, each only when set, so a reopened run prices at
+the same rates.
+
+- **Pricing a call.** Uncached prompt tokens at the input rate, cached prompt
+  tokens at the cached rate, answer tokens (reasoning included) at the output
+  rate. The cache split comes from `prompt_tokens_details.cached_tokens`. If any
+  call of a decision does not report it, or reports more than the prompt, every
+  prompt token is priced as uncached, an upper bound.
+- **Reserving.** A decision reserves its worst case as in §3, priced with no
+  cache hits. A supervisor consult reserves its prompt estimate plus its answer
+  limit. A call is refused with `cost` if the reservation does not fit.
+- **Settling.** A call whose cost could not be priced keeps its reserved worst
+  case, as unknown token usage keeps its reservation.
+- **Non-model operations.** The ledger refuses any reservation while any
+  settled operation has an unknown cost. Actions and evaluations incur no
+  provider spend, so when a cost limit is set they reserve and settle at zero.
+  This applies only when `limits.cost` is set, so journals without a cost limit
+  replay as before.
+
+Provider prices change. Use a token or time limit as the primary bound when the
+rate is promotional; the dollar limit is only as good as the card.
+
 ## Not decided here
 
-- **Cost:** `BudgetLimits.cost` still has no CLI flag, because provider prices
-  are not recorded anywhere yet.
 - **Remaining tokens and time:** the model's remaining budgets don't show
   them yet, so there is no warning at 80%.
 - **Cancelling an in-flight call** when the deadline passes.
 
-All three stay open in COD-86.
+The two that remain stay open in COD-86; cost is decided in §5.
 
 ## Dependents updated in the same change
 

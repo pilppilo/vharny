@@ -11,11 +11,13 @@ from __future__ import annotations
 import math
 import re
 from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
 from typing import Mapping
 
 from ..generators.openai_compat import RESPONSE_FORMAT_JSON_OBJECT
 from .errors import ContractError
 from .models import EvaluationMode
+from .pricing import RateCard
 
 DEFAULT_CHECK_TIMEOUT_SECONDS = 600.0
 DEFAULT_PROVIDER_TIMEOUT_SECONDS = 120.0
@@ -128,6 +130,32 @@ def _optional_positive_int(value: Mapping[str, object], key: str) -> int | None:
     return item
 
 
+def _optional_positive_decimal(value: Mapping[str, object], key: str) -> Decimal | None:
+    """A persisted positive decimal, stored as a string, absent when unset."""
+    item = value.get(key)
+    if item is None:
+        return None
+    if isinstance(item, bool) or not isinstance(item, str):
+        raise ContractError(f"run manifest {key} must be a decimal string")
+    try:
+        parsed = Decimal(item)
+    except InvalidOperation as exc:
+        raise ContractError(f"run manifest {key} must be a decimal string") from exc
+    if not parsed.is_finite() or parsed <= 0:
+        raise ContractError(f"run manifest {key} must be a positive decimal")
+    return parsed
+
+
+def _optional_rate_card(value: Mapping[str, object]) -> RateCard | None:
+    """A persisted rate card, absent when unset."""
+    item = value.get("rate_card")
+    if item is None:
+        return None
+    if not isinstance(item, Mapping):
+        raise ContractError("run manifest rate_card must be an object")
+    return RateCard.from_payload(item)
+
+
 def _validate_provider_options(settings: RunSettings) -> None:
     """Check the optional provider settings: streaming and answer-limit growth."""
     if not isinstance(settings.provider_stream, bool):
@@ -151,6 +179,17 @@ def _validate_run_limits(settings: RunSettings) -> None:
             not isinstance(value, int) or isinstance(value, bool) or value < 1
         ):
             raise ContractError(f"{name} must be a positive integer")
+    if settings.max_cost is not None:
+        if (
+            not isinstance(settings.max_cost, Decimal)
+            or not settings.max_cost.is_finite()
+            or settings.max_cost <= 0
+        ):
+            raise ContractError("max_cost must be a positive decimal")
+        if settings.rate_card is None:
+            raise ContractError("max_cost requires a rate card to price calls")
+    if settings.rate_card is not None and not isinstance(settings.rate_card, RateCard):
+        raise ContractError("rate_card must be a RateCard")
 
 
 def _validate_arc(settings: RunSettings) -> None:
@@ -276,6 +315,11 @@ class RunSettings:
     max_wall_clock_seconds: int | None = None
     #: COD-86: billed provider tokens (prompt plus answer) for the whole run.
     max_tokens: int | None = None
+    #: COD-86: dollars of provider spend for the whole run, priced at ``rate_card``.
+    max_cost: Decimal | None = None
+    #: COD-86: operator-supplied rates; recorded in the manifest so a reopened
+    #: run prices at the same rates. Prices each call even without a limit.
+    rate_card: RateCard | None = None
 
     def __post_init__(self) -> None:
         if not self.objective.strip():
@@ -385,6 +429,10 @@ class RunSettings:
             payload["max_wall_clock_seconds"] = self.max_wall_clock_seconds
         if self.max_tokens is not None:
             payload["max_tokens"] = self.max_tokens
+        if self.max_cost is not None:
+            payload["max_cost"] = str(self.max_cost)
+        if self.rate_card is not None:
+            payload["rate_card"] = self.rate_card.to_payload()
         if self.provider_stream:
             payload["provider_stream"] = True
         if self.initial_output_tokens is not None:
@@ -427,6 +475,8 @@ class RunSettings:
                 value, "max_wall_clock_seconds"
             ),
             max_tokens=_optional_positive_int(value, "max_tokens"),
+            max_cost=_optional_positive_decimal(value, "max_cost"),
+            rate_card=_optional_rate_card(value),
             token_budget=_required_int(value, "token_budget"),
             max_output_tokens=_required_int(value, "max_output_tokens"),
             repair_budget=_required_int(value, "repair_budget"),

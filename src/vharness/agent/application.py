@@ -374,6 +374,7 @@ def build_model(settings: RunSettings) -> tuple[Model, Callable[[], None] | None
         model_id=endpoint.model,
         repair_budget=settings.repair_budget,
         initial_output_tokens=settings.initial_output_tokens,
+        rate_card=settings.rate_card,
     )
     return model, generator.close
 
@@ -407,7 +408,9 @@ def build_supervisor(
         extra_headers=provider_extra_headers() or None,
         stream=settings.provider_stream,
     )
-    supervisor = ModelSupervisor(generator, model_id=model_name)
+    supervisor = ModelSupervisor(
+        generator, model_id=model_name, rate_card=settings.rate_card
+    )
     # ADR-0023: board games get board-move labels; every other run keeps p6.
     capability = (
         SupervisionCapability(supervisor, policy=monitor_policy_p7())
@@ -448,6 +451,11 @@ def run_identity(
         safe["max_wall_clock_seconds"] = settings.max_wall_clock_seconds
     if settings.max_tokens is not None:
         safe["max_tokens"] = settings.max_tokens
+    if settings.max_cost is not None:
+        safe["max_cost"] = str(settings.max_cost)
+    if settings.rate_card is not None:
+        # Set-only, like the limits above, so other run identities are unchanged.
+        safe["rate_card"] = settings.rate_card.to_payload()
     if settings.initial_output_tokens is not None:
         # COD-88: growth changes what each call asks for; set-only, as above.
         safe["initial_output_tokens"] = settings.initial_output_tokens
@@ -1039,6 +1047,7 @@ def _create_session(
             evaluations=settings.max_evaluations,
             wall_clock_seconds=settings.max_wall_clock_seconds,
             tokens=settings.max_tokens,
+            cost=settings.max_cost,
         ),
         environment_id=environment.describe().environment_id,
         evaluation_contract_id=dependencies.evaluation_contract_id,

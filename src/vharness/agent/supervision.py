@@ -66,6 +66,7 @@ from .memory import (
     supported_progress_digests,
 )
 from .models import ArtifactRef, Event, JsonValue, UsageMeasurement
+from .pricing import RateCard
 from .transitions import SessionState
 
 # The supervision module carries the monitor, the advisory supervisor
@@ -1339,11 +1340,19 @@ class ModelSupervisor:
     # The supervisor exposes one protocol method by design.
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, generator: "TextGenerator", *, model_id: str) -> None:
+    def __init__(
+        self,
+        generator: "TextGenerator",
+        *,
+        model_id: str,
+        rate_card: RateCard | None = None,
+    ) -> None:
         if not model_id.strip():
             raise ContractError("supervisor model id must be non-empty")
         self._generator = generator
         self._model_id = model_id
+        #: COD-86: prices each consult when the run has a cost limit.
+        self.rate_card = rate_card
 
     @property
     def max_output_tokens(self) -> int | None:
@@ -1358,16 +1367,26 @@ class ModelSupervisor:
         generation = self._generator.generate(SUPERVISOR_SYSTEM_PROMPT, prompt)
         duration_ms = max(0, int(round((time.monotonic() - started) * 1000)))
         failed = bool(getattr(generation, "error", None))
+        input_tokens = _generation_token(
+            getattr(generation, "prompt_tokens", None), unknown_zero=failed
+        )
+        output_tokens = _generation_token(
+            getattr(generation, "completion_tokens", None), unknown_zero=failed
+        )
+        cached = _optional_token(getattr(generation, "cached_prompt_tokens", None))
+        if cached is not None and (input_tokens is None or cached > input_tokens):
+            cached = None
         usage = UsageMeasurement(
             measurement_id=f"supervisor-usage-{uuid4().hex[:12]}",
             model_calls=1,
-            input_tokens=_generation_token(
-                getattr(generation, "prompt_tokens", None), unknown_zero=failed
-            ),
-            output_tokens=_generation_token(
-                getattr(generation, "completion_tokens", None), unknown_zero=failed
-            ),
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
             duration_ms=duration_ms,
+            cost=(
+                None
+                if self.rate_card is None
+                else self.rate_card.cost(input_tokens, output_tokens, cached)
+            ),
         )
         # Import locally to avoid the kernel's module-level guidance import
         # forming a cycle with this supervisor module.

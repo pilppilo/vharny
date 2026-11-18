@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from collections.abc import Mapping
 from types import SimpleNamespace
+from typing import Any, cast
 
 import pytest
 
@@ -65,6 +67,9 @@ def test_bad_token_counts_are_refused() -> None:
         LONGCAT.cost(10, 0, cached_input_tokens=11)
 
 
+_REQUEST = cast(Any, SimpleNamespace(request_id="req-1"))
+
+
 class _Generator:
     def generate(self, system: str, prompt: str):  # pragma: no cover - unused
         raise AssertionError("not called")
@@ -88,8 +93,7 @@ def _attempts(
 
 def test_model_prices_usage_across_all_attempts() -> None:
     model = CompatibleModel(_Generator(), rate_card=LONGCAT)
-    request = SimpleNamespace(request_id="req-1")
-    usage = model._usage(request, _attempts((1000, 200), (3000, 400)))  # type: ignore[arg-type]
+    usage = model._usage(_REQUEST, _attempts((1000, 200), (3000, 400)))
     assert usage.input_tokens == 4000
     assert usage.output_tokens == 600
     assert usage.cost == Decimal("0.00192")
@@ -97,23 +101,20 @@ def test_model_prices_usage_across_all_attempts() -> None:
 
 def test_model_without_a_rate_card_leaves_cost_unknown() -> None:
     model = CompatibleModel(_Generator())
-    request = SimpleNamespace(request_id="req-1")
-    usage = model._usage(request, _attempts((1000, 200)))  # type: ignore[arg-type]
+    usage = model._usage(_REQUEST, _attempts((1000, 200)))
     assert usage.cost is None
 
 
 def test_one_unreported_attempt_keeps_cost_unknown() -> None:
     model = CompatibleModel(_Generator(), rate_card=LONGCAT)
-    request = SimpleNamespace(request_id="req-1")
-    usage = model._usage(request, _attempts((1000, 200), (None, None)))  # type: ignore[arg-type]
+    usage = model._usage(_REQUEST, _attempts((1000, 200), (None, None)))
     assert usage.cost is None
 
 
 def test_cached_prompt_tokens_use_the_cached_rate() -> None:
     model = CompatibleModel(_Generator(), rate_card=LONGCAT)
-    request = SimpleNamespace(request_id="req-1")
-    usage = model._usage(  # type: ignore[arg-type]
-        request, _attempts((1000, 200), (3000, 400), cached=(800, 2400))
+    usage = model._usage(
+        _REQUEST, _attempts((1000, 200), (3000, 400), cached=(800, 2400))
     )
     # 800 uncached + 3200 cached input, 600 output.
     assert usage.cost == Decimal("0.0009792")
@@ -121,24 +122,24 @@ def test_cached_prompt_tokens_use_the_cached_rate() -> None:
 
 def test_a_partial_cache_report_prices_all_input_uncached() -> None:
     model = CompatibleModel(_Generator(), rate_card=LONGCAT)
-    request = SimpleNamespace(request_id="req-1")
-    usage = model._usage(  # type: ignore[arg-type]
-        request, _attempts((1000, 200), (3000, 400), cached=(800, None))
+    usage = model._usage(
+        _REQUEST, _attempts((1000, 200), (3000, 400), cached=(800, None))
     )
     assert usage.cost == Decimal("0.00192")
 
 
 def test_an_impossible_cache_report_is_not_trusted() -> None:
     model = CompatibleModel(_Generator(), rate_card=LONGCAT)
-    request = SimpleNamespace(request_id="req-1")
-    usage = model._usage(request, _attempts((100, 10), cached=(500,)))  # type: ignore[arg-type]
+    usage = model._usage(_REQUEST, _attempts((100, 10), cached=(500,)))
     assert usage.cost == LONGCAT.cost(100, 10)
 
 
 def test_unset_cached_tokens_stay_out_of_the_encoding() -> None:
     plain = to_json_value(ModelAttempt(output="", finish_reason="stop"))
+    assert isinstance(plain, Mapping)
     assert "cached_prompt_tokens" not in plain
     cached = to_json_value(
         ModelAttempt(output="", finish_reason="stop", cached_prompt_tokens=0)
     )
+    assert isinstance(cached, Mapping)
     assert cached["cached_prompt_tokens"] == 0
