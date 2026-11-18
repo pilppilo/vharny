@@ -6,7 +6,7 @@ status: accepted
 owners: []
 created: 2026-09-04
 updated: 2026-11-17
-depends_on: [ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0019, ADR-0020, ADR-0021, ADR-0022]
+depends_on: [ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0019, ADR-0020, ADR-0021, ADR-0022, ADR-0023]
 supersedes: []
 related: [ADR-0019, ADR-0008, ROAD-0001, BENCH-0001, SCHEM-0001, PHASE-0001, PHASE-0002, PHASE-0003, PHASE-0004]
 ---
@@ -364,7 +364,11 @@ normalized digest of the content of evidence the agent received — tool output,
 receipt payload, or observation — computed independently of the action that
 produced it (ADR-0008). ADR-0008 additionally makes these four families a
 mandatory candidate menu: every supervisor-policy experiment must carry a
-candidate or record a justified exclusion for each family.
+candidate or record a justified exclusion for each family. On a board game a
+repeated action is not by itself a repeat: under `monitor.p7.v1` (ADR-0023,
+ARC-AGI-3 runs only) each move is labelled forward, return or weak by how far
+it moved the board, and only returns to an earlier board and weak moves count
+as repeats.
 
 A plateau alone is not failure: the paper's trajectory shows discrete jumps,
 long searches between commits, and diminishing returns. Repetition and absence

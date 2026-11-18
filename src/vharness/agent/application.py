@@ -77,7 +77,12 @@ from .ports import (
 from .run_settings import RunManifestRecord, RunSettings, TransportRecoverySettings
 from .session import DecisionHandle, Session
 from .session_state import command_from_payload
-from .supervision import ModelSupervisor, SupervisionCapability, SupervisorResponse
+from .supervision import (
+    ModelSupervisor,
+    SupervisionCapability,
+    SupervisorResponse,
+    monitor_policy_p7,
+)
 
 MANIFEST_NAME = "run.json"
 #: ADR-0022: consecutive decisions that may end ``output-exhausted`` before the
@@ -396,7 +401,13 @@ def build_supervisor(
         extra_headers=provider_extra_headers() or None,
         stream=settings.provider_stream,
     )
-    capability = SupervisionCapability(ModelSupervisor(generator, model_id=model_name))
+    supervisor = ModelSupervisor(generator, model_id=model_name)
+    # ADR-0023: board games get board-move labels; every other run keeps p6.
+    capability = (
+        SupervisionCapability(supervisor, policy=monitor_policy_p7())
+        if settings.arc is not None
+        else SupervisionCapability(supervisor)
+    )
     return capability, generator.close
 
 
