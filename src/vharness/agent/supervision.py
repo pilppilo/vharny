@@ -1360,13 +1360,10 @@ class ModelSupervisor:
         limit = getattr(self._generator, "max_tokens", None)
         return limit if isinstance(limit, int) and not isinstance(limit, bool) else None
 
-    def advise(self, digest: SupervisorDigest) -> SupervisorResponse:
-        """Run one advisory provider call for the given trajectory digest."""
-        prompt = render_digest(digest)
-        started = time.monotonic()
-        generation = self._generator.generate(SUPERVISOR_SYSTEM_PROMPT, prompt)
-        duration_ms = max(0, int(round((time.monotonic() - started) * 1000)))
-        failed = bool(getattr(generation, "error", None))
+    def _usage(
+        self, generation: object, duration_ms: int, *, failed: bool
+    ) -> UsageMeasurement:
+        """Measure one consult, priced at the rate card when there is one."""
         input_tokens = _generation_token(
             getattr(generation, "prompt_tokens", None), unknown_zero=failed
         )
@@ -1376,7 +1373,7 @@ class ModelSupervisor:
         cached = _optional_token(getattr(generation, "cached_prompt_tokens", None))
         if cached is not None and (input_tokens is None or cached > input_tokens):
             cached = None
-        usage = UsageMeasurement(
+        return UsageMeasurement(
             measurement_id=f"supervisor-usage-{uuid4().hex[:12]}",
             model_calls=1,
             input_tokens=input_tokens,
@@ -1388,6 +1385,15 @@ class ModelSupervisor:
                 else self.rate_card.cost(input_tokens, output_tokens, cached)
             ),
         )
+
+    def advise(self, digest: SupervisorDigest) -> SupervisorResponse:
+        """Run one advisory provider call for the given trajectory digest."""
+        prompt = render_digest(digest)
+        started = time.monotonic()
+        generation = self._generator.generate(SUPERVISOR_SYSTEM_PROMPT, prompt)
+        duration_ms = max(0, int(round((time.monotonic() - started) * 1000)))
+        failed = bool(getattr(generation, "error", None))
+        usage = self._usage(generation, duration_ms, failed=failed)
         # Import locally to avoid the kernel's module-level guidance import
         # forming a cycle with this supervisor module.
         from .kernel import ModelCallError  # pylint: disable=import-outside-toplevel

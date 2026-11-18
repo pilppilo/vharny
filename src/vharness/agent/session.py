@@ -31,7 +31,7 @@ from .evidence import (
     counters,
     manifest,
 )
-from .journal import SearchFilter, SqliteJournal
+from .journal import SearchFilter, SearchHit, SqliteJournal
 from .models import (
     ActionProposal,
     ArtifactRef,
@@ -149,6 +149,7 @@ from .memory import (
     protected_digests,
     remaining_budgets,
     select_evictions,
+    WorkingMemory,
     working_memory,
 )
 from .operator import OperatorView, build_operator_view
@@ -860,14 +861,7 @@ class Session:
         )
         latest_receipt = latest_receipt_payload(events)
         receipt_content = self._receipt_content_map(events)
-        query = f"{working.task.objective} {working.current_plan}"
-        if working.operator_direction:
-            query = f"{query} {working.operator_direction}"
-        hits = self._journal.search(
-            self._session_id,
-            query,
-            filters=SearchFilter(kinds=RETRIEVAL_EVENT_KINDS),
-        )
+        hits = self._retrieval_hits(working)
 
         def make_request(context: ContextBundle) -> DecisionInput:
             return DecisionInput(
@@ -985,6 +979,17 @@ class Session:
             ),
         )
         return DecisionHandle(request, reservation, context_manifest, visible_input)
+
+    def _retrieval_hits(self, working: WorkingMemory) -> tuple[SearchHit, ...]:
+        """Search the journal for context relevant to the current plan."""
+        query = f"{working.task.objective} {working.current_plan}"
+        if working.operator_direction:
+            query = f"{query} {working.operator_direction}"
+        return self._journal.search(
+            self._session_id,
+            query,
+            filters=SearchFilter(kinds=RETRIEVAL_EVENT_KINDS),
+        )
 
     def _arc_decision_budgets(
         self, remaining: Mapping[str, JsonValue], events: tuple[Event, ...]

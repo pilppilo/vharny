@@ -1237,7 +1237,7 @@ def bounded_model_duration(value: object) -> int | None:
 class CompatibleModel:
     """Adapt a text generator. Every transport and repair call is counted."""
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         generator: TextGenerator,
         *,
