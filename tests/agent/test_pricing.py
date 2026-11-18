@@ -8,6 +8,7 @@ from types import SimpleNamespace
 import pytest
 
 from vharness.agent import CompatibleModel
+from vharness.agent.codec import to_json_value
 from vharness.agent.errors import ContractError
 from vharness.agent.kernel import ModelAttempt
 from vharness.agent.pricing import RateCard
@@ -69,12 +70,19 @@ class _Generator:
         raise AssertionError("not called")
 
 
-def _attempts(*pairs: tuple[int | None, int | None]) -> list[ModelAttempt]:
+def _attempts(
+    *pairs: tuple[int | None, int | None], cached: tuple[int | None, ...] = ()
+) -> list[ModelAttempt]:
+    cache = cached or (None,) * len(pairs)
     return [
         ModelAttempt(
-            output="", finish_reason="stop", prompt_tokens=p, completion_tokens=c
+            output="",
+            finish_reason="stop",
+            prompt_tokens=p,
+            completion_tokens=c,
+            cached_prompt_tokens=k,
         )
-        for p, c in pairs
+        for (p, c), k in zip(pairs, cache)
     ]
 
 
@@ -99,3 +107,38 @@ def test_one_unreported_attempt_keeps_cost_unknown() -> None:
     request = SimpleNamespace(request_id="req-1")
     usage = model._usage(request, _attempts((1000, 200), (None, None)))  # type: ignore[arg-type]
     assert usage.cost is None
+
+
+def test_cached_prompt_tokens_use_the_cached_rate() -> None:
+    model = CompatibleModel(_Generator(), rate_card=LONGCAT)
+    request = SimpleNamespace(request_id="req-1")
+    usage = model._usage(  # type: ignore[arg-type]
+        request, _attempts((1000, 200), (3000, 400), cached=(800, 2400))
+    )
+    # 800 uncached + 3200 cached input, 600 output.
+    assert usage.cost == Decimal("0.0009792")
+
+
+def test_a_partial_cache_report_prices_all_input_uncached() -> None:
+    model = CompatibleModel(_Generator(), rate_card=LONGCAT)
+    request = SimpleNamespace(request_id="req-1")
+    usage = model._usage(  # type: ignore[arg-type]
+        request, _attempts((1000, 200), (3000, 400), cached=(800, None))
+    )
+    assert usage.cost == Decimal("0.00192")
+
+
+def test_an_impossible_cache_report_is_not_trusted() -> None:
+    model = CompatibleModel(_Generator(), rate_card=LONGCAT)
+    request = SimpleNamespace(request_id="req-1")
+    usage = model._usage(request, _attempts((100, 10), cached=(500,)))  # type: ignore[arg-type]
+    assert usage.cost == LONGCAT.cost(100, 10)
+
+
+def test_unset_cached_tokens_stay_out_of_the_encoding() -> None:
+    plain = to_json_value(ModelAttempt(output="", finish_reason="stop"))
+    assert "cached_prompt_tokens" not in plain
+    cached = to_json_value(
+        ModelAttempt(output="", finish_reason="stop", cached_prompt_tokens=0)
+    )
+    assert cached["cached_prompt_tokens"] == 0

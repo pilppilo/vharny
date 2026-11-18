@@ -46,6 +46,7 @@ USAGE = {
     "completion_tokens": 9,
     "total_tokens": 20,
     "completion_tokens_details": {"reasoning_tokens": 7},
+    "prompt_tokens_details": {"cached_tokens": 4},
 }
 
 
@@ -154,6 +155,7 @@ def test_streamed_reply_is_collected_with_its_usage(stub):
     assert generation.finish_reason == "stop"
     assert (generation.prompt_tokens, generation.completion_tokens) == (11, 9)
     assert generation.reasoning_tokens == 7
+    assert generation.cached_prompt_tokens == 4
     request = behaviour.requests[0]
     assert request["stream"] is True
     assert request["stream_options"] == {"include_usage": True}

@@ -89,6 +89,15 @@ def _reasoning_tokens(usage: object) -> int | None:
     return value
 
 
+def _cached_prompt_tokens(usage: object) -> int | None:
+    """Return provider-reported cached prompt tokens, or ``None`` if unreported."""
+    details = getattr(usage, "prompt_tokens_details", None)
+    value = getattr(details, "cached_tokens", None) if details is not None else None
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        return None
+    return value
+
+
 class _FormatKwargs(TypedDict, total=False):
     response_format: ResponseFormat
 
@@ -385,6 +394,7 @@ class OpenAICompatible(Generator):
         total_prompt_tokens = 0
         total_completion_tokens = 0
         total_reasoning_tokens: int | None = 0
+        total_cached_prompt_tokens: int | None = 0
         total_latency = 0.0
         for attempt in range(total_attempts):
             started = time.perf_counter()
@@ -420,6 +430,11 @@ class OpenAICompatible(Generator):
                 total_reasoning_tokens = None
             elif total_reasoning_tokens is not None:
                 total_reasoning_tokens += reasoning_tokens
+            cached_prompt_tokens = _cached_prompt_tokens(usage)
+            if cached_prompt_tokens is None:
+                total_cached_prompt_tokens = None
+            elif total_cached_prompt_tokens is not None:
+                total_cached_prompt_tokens += cached_prompt_tokens
             with self._stats_lock:
                 self.stats["latencies"].append(latency)
                 if usage is not None:
@@ -449,6 +464,7 @@ class OpenAICompatible(Generator):
                 prompt_tokens=total_prompt_tokens,
                 completion_tokens=total_completion_tokens,
                 reasoning_tokens=total_reasoning_tokens,
+                cached_prompt_tokens=total_cached_prompt_tokens,
             )
 
         with self._stats_lock:
