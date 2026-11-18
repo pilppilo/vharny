@@ -40,6 +40,7 @@ from .models import (
     UsageMeasurement,
     frozen_mapping,
 )
+from .pricing import RateCard
 from .supervision import GuidanceDecision
 
 _MISSING = object()
@@ -1234,13 +1235,19 @@ class CompatibleModel:
         repair_budget: int = 1,
         reserved_output_tokens: int | None = None,
         initial_output_tokens: int | None = None,
+        rate_card: RateCard | None = None,
     ) -> None:
         """Adapt ``generator``; ``initial_output_tokens`` turns on growth.
 
         COD-88: with ``initial_output_tokens`` each decision starts at that
         answer limit, which is also what the context reserves, and doubles it
         on an exhausted reply up to the generator's ``max_tokens``.
+
+        COD-86: with a ``rate_card`` each measurement carries a dollar cost
+        priced from its reported tokens. Without one cost stays unknown, so
+        existing journals and identities are unchanged.
         """
+        self.rate_card = rate_card
         if repair_budget < 0:
             raise ContractError("repair_budget must not be negative")
         generator_output_tokens = getattr(generator, "max_tokens", _MISSING)
@@ -1614,15 +1621,25 @@ class CompatibleModel:
     def _usage(
         self, request: DecisionInput, attempts: list[ModelAttempt]
     ) -> UsageMeasurement:
+        input_tokens = _optional_attempt_total(
+            attempts, lambda item: item.prompt_tokens
+        )
+        output_tokens = _optional_attempt_total(
+            attempts, lambda item: item.completion_tokens
+        )
+        # The provider's cache split is not parsed yet, so prompt tokens are
+        # priced as uncached: an upper bound while the cached rate is lower.
+        cost = (
+            self.rate_card.cost(input_tokens, output_tokens)
+            if self.rate_card is not None
+            else None
+        )
         return UsageMeasurement(
             measurement_id=f"{request.request_id}-usage",
             model_calls=len(attempts),
-            input_tokens=_optional_attempt_total(
-                attempts, lambda item: item.prompt_tokens
-            ),
-            output_tokens=_optional_attempt_total(
-                attempts, lambda item: item.completion_tokens
-            ),
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cost=cost,
             duration_ms=_attempts_duration(attempts),
         )
 
