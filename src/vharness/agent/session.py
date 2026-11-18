@@ -19,7 +19,7 @@ from time import perf_counter_ns
 from typing import Callable, NoReturn
 from uuid import uuid4
 
-from vharness.core import RETRYABLE_FAILURE_CLASSES, VERSION
+from vharness.core import RETRYABLE_FAILURE_CLASSES, VERSION, ModelFailureClass
 
 from .artifacts import ArtifactStore
 from .codec import canonical_json, parse_json, parse_json_object, to_json_value
@@ -307,6 +307,8 @@ class TransportRecoveryWindow:
 
     retryable_failures: int
     failed_calls: int
+    #: ADR-0022: decisions in the window that ended ``output-exhausted``.
+    exhausted_decisions: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -1209,6 +1211,10 @@ class Session:
             if event.kind == "model_malformed":
                 window = replace(window, failed_calls=window.failed_calls + 1)
                 failure_class = event.payload.get("failure_class")
+                if failure_class == ModelFailureClass.OUTPUT_EXHAUSTED.value:
+                    window = replace(
+                        window, exhausted_decisions=window.exhausted_decisions + 1
+                    )
                 if (
                     leading
                     and isinstance(failure_class, str)

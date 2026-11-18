@@ -26,6 +26,7 @@ from vharness.agent.kernel import (
     normalize_failure_class,
 )
 from vharness.agent.models import PROVIDER_RECOVERY_WAIT, Pause, Resume, Steer
+from vharness.agent.replay import replay
 from vharness.agent.run_settings import TransportRecoverySettings
 from vharness.core import Generation, ModelFailureClass
 
@@ -468,5 +469,76 @@ def test_status_exposes_the_provider_recovery_wait(tmp_path):
         view = app.session.operator_view()
         assert view.wait_reason == PROVIDER_RECOVERY_WAIT
         assert any("RECOVERY waiting" in line for line in view.action_receipt_stream)
+    finally:
+        app.close()
+
+
+# --- ADR-0022: a decision that never answers costs its calls, not the game ---
+
+
+class _PromptRecordingTransport(_ScriptedTransport):
+    """Scripted transport that also keeps every prompt it was sent."""
+
+    def __init__(self, script: tuple[Generation | Exception, ...]) -> None:
+        super().__init__(script)
+        self.prompts: list[str] = []
+
+    def generate(self, system: str, prompt: str) -> Generation:
+        self.prompts.append(prompt)
+        return super().generate(system, prompt)
+
+
+def _ran_out() -> Generation:
+    """A reply that spent its whole answer limit and gave no answer."""
+    return Generation(text="", model="scripted-transport", finish_reason="length")
+
+
+def test_a_decision_that_runs_out_is_recorded_and_the_game_goes_on(tmp_path):
+    # ft09 in the LongCat trial: the first decision never answered.
+    transport = _PromptRecordingTransport((_ran_out(), _lineage_success()))
+    app = _application(tmp_path, "session-ex1", transport)
+    try:
+        assert app.tick() == "decided"
+        failed = _events_of(app, "model_malformed")
+        assert [event.payload["failure_class"] for event in failed] == [
+            "output-exhausted"
+        ]
+        assert app.view().status is SessionStatus.RUNNING
+        assert "provider_recovery_waiting" not in _kinds(app)
+        _drive_until(app, lambda a: bool(_events_of(a, "model_decided")))
+        assert transport.calls == 2
+        # The next request differs, and shows the model its last decision failed.
+        assert transport.prompts[0] != transport.prompts[1]
+        assert "failure_class=output-exhausted" in transport.prompts[1]
+        replay(app.session.events(limit=1000))
+    finally:
+        app.close()
+
+
+def test_three_decisions_in_a_row_that_run_out_end_the_run(tmp_path):
+    transport = _ScriptedTransport((_ran_out(), _ran_out(), _ran_out()))
+    app = _application(tmp_path, "session-ex2", transport)
+    try:
+        assert app.tick() == "decided"
+        assert app.tick() == "decided"
+        with pytest.raises(ModelCallError, match="3 consecutive decisions") as raised:
+            _drive_until(app, lambda a: False, timeout_seconds=5.0)
+        assert raised.value.failure_class == "output-exhausted"
+        assert len(_events_of(app, "model_malformed")) == 3
+        assert transport.calls == 3
+        replay(app.session.events(limit=1000))
+    finally:
+        app.close()
+
+
+def test_an_answered_decision_restarts_the_count(tmp_path):
+    transport = _ScriptedTransport(
+        (_ran_out(), _ran_out(), _lineage_success(), _ran_out(), _lineage_success())
+    )
+    app = _application(tmp_path, "session-ex3", transport)
+    try:
+        _drive_until(app, lambda a: len(_events_of(a, "model_decided")) == 2)
+        assert len(_events_of(app, "model_malformed")) == 3
+        assert app.view().status is SessionStatus.RUNNING
     finally:
         app.close()

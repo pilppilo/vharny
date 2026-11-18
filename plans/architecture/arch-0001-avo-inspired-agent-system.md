@@ -6,7 +6,7 @@ status: accepted
 owners: []
 created: 2026-09-04
 updated: 2026-11-17
-depends_on: [ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0019, ADR-0020, ADR-0021]
+depends_on: [ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0019, ADR-0020, ADR-0021, ADR-0022]
 supersedes: []
 related: [ADR-0019, ADR-0008, ROAD-0001, BENCH-0001, SCHEM-0001, PHASE-0001, PHASE-0002, PHASE-0003, PHASE-0004]
 ---
@@ -438,6 +438,12 @@ same instruction. Growth stops at the maximum, at what the token budget still
 fits, or where the remaining model calls are needed for the repair budget;
 ADR-0017's budgeted re-ask then runs last. Each attempt records the limit it
 asked for, and the provider budget check uses the largest one.
+
+A decision still exhausted after all of that no longer ends the run
+(ADR-0022). The coordinator records it with its attempts and spent calls, the
+model sees it in recent history by its failure class, and the session decides
+again. Three exhausted decisions in a row, counted from the journal and reset
+by any decision that answers, end the run; budgets bound the rest.
 
 Provider transport failures resolve through typed recovery
 outcomes: only explicitly transient connection, timeout, rate-limit, and
