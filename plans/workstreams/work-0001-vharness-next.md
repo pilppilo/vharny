@@ -5427,3 +5427,28 @@ remain append-only.
     it every prompt token is priced as uncached, so cost is overstated.
 - **Suggested next action:** One live LongCat call with a repeated prompt, to
   see whether `prompt_tokens_details.cached_tokens` comes back.
+
+## 2026-11-18 16:30 UTC — Sizing `--max-cost` from the LongCat trial
+
+- **Goal:** Replace "operator's choice" for the campaign's cost limit with a
+  rule derived from recorded usage, and keep the data and reasons.
+- **Work completed:**
+  - `tools/price_recorded_runs.py` prices recorded runs at a rate card.
+  - `campaigns/rate-cards/longcat-2.5-2026-11-18.json`: the confirmed
+    LongCat-2.5 rates. Rate cards are dated and never edited.
+  - `evidence/phase-0004-longcat-trial/cost-sizing.md`: the priced trial and
+    the proposed rule, `--max-cost` per game = $0.15 x action limit + $0.40.
+- **Evidence:** The trial runs cost $0.448 (`ls20`), $0.124 (`ft09`) and
+  $0.254 (`rerun-ls20`). The current order costs $0.025 per game action; 75%
+  to 100% of each run's cost went on calls that ran out or failed. The worst
+  decision cost $0.128. A full-context decision reserves $0.354.
+- **Discoveries affecting later work:**
+  - Output tokens drive cost; prompt tokens are 9% to 33%. The cache split
+    can lower cost by at most about a third.
+  - The model-call limit already caps spend at about $0.059 per call, so the
+    cost limit is a backstop for raised call limits and rate changes.
+- **Open questions:** Sample of 3 runs, 2 games, 24 decisions. Whether
+  LongCat reports `cached_tokens`.
+- **Suggested next action:** Pass `--rate-card` on every run; re-derive the
+  rule from the first campaign games (95th percentile cost per action) and
+  carry it into campaign manifest decision 5 (PR #9).
