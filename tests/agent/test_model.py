@@ -808,9 +808,8 @@ def test_exhausted_action_and_evaluation_budgets_skip_model_and_supervisor(
         ),
     )
 
-    with pytest.raises(
-        TransitionError, match="action and evaluation budgets exhausted"
-    ):
+    # ADR-0024: a named budget outcome (BudgetExhausted is a TransitionError).
+    with pytest.raises(TransitionError, match="action and evaluation budget exhausted"):
         session.prepare_decision(CompatibleModel(generator, repair_budget=0))
 
     assert generator.calls == 0

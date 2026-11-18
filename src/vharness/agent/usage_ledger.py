@@ -6,7 +6,7 @@ from dataclasses import dataclass, replace
 from decimal import Decimal
 from typing import Callable
 
-from .errors import TransitionError
+from .errors import BudgetExhausted, TransitionError
 from .models import (
     BudgetLimits,
     ResourceReservation,
@@ -24,7 +24,7 @@ class UsageRecord:
 
 
 @dataclass(frozen=True, slots=True)
-class UsageLedger:  # pylint: disable=too-many-instance-attributes
+class UsageLedger:  # pylint: disable=too-many-instance-attributes,too-many-public-methods
     """Durable reservation, settlement, and measured-usage facts.
 
     Totals are derived so reserved exposure can never be mistaken for provider
@@ -153,6 +153,35 @@ class UsageLedger:  # pylint: disable=too-many-instance-attributes
         return self._conservative_total("model_calls")
 
     @property
+    def conservative_tokens(self) -> int:
+        """Charge billed tokens or retain the bound when usage is incomplete."""
+        measured: dict[str, int] = {}
+        incomplete: set[str] = set()
+        for record in self.measurements:
+            usage = record.measurement
+            if not usage.model_calls and not (
+                usage.input_tokens or usage.output_tokens
+            ):
+                continue
+            operation = record.operation_id
+            if usage.input_tokens is None or usage.output_tokens is None:
+                incomplete.add(operation)
+            measured[operation] = (
+                measured.get(operation, 0)
+                + (usage.input_tokens or 0)
+                + (usage.output_tokens or 0)
+            )
+        for reservation in self.reservations:
+            operation = reservation.operation_id
+            if reservation.tokens is None or operation in self.released_operation_ids:
+                continue
+            if operation in incomplete or operation not in measured:
+                measured[operation] = max(
+                    measured.get(operation, 0), reservation.tokens
+                )
+        return sum(measured.values())
+
+    @property
     def input_tokens(self) -> int | None:
         """Return known input-token total, or unknown when any record lacks it."""
         return _optional_measurement_total(
@@ -233,19 +262,24 @@ class UsageLedger:  # pylint: disable=too-many-instance-attributes
             and self._conservative_total("actions") + reservation.actions
             > limits.actions
         ):
-            raise TransitionError("action budget exhausted")
+            raise BudgetExhausted("action")
         if (
             limits.evaluations is not None
             and self._conservative_total("evaluations") + reservation.evaluations
             > limits.evaluations
         ):
-            raise TransitionError("evaluation budget exhausted")
+            raise BudgetExhausted("evaluation")
         if (
             limits.model_calls is not None
             and self._conservative_total("model_calls") + reservation.model_calls
             > limits.model_calls
         ):
-            raise TransitionError("model call budget exhausted")
+            raise BudgetExhausted("model call")
+        if limits.tokens is not None and reservation.model_calls:
+            if reservation.tokens is None:
+                raise TransitionError("token budget requires a reservation bound")
+            if self.conservative_tokens + reservation.tokens > limits.tokens:
+                raise BudgetExhausted("token")
         if limits.cost is not None:
             if reservation.cost is None or self._has_unknown_cost_exposure():
                 raise TransitionError("cost budget has unknown exposure")
@@ -255,7 +289,7 @@ class UsageLedger:  # pylint: disable=too-many-instance-attributes
                 + reservation.cost
                 > limits.cost
             ):
-                raise TransitionError("cost budget exhausted")
+                raise BudgetExhausted("cost")
         return replace(
             self,
             reservations=(*self.reservations, reservation),

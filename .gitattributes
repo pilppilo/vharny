@@ -1,3 +1,7 @@
+# Text files are LF in the repository and in every checkout, Windows included,
+# so editors there cannot rewrite line endings. Later lines override this.
+* text=auto eol=lf
+
 # Retained evidence hashes raw bytes, including text and extensionless artifacts.
 /evidence/phase-0002-operator-steering-resume/** -text
 /evidence/phase-0002-live-software/** -text
@@ -5,3 +9,4 @@
 
 tools/exp_0001_supervisor_policy.py text eol=lf
 /evidence/phase-0004-arc-agi-3-smoke/** -text
+/evidence/phase-0004-longcat-trial/** -text

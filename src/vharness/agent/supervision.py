@@ -1345,6 +1345,12 @@ class ModelSupervisor:
         self._generator = generator
         self._model_id = model_id
 
+    @property
+    def max_output_tokens(self) -> int | None:
+        """The supervisor call's answer limit, when its generator states one."""
+        limit = getattr(self._generator, "max_tokens", None)
+        return limit if isinstance(limit, int) and not isinstance(limit, bool) else None
+
     def advise(self, digest: SupervisorDigest) -> SupervisorResponse:
         """Run one advisory provider call for the given trajectory digest."""
         prompt = render_digest(digest)

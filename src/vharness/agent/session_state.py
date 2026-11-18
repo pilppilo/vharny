@@ -190,6 +190,8 @@ def task_from_payload(value: Mapping[str, object]) -> TaskSpec:
             model_calls=_optional_int(budgets, "model_calls"),
             evaluations=_optional_int(budgets, "evaluations"),
             cost=_optional_decimal(budgets, "cost"),
+            tokens=_optional_int(budgets, "tokens"),
+            wall_clock_seconds=_optional_int(budgets, "wall_clock_seconds"),
         ),
         _string(value, "environment_id"),
         _string(value, "evaluation_contract_id"),
@@ -208,6 +210,7 @@ def reservation_from_payload(value: Mapping[str, object]) -> ResourceReservation
         _integer(value, "evaluations"),
         _optional_decimal(value, "cost"),
         _integer_default(value, "model_calls", 0),
+        _optional_int(value, "tokens"),
     )
 
 

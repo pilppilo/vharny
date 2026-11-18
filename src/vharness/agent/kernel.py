@@ -1275,6 +1275,15 @@ class CompatibleModel:
         self._call_limit = self.reserved_output_tokens
         self._asked_now = False
         self._generator = _CoordinatorOwnedGenerator(generator)
+        #: COD-86: the most provider calls one decision can make: the first
+        #: call, the repair budget, and with growth on the free answer-now
+        #: re-ask plus one call per doubling up to the maximum (ADR-0021).
+        self.max_calls_per_decision = 1 + repair_budget
+        if self._grows:
+            limit, doublings = self.reserved_output_tokens, 0
+            while limit < self.max_output_tokens:
+                limit, doublings = limit * 2, doublings + 1
+            self.max_calls_per_decision += 1 + doublings
         self.model_id = model_id or "compatible"
         self.provider_id = getattr(generator, "provider_id", "compatible")
         self.repair_budget = repair_budget

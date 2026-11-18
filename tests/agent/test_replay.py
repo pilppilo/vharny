@@ -7,6 +7,7 @@ import pytest
 
 from vharness.agent.errors import IntegrityError
 from vharness.agent.evidence import OPERATIONAL_MEASUREMENT_SCOPE
+from vharness.agent.models import SessionStatus
 from vharness.agent.replay import replay
 from vharness.agent.supervision import BURN_CAUSE, CHECKPOINT_CAUSE
 from tools.phase3_paired_recovery import _read_events
@@ -50,6 +51,19 @@ def _burn_trigger_payload(**overrides):
     }
     payload.update(overrides)
     return payload
+
+
+@pytest.mark.parametrize(
+    "resource", ["action", "model call", "evaluation", "token", "time", "cost"]
+)
+def test_replay_records_budget_exhaustion(resource: str) -> None:
+    events = _read_events(RUN / "events.jsonl.gz")[:1]
+    stop = _appended_event(
+        events,
+        "budget_exhausted",
+        {"resource": resource, "reason": f"{resource} budget exhausted"},
+    )
+    assert replay((*events, stop)).status is SessionStatus.STOPPED
 
 
 def test_replay_accepts_measured_artifact_read_without_changing_projection() -> None:

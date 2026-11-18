@@ -665,6 +665,14 @@ def _closed_stop(
     """Return a stop class that replay status already decides."""
     tail = events[-1]
     if status is SessionStatus.STOPPED:
+        budget_stop = _last(events, "budget_exhausted")
+        operator_stop = _last(events, "session_stopped")
+        if budget_stop is not None and (
+            operator_stop is None or budget_stop.sequence > operator_stop.sequence
+        ):
+            return _stop(
+                "budget_exhausted", budget_stop, _string(budget_stop.payload, "reason")
+            )
         return _stop("operator_stop", _last(events, "session_stopped") or tail, None)
     if status is SessionStatus.WAITING and wait_reason == OPERATOR_ANSWER_WAIT:
         event = _last(events, "question_recorded") or tail

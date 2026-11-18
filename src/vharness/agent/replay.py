@@ -14,7 +14,7 @@ from dataclasses import replace
 from typing import Iterable
 
 from .codec import canonical_json, parse_json_object
-from .errors import ContractError, IntegrityError, TransitionError
+from .errors import BUDGET_RESOURCES, ContractError, IntegrityError, TransitionError
 from .models import (
     AttemptDisposition,
     Event,
@@ -720,6 +720,18 @@ def _reduce_existing(previous: SessionState, event: Event) -> SessionState:
             event,
             embedded_command=command_from_payload(command),
         )
+    if event.kind == "budget_exhausted":
+        _same_objective(event, previous)
+        _exact_keys(payload, {"resource", "reason"})
+        resource = string_from_payload(payload, "resource")
+        if (
+            resource not in BUDGET_RESOURCES
+            or payload.get("reason") != f"{resource} budget exhausted"
+            or previous.status
+            in {SessionStatus.COMPLETED, SessionStatus.FAILED, SessionStatus.STOPPED}
+        ):
+            raise IntegrityError("invalid budget exhaustion transition")
+        return replace(previous, status=SessionStatus.STOPPED)
     if event.kind == "session_stopped":
         command = _mapping(payload, "command")
         _command_causation(event, command)

@@ -142,7 +142,7 @@ def _unanswered_questions(
     return (f"{open_id}: {text}",)
 
 
-def _stream_detail(  # pylint: disable=too-many-return-statements
+def _stream_detail(  # pylint: disable=too-many-return-statements,too-many-branches
     event: Event,
 ) -> str | None:
     """Render action/receipt detail instead of event-kind labels."""
@@ -161,6 +161,8 @@ def _stream_detail(  # pylint: disable=too-many-return-statements
             return f"RUNTIME {status} {detail}".strip()
     if event.kind == "evaluation_intended":
         return "EVALUATION requested"
+    if event.kind == "budget_exhausted":
+        return f"BUDGET-EXHAUSTED {payload.get('reason')}"
     if event.kind == "evaluation_received":
         receipt = payload.get("receipt")
         if isinstance(receipt, Mapping):

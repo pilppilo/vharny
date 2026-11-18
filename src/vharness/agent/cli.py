@@ -695,6 +695,8 @@ def _workspace_settings(arguments: argparse.Namespace) -> RunSettings:
         max_model_calls=arguments.max_model_calls,
         max_evaluations=arguments.max_evaluations,
         max_steps=arguments.max_steps,
+        max_wall_clock_seconds=arguments.max_wall_clock_seconds,
+        max_tokens=arguments.max_tokens,
         token_budget=arguments.token_budget,
         max_output_tokens=arguments.max_output_tokens,
         repair_budget=arguments.repair_budget,
@@ -855,7 +857,7 @@ def _drive_application(
             cursor = _print_new_events(app.session, cursor, output)
             view = app.view()
             if view.status in _APPLICATION_TERMINAL:
-                return _finish_application(app, output)
+                return _finish_application(app, output, error)
             if _is_operator_wait(view):
                 if not wait_reported:
                     _report_operator_wait(app, view, output)
@@ -922,8 +924,30 @@ def _drive_application(
     return 1
 
 
-def _finish_application(app: Application, output: TextIO) -> int:
+def _budget_stop_reason(app: Application) -> str | None:
+    """Return the budget-exhausted reason when that is how the run ended."""
+    for event in reversed(app.session.events(limit=20)):
+        if event.kind == "budget_exhausted":
+            reason = event.payload.get("reason")
+            return reason if isinstance(reason, str) else "budget exhausted"
+        if event.kind == "session_stopped":
+            return None
+    return None
+
+
+def _finish_application(
+    app: Application, output: TextIO, error: TextIO | None = None
+) -> int:
     view = app.view()
+    budget_reason = (
+        _budget_stop_reason(app) if view.status is SessionStatus.STOPPED else None
+    )
+    if budget_reason is not None:
+        # ADR-0024: a budget outcome, distinct from the agent failing.
+        if error is not None:
+            _write_error(error, "run", budget_reason)
+        print(f"TERMINAL budget exhausted; {budget_reason}", file=output)
+        return 1
     _print_terminal(view.status, view.wait_reason, output)
     if view.status is SessionStatus.STOPPED and app.survivors:
         print(f"SURVIVORS {_compact(app.survivors)}", file=output)
@@ -1692,6 +1716,23 @@ def _add_run_arguments(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument("--max-actions", type=_nonnegative, default=6)
     parser.add_argument("--max-model-calls", type=_nonnegative, default=8)
+    parser.add_argument(
+        "--max-wall-clock-seconds",
+        type=_positive,
+        default=None,
+        metavar="SECONDS",
+        help="stop the run with a budget-exhausted outcome this many seconds "
+        "after it was created; paused and down time count",
+    )
+    parser.add_argument(
+        "--max-tokens",
+        type=_positive,
+        default=None,
+        metavar="TOKENS",
+        help="stop the run with a budget-exhausted outcome before a model call "
+        "whose worst case (prompt estimate plus largest answer, per possible "
+        "call) would exceed this many billed tokens",
+    )
     parser.add_argument("--max-evaluations", type=_nonnegative, default=2)
     parser.add_argument("--max-steps", type=_positive, default=12)
     parser.add_argument(

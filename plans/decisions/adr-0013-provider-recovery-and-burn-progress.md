@@ -73,6 +73,8 @@ replacement is adopted. EXP-0003 is a draft requiring approval before execution.
    Authentication/configuration failures expose an operator-action condition
    immediately. Stop remains terminal. Corruption/integrity failures retain
    their existing fail-stop behavior.
+   *Amended by ADR-0024 (2026-11-18): a retry the budget cannot pay for ends
+   the run with a `budget_exhausted` outcome instead of this wait.*
 
 ### Supported-progress budget checkpoints
 
