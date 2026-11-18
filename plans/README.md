@@ -75,6 +75,7 @@ None.
 | ADR-0019 | accepted | PHASE-0004 gates are independent; ARC-AGI-3 work proceeds before the deferred Timing and Omarchy acceptance runs | ADR-0007 |
 | ADR-0020 | accepted | Context fit switches from the word count to the calibrated real-size estimate at the first provider report, with fixed shares (must-have, 256-token bookkeeping, retrieved notes at most 25%, recent history); the worst-seen ratio never decreases; results across the change are not comparable | ADR-0016 |
 | ADR-0021 | accepted | With answer-limit growth on, a call that runs out is first asked for the answer at the same limit, outside the repair budget; raises then double the limit and keep asking; ADR-0017's budgeted re-ask stays last | — |
+| ADR-0022 | accepted | A decision still exhausted after its re-asks is recorded and the session decides again, shown to the model by its failure class; three in a row end the run | — |
 
 ## Delivery order
 

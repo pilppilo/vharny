@@ -1002,7 +1002,7 @@ def _recent_event_text(event: Event, context: _RecentRenderContext) -> str:
         return _render_receipt(event, prefix, context)
     if event.kind == "action_intended":
         return _render_action_intended(event, prefix)
-    if event.kind == "model_decided":
+    if event.kind in ("model_decided", "model_malformed"):
         return _render_model_decided(event, prefix)
     if event.kind in {"knowledge_recorded", "investigation_recorded"}:
         return _render_record(event, prefix)
@@ -1076,6 +1076,12 @@ def _render_action_intended(event: Event, prefix: str) -> str:
 
 
 def _render_model_decided(event: Event, prefix: str) -> str:
+    """Render a decision's result kind, or a failed decision's class (ADR-0022)."""
+    if event.kind == "model_malformed":
+        failure_class = event.payload.get("failure_class")
+        if not isinstance(failure_class, str) or not failure_class:
+            return prefix
+        return f"{prefix} failure_class={failure_class}"
     result_kind = event.payload.get("result_kind")
     if not isinstance(result_kind, str) or not result_kind:
         return prefix

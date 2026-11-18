@@ -12,7 +12,7 @@ concrete workspace runtime, evaluator, and supervisor, and drives ``Session``.
 
 # The composition root gathers explicit dependencies and run settings by design;
 # collapsing them into untyped bags would hide the real boundaries.
-# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-instance-attributes
+# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-instance-attributes,too-many-lines
 
 from __future__ import annotations
 
@@ -80,6 +80,9 @@ from .session_state import command_from_payload
 from .supervision import ModelSupervisor, SupervisionCapability, SupervisorResponse
 
 MANIFEST_NAME = "run.json"
+#: ADR-0022: consecutive decisions that may end ``output-exhausted`` before the
+#: run ends. Earlier ones are recorded and the session decides again.
+EXHAUSTED_DECISION_LIMIT = 3
 DEFAULT_POLL_SECONDS = 0.05
 
 _TERMINAL = frozenset(
@@ -781,10 +784,16 @@ class Application:
 
         Retryable transport classes are scheduled again up to the configured
         retry bound; authentication and configuration classes enter the durable
-        provider-recovery wait immediately; every other class propagates after
-        settlement exactly as before this recovery policy existed.
+        provider-recovery wait immediately. An ``output-exhausted`` decision is
+        settled and the session decides again, until ``EXHAUSTED_DECISION_LIMIT``
+        such decisions in a row end the run (ADR-0022). Every other class
+        propagates after settlement exactly as before this recovery policy
+        existed.
         """
         failure_class = exc.failure_class or ModelFailureClass.UNKNOWN.value
+        if failure_class == ModelFailureClass.OUTPUT_EXHAUSTED.value:
+            self._settle_exhausted_decision(handle, exc)
+            return
         if (
             failure_class not in RETRYABLE_FAILURE_CLASSES
             and failure_class not in OPERATOR_ACTION_FAILURE_CLASSES
@@ -813,6 +822,33 @@ class Application:
             operator_action=failure_class in OPERATOR_ACTION_FAILURE_CLASSES,
             detail=_recovery_wait_detail(failure_class, window.failed_calls),
         )
+
+    def _settle_exhausted_decision(
+        self, handle: DecisionHandle, exc: ModelCallError
+    ) -> None:
+        """Record a decision that never answered; decide again or end (ADR-0022).
+
+        Its calls are spent like any other decision's. The run ends, as before
+        ADR-0022, only when this would be the ``EXHAUSTED_DECISION_LIMIT``-th
+        such decision in a row; budgets bound everything else.
+        """
+        earlier = self._session.transport_recovery_window().exhausted_decisions
+        if earlier + 1 >= EXHAUSTED_DECISION_LIMIT:
+            self._session.fail_decision(
+                handle,
+                ModelCallError(
+                    f"provider output exhausted on {earlier + 1} consecutive "
+                    "decisions",
+                    usage=exc.usage,
+                    attempts=exc.attempts,
+                    output=exc.output,
+                    duration_ms=exc.duration_ms,
+                    failure_class=exc.failure_class,
+                    repairs=exc.repairs,
+                ),
+            )
+        self._retry = None
+        self._session.settle_decision_failure(handle, exc)
 
     def _resolve(self, pending: PendingDispatch) -> None:
         """Run one deferred port call on a worker and apply its typed result."""

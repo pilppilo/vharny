@@ -5,7 +5,7 @@ type: decision
 status: accepted
 owners: [operator]
 created: 2026-11-10
-updated: 2026-11-11
+updated: 2026-11-18
 depends_on: [ADR-0008, ADR-0015, ADR-0016]
 supersedes: []
 related: [ARCH-0001, PHASE-0004, SCHEM-0001]
@@ -89,6 +89,10 @@ truncating reasoning stays visible as clustered `model_repaired`
 occurrences, not as a silently healthier run.
 
 ### 4. Exhaustion keeps the current outcome
+
+*Amended by ADR-0022 (2026-11-18): in the coordinator, a decision that is still
+exhausted after its re-ask is recorded and the session decides again; three
+such decisions in a row end the run.*
 
 If the re-ask is also empty or length-limited, the decision settles as
 terminal `output-exhausted` exactly as today, with both attempts and their
