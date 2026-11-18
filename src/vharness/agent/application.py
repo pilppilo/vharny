@@ -49,7 +49,13 @@ from .control import (
     TransportInbox,
     frame_command,
 )
-from .errors import AgentError, ContractError, IntegrityError, TransitionError
+from .errors import (
+    AgentError,
+    BudgetExhausted,
+    ContractError,
+    IntegrityError,
+    TransitionError,
+)
 from .journal import SqliteJournal
 from .kernel import CompatibleModel, Model, ModelCallError, decide
 from .models import (
@@ -438,6 +444,10 @@ def run_identity(
     if settings.arc is not None:
         # Added only for ARC runs, so existing run identities are unchanged.
         safe["arc"] = settings.arc.to_payload()
+    if settings.max_wall_clock_seconds is not None:
+        safe["max_wall_clock_seconds"] = settings.max_wall_clock_seconds
+    if settings.max_tokens is not None:
+        safe["max_tokens"] = settings.max_tokens
     if settings.initial_output_tokens is not None:
         # COD-88: growth changes what each call asks for; set-only, as above.
         safe["initial_output_tokens"] = settings.initial_output_tokens
@@ -456,7 +466,7 @@ class Application:
     session's typed receipt paths.
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-locals
         self,
         session: Session,
         model: Model,
@@ -473,6 +483,7 @@ class Application:
         poll_seconds: float,
         supervisor_close: Callable[[], None] | None = None,
         recovery: TransportRecoverySettings | None = None,
+        deadline: float | None = None,
     ) -> None:
         self._session = session
         self._model = model
@@ -489,6 +500,7 @@ class Application:
         self._poll_seconds = poll_seconds
         self._recovery = recovery or TransportRecoverySettings()
         self._retry: _RetryWake | None = None
+        self._deadline = deadline
         self._server: ControlServer | None = None
         self._survivors: tuple[Mapping[str, object], ...] = ()
         self.last_error: str | None = None
@@ -639,6 +651,7 @@ class Application:
             poll_seconds=poll_seconds,
             supervisor_close=supervisor_close,
             recovery=settings.transport_recovery,
+            deadline=_run_deadline(journal, session_id, settings),
         )
 
     # -- read-only accessors --
@@ -705,6 +718,9 @@ class Application:
         if status in _TERMINAL:
             self._retry = None
             return "terminal"
+        if self._deadline is not None and time.time() >= self._deadline:
+            self._session.stop_for_budget(BudgetExhausted("time"))
+            return "terminal"
         if status is SessionStatus.PAUSED:
             self._idle()
             return "idle"
@@ -732,6 +748,9 @@ class Application:
             handle = self._session.prepare_decision(
                 self._model, token_budget=self._token_budget, dispatch=False
             )
+        except BudgetExhausted as exc:
+            self._session.stop_for_budget(exc)
+            return "terminal"
         except TransitionError as exc:
             if wake is None:
                 raise
@@ -769,6 +788,8 @@ class Application:
                     steps += 1
             else:
                 self.last_error = "step limit exhausted; run is resumable"
+        except BudgetExhausted as exc:
+            self._session.stop_for_budget(exc)
         except AgentError as exc:
             self.last_error = str(exc)
         finally:
@@ -778,7 +799,13 @@ class Application:
     def _decide(self, handle: DecisionHandle) -> None:
         """Run one model call on a worker and apply its typed result."""
         try:
-            response = self._run_worker(lambda: decide(handle.request, self._model))
+            response = self._run_worker(
+                lambda: decide(handle.request, self._model), enforce_deadline=True
+            )
+        except BudgetExhausted as exc:
+            self._session.settle_decision_failure(handle, exc)
+            self._session.stop_for_budget(exc)
+            return
         except ModelCallError as exc:
             self._settle_decision_failure(handle, exc)
             return
@@ -898,11 +925,20 @@ class Application:
         except Exception:  # pylint: disable=broad-exception-caught
             return None
 
-    def _run_worker(self, call: Callable[[], T]) -> T:
+    def _run_worker(
+        self, call: Callable[[], T], *, enforce_deadline: bool = False
+    ) -> T:
         """Run one blocking call on the pool while still admitting controls."""
         future = self._pool.submit(call)
         while True:
             self._drain_controls()
+            if (
+                enforce_deadline
+                and self._deadline is not None
+                and time.time() >= self._deadline
+            ):
+                future.cancel()
+                raise BudgetExhausted("time")
             if future.done():
                 return future.result()
             self._idle()
@@ -945,6 +981,21 @@ class Application:
                 self._server = None
 
 
+def _run_deadline(
+    journal: SqliteJournal, session_id: str, settings: RunSettings
+) -> float | None:
+    """Return the run's wall-clock deadline, counted from session creation.
+
+    ADR-0024: the limit is elapsed time, so it keeps running while the run is
+    paused or its process is down, and a resumed run keeps its deadline.
+    """
+    if settings.max_wall_clock_seconds is None:
+        return None
+    created = journal.events(session_id, limit=1)[0]
+    started = datetime.fromisoformat(created.recorded_at).timestamp()
+    return started + settings.max_wall_clock_seconds
+
+
 def _create_session(
     settings: RunSettings,
     session_id: str,
@@ -965,6 +1016,8 @@ def _create_session(
             actions=settings.max_actions,
             model_calls=settings.max_model_calls,
             evaluations=settings.max_evaluations,
+            wall_clock_seconds=settings.max_wall_clock_seconds,
+            tokens=settings.max_tokens,
         ),
         environment_id=environment.describe().environment_id,
         evaluation_contract_id=dependencies.evaluation_contract_id,

@@ -446,16 +446,20 @@ def test_restart_during_backoff_respects_the_journaled_window(tmp_path):
         reopened.close()
 
 
-def test_budget_exhaustion_during_recovery_enters_the_waiting_state(tmp_path):
+def test_budget_exhaustion_during_recovery_stops_with_a_budget_outcome(tmp_path):
+    """ADR-0024: a retry the budget can't pay for ends the run; resume can't help."""
     transport = _ScriptedTransport(tuple(_transport_failure() for _ in range(2)))
     app = _application(tmp_path, "session-tr10", transport, max_model_calls=2)
     try:
-        _drive_until(app, lambda a: a.view().status is SessionStatus.WAITING)
-        payload = _events_of(app, "provider_recovery_waiting")[0].payload
-        assert payload["detail"] == "resource budget exhausted"
-        assert payload["operator_action"] is False
-        assert payload["consumed_calls"] == 2
+        _drive_until(app, lambda a: a.view().status is SessionStatus.STOPPED)
+        payload = _events_of(app, "budget_exhausted")[0].payload
+        assert payload == {
+            "resource": "model call",
+            "reason": "model call budget exhausted",
+        }
+        assert "provider_recovery_waiting" not in _kinds(app)
         assert transport.calls == 2
+        replay(app.session.events(limit=1000))
     finally:
         app.close()
 

@@ -15,7 +15,7 @@ from enum import Enum
 from typing import cast
 
 from .errors import ContractError
-from .models import JsonValue
+from .models import OMIT_IF_NONE, JsonValue
 
 MAX_JSON_BYTES = 1_000_000
 MAX_JSON_DEPTH = 64
@@ -36,9 +36,14 @@ def to_json_value(value: object) -> JsonValue:
     if isinstance(value, Enum):
         return to_json_value(value.value)
     if is_dataclass(value):
+        # A field marked OMIT_IF_NONE is left out while unset, so adding an
+        # optional field keeps the encoding, and every digest, of older values.
         encoded = {
             item.name: to_json_value(getattr(value, item.name))
             for item in fields(value)
+            if not (
+                item.metadata.get(OMIT_IF_NONE) and getattr(value, item.name) is None
+            )
         }
         encoded["__type__"] = type(value).__name__
         return encoded

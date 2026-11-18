@@ -6,7 +6,7 @@ status: accepted
 owners: []
 created: 2026-09-04
 updated: 2026-11-17
-depends_on: [ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0019, ADR-0020, ADR-0021, ADR-0022, ADR-0023]
+depends_on: [ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0019, ADR-0020, ADR-0021, ADR-0022, ADR-0023, ADR-0024]
 supersedes: []
 related: [ADR-0019, ADR-0008, ROAD-0001, BENCH-0001, SCHEM-0001, PHASE-0001, PHASE-0002, PHASE-0003, PHASE-0004]
 ---
@@ -407,6 +407,12 @@ the returned receipt and reconcile its resource reservation before continuing.
 If completion cannot be determined,
 mark the proposal `indeterminate`, expose it to the operator and agent, and do
 not resend it automatically.
+
+Running out of a budget is its own outcome (ADR-0024). When a limit refuses
+work, whether actions, model calls, evaluations, billed tokens, elapsed time or
+cost, the session journals `budget_exhausted` with the resource and ends
+`stopped`; it is neither a failure nor an operator stop. Model calls reserve
+their worst-case tokens before they run and settle to billed use after.
 
 Model timeout, malformed output, runtime rejection, execution failure, evaluator
 unavailability, and supervisor failure are typed events with bounded retry

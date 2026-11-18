@@ -141,6 +141,18 @@ def _validate_provider_options(settings: RunSettings) -> None:
         raise ContractError("initial_output_tokens must not exceed max_output_tokens")
 
 
+def _validate_run_limits(settings: RunSettings) -> None:
+    """Check the optional whole-run limits: wall-clock time and tokens."""
+    for name, value in (
+        ("max_wall_clock_seconds", settings.max_wall_clock_seconds),
+        ("max_tokens", settings.max_tokens),
+    ):
+        if value is not None and (
+            not isinstance(value, int) or isinstance(value, bool) or value < 1
+        ):
+            raise ContractError(f"{name} must be a positive integer")
+
+
 def _validate_arc(settings: RunSettings) -> None:
     """ARC runs play one game: no check command, no target, a positive limit."""
     if settings.arc is None:
@@ -260,6 +272,10 @@ class RunSettings:
     child_env_allow: tuple[str, ...] | None = None
     #: Set for an ARC-AGI-3 run; ``workspace`` is then where games are downloaded.
     arc: ArcRunSettings | None = None
+    #: COD-86: seconds from session creation until the run stops.
+    max_wall_clock_seconds: int | None = None
+    #: COD-86: billed provider tokens (prompt plus answer) for the whole run.
+    max_tokens: int | None = None
 
     def __post_init__(self) -> None:
         if not self.objective.strip():
@@ -298,6 +314,7 @@ class RunSettings:
             raise ContractError("transport_recovery must be TransportRecoverySettings")
         _validate_child_env_allow(self.child_env_allow, self.api_key_env)
         _validate_provider_options(self)
+        _validate_run_limits(self)
         _validate_arc(self)
 
     @property
@@ -364,6 +381,10 @@ class RunSettings:
         }
         if self.arc is not None:
             payload["arc"] = self.arc.to_payload()
+        if self.max_wall_clock_seconds is not None:
+            payload["max_wall_clock_seconds"] = self.max_wall_clock_seconds
+        if self.max_tokens is not None:
+            payload["max_tokens"] = self.max_tokens
         if self.provider_stream:
             payload["provider_stream"] = True
         if self.initial_output_tokens is not None:
@@ -402,6 +423,10 @@ class RunSettings:
             max_model_calls=_required_int(value, "max_model_calls"),
             max_evaluations=_required_int(value, "max_evaluations"),
             max_steps=_required_int(value, "max_steps"),
+            max_wall_clock_seconds=_optional_positive_int(
+                value, "max_wall_clock_seconds"
+            ),
+            max_tokens=_optional_positive_int(value, "max_tokens"),
             token_budget=_required_int(value, "token_budget"),
             max_output_tokens=_required_int(value, "max_output_tokens"),
             repair_budget=_required_int(value, "repair_budget"),

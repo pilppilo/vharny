@@ -80,7 +80,7 @@ def _journal_events(run_dir: Path) -> tuple[Event, ...]:
         journal.close()
 
 
-def test_budget_exhausted_run_journals_runner_exit_and_status_reports_it(
+def test_budget_exhausted_run_records_its_outcome_and_status_reports_it(
     tmp_path, monkeypatch
 ):
     monkeypatch.setattr(
@@ -104,24 +104,23 @@ def test_budget_exhausted_run_journals_runner_exit_and_status_reports_it(
         ]
     )
 
+    # ADR-0024: running out of budget is its own outcome, not a failure.
     assert code == 1
     assert "model call budget exhausted" in error
-    assert "TERMINAL failure; inspect the journal" in output
+    assert "TERMINAL budget exhausted; model call budget exhausted" in output
 
     events = _journal_events(run_dir)
-    assert events[-1].kind == "runner_exited"
-    reason = events[-1].payload.get("reason")
-    assert isinstance(reason, str) and "budget" in reason
-
-    # The observation must not move the durable projection: the run stays
-    # resumable and replay accepts the stream unchanged.
-    state = replay(events)
-    assert state.status is not SessionStatus.FAILED
+    assert events[-1].kind == "budget_exhausted"
+    assert events[-1].payload == {
+        "resource": "model call",
+        "reason": "model call budget exhausted",
+    }
+    assert replay(events).status is SessionStatus.STOPPED
 
     code, status, status_error = _invoke(["status", "--run-dir", str(run_dir)])
     assert code == 0, status_error
-    assert "STATUS failed" in status
-    assert f"RUNNER-EXIT {reason}" in status
+    assert "STATUS stopped" in status
+    assert "BUDGET-EXHAUSTED model call budget exhausted" in status
 
 
 def test_operator_view_overlays_failure_only_for_live_statuses(tmp_path):

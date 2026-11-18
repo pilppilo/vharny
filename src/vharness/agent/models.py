@@ -19,6 +19,11 @@ if TYPE_CHECKING:  # pragma: no cover - type-only import avoids a supervision cy
     from .supervision import SupervisorDigest
 
 JsonPrimitive: TypeAlias = str | int | float | bool | None
+#: Field metadata key: the codec leaves the field out while it is None, so an
+#: optional field added later keeps the encoding and digests of older values.
+OMIT_IF_NONE = "omit_if_none"
+_OMIT_IF_NONE = MappingProxyType({OMIT_IF_NONE: True})
+
 JsonValue: TypeAlias = (
     JsonPrimitive | tuple["JsonValue", ...] | Mapping[str, "JsonValue"]
 )
@@ -348,13 +353,23 @@ class BudgetLimits:
     model_calls: int | None = None
     evaluations: int | None = None
     cost: Decimal | None = None
+    #: COD-86: billed provider tokens (prompt plus answer) for the whole run.
+    tokens: int | None = field(default=None, metadata=_OMIT_IF_NONE)
+    #: COD-86: seconds from session creation until the run stops.
+    wall_clock_seconds: int | None = field(default=None, metadata=_OMIT_IF_NONE)
 
     def __post_init__(self) -> None:
         for name, value in (
             ("actions", self.actions),
             ("model_calls", self.model_calls),
             ("evaluations", self.evaluations),
+            ("tokens", self.tokens),
+            ("wall_clock_seconds", self.wall_clock_seconds),
         ):
+            if value is not None and (
+                not isinstance(value, int) or isinstance(value, bool)
+            ):
+                raise ContractError(f"budget {name} must be an integer")
             if value is not None and value < 0:
                 raise ContractError(f"budget {name} must not be negative")
         if self.cost is not None:
@@ -496,10 +511,18 @@ class ResourceReservation:
     evaluations: int = 0
     cost: Decimal | None = None
     model_calls: int = 0
+    #: COD-86: worst-case billed tokens, set only when the run has a token limit.
+    tokens: int | None = field(default=None, metadata=_OMIT_IF_NONE)
 
     def __post_init__(self) -> None:
         _nonempty(self.reservation_id, "reservation_id")
         _nonempty(self.operation_id, "operation_id")
+        if self.tokens is not None and (
+            not isinstance(self.tokens, int)
+            or isinstance(self.tokens, bool)
+            or self.tokens < 0
+        ):
+            raise ContractError("reserved tokens must be a non-negative integer")
         if (
             self.objective_version < 1
             or self.actions < 0

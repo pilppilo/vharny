@@ -77,6 +77,7 @@ None.
 | ADR-0021 | accepted | With answer-limit growth on, a call that runs out is first asked for the answer at the same limit, outside the repair budget; raises then double the limit and keep asking; ADR-0017's budgeted re-ask stays last | — |
 | ADR-0022 | accepted | A decision still exhausted after its re-asks is recorded and the session decides again, shown to the model by its failure class; three in a row end the run | — |
 | ADR-0023 | accepted | On a board, `monitor.p7.v1` labels each move forward, return or weak by its distance against the level's largest move; forward moves repeat nothing, weak moves repeat their action, returns repeat one fingerprint naming untried actions; ARC runs only, p6 stays the default | — |
+| ADR-0024 | accepted | Whole-run token and wall-clock limits; every refused budget ends the run with a journaled `budget_exhausted` outcome naming the resource; tokens reserve each call's worst case and settle to billed use; time is elapsed from session creation | — |
 
 ## Delivery order
 

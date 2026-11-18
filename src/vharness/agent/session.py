@@ -23,7 +23,7 @@ from vharness.core import RETRYABLE_FAILURE_CLASSES, VERSION, ModelFailureClass
 
 from .artifacts import ArtifactStore
 from .codec import canonical_json, parse_json, parse_json_object, to_json_value
-from .errors import ContractError, IntegrityError, TransitionError
+from .errors import BudgetExhausted, ContractError, IntegrityError, TransitionError
 from .evidence import (
     OPERATIONAL_MEASUREMENT_SCOPE,
     RunCounters,
@@ -75,6 +75,7 @@ from .models import (
     frozen_mapping,
 )
 from .context import (
+    RESERVED_OUTPUT_TOKENS,
     POLICY_VERSION,
     RETRIEVAL_EVENT_KINDS,
     SYSTEM_PROMPT,
@@ -192,6 +193,7 @@ from .transitions import (
 )
 from .supervision import (
     MONITOR_POLICY_P7_VERSION,
+    SUPERVISOR_SYSTEM_PROMPT,
     EVIDENCE_ACTIONS,
     Guidance,
     GuidanceDecision,
@@ -579,6 +581,20 @@ class Session:
         """Return the stable session identity."""
         return self._session_id
 
+    def stop_for_budget(self, exhausted: BudgetExhausted) -> None:
+        """Record a terminal budget outcome independently of operator stops."""
+        if self._state.status in (
+            SessionStatus.COMPLETED,
+            SessionStatus.FAILED,
+            SessionStatus.STOPPED,
+        ):
+            return
+        self._persist(
+            "budget_exhausted",
+            replace(self._state, status=SessionStatus.STOPPED),
+            {"resource": exhausted.resource, "reason": str(exhausted)},
+        )
+
     def view(self) -> SessionView:
         """Return a read-only view at the current durable cursor."""
         return SessionView(
@@ -828,7 +844,7 @@ class Session:
             remaining = remaining_budgets(self._state, events)
             model_remaining = _remaining_model_calls(remaining)
         if not _model_call_budget_covers(model_remaining, model_call_bound):
-            raise TransitionError("model call budget exhausted")
+            raise BudgetExhausted("model call")
         working = working_memory(self._state, events)
         attempt = self._require_active_attempt()
         model_id = configuration.model_id
@@ -937,6 +953,9 @@ class Session:
             operation_id=request.request_id,
             objective_version=self._state.task.objective_version,
             model_calls=_model_call_bound(model),
+            tokens=self._decision_token_bound(
+                model, context_manifest, tokens_per_char, reserved_output_tokens
+            ),
         )
         intended = intend_model_call(
             self._state,
@@ -960,6 +979,53 @@ class Session:
             ),
         )
         return DecisionHandle(request, reservation, context_manifest, visible_input)
+
+    def _decision_token_bound(
+        self,
+        model: Model,
+        context_manifest: ContextManifest,
+        tokens_per_char: float | None,
+        reserved_output_tokens: int,
+    ) -> int | None:
+        """Return a decision's worst-case billed tokens under a token limit.
+
+        COD-86, ADR-0024: every call the decision can make, each billed as the
+        calibrated prompt estimate plus the largest answer it may ask for.
+        ``None`` without a token limit, so other journals are unchanged.
+        """
+        if self._state.task.budgets.tokens is None:
+            return None
+        calls = getattr(model, "max_calls_per_decision", None)
+        if not isinstance(calls, int) or isinstance(calls, bool) or calls < 1:
+            calls = _model_call_bound(model)
+        answer = getattr(model, "max_output_tokens", None)
+        if not isinstance(answer, int) or isinstance(answer, bool):
+            answer = reserved_output_tokens
+        prompt = (
+            context_manifest.estimated_input_tokens or 0
+        ) + estimate_serialized_tokens(SYSTEM_PROMPT, tokens_per_char)
+        return calls * (prompt + max(answer, reserved_output_tokens))
+
+    def _supervisor_token_bound(
+        self, visible: str, events: tuple[Event, ...]
+    ) -> int | None:
+        """Return a supervisor consult's worst-case billed tokens, if limited."""
+        if self._state.task.budgets.tokens is None:
+            return None
+        tokens_per_char = _observed_tokens_per_char(events)
+        capability = self._supervision
+        answer = (
+            getattr(capability.supervisor, "max_output_tokens", None)
+            if capability is not None
+            else None
+        )
+        if not isinstance(answer, int) or isinstance(answer, bool):
+            answer = RESERVED_OUTPUT_TOKENS
+        return (
+            estimate_serialized_tokens(visible, tokens_per_char)
+            + estimate_serialized_tokens(SUPERVISOR_SYSTEM_PROMPT, tokens_per_char)
+            + answer
+        )
 
     def _finalize_request(
         self,
@@ -2054,6 +2120,7 @@ class Session:
             operation_id=request_id,
             objective_version=self._state.task.objective_version,
             model_calls=1,
+            tokens=self._supervisor_token_bound(visible, events),
         )
         try:
             intended = intend_model_call(
@@ -3846,13 +3913,12 @@ def _step_budget_preflight(
     if _budget_exhausted(budgets.get("actions")) and _budget_exhausted(
         budgets.get("evaluations")
     ):
-        raise TransitionError(
-            "action and evaluation budgets exhausted; no dispatchable work remains"
-        )
+        # ADR-0024: no dispatchable work remains, a budget outcome like any other.
+        raise BudgetExhausted("action and evaluation")
     remaining = _remaining_model_calls(budgets)
     bound = _model_call_bound(model)
     if not supervised and not _model_call_budget_covers(remaining, bound):
-        raise TransitionError("model call budget exhausted")
+        raise BudgetExhausted("model call")
     allow_consult = not supervised or _model_call_budget_covers(remaining, bound + 1)
     return remaining, bound, allow_consult
 
