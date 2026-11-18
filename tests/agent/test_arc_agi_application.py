@@ -11,6 +11,7 @@ import copy
 import json
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
+from decimal import Decimal
 from io import StringIO
 from pathlib import Path
 from threading import Event
@@ -45,6 +46,7 @@ from vharness.agent.context import POLICY_VERSION, SYSTEM_PROMPT, TOKEN_COUNTER
 from vharness.agent.control import ACCEPTED, command_frame
 from vharness.agent.errors import ContractError
 from vharness.agent.models import EvaluationMode, Pause, Resume, Stop
+from vharness.agent.pricing import RateCard
 from vharness.agent.replay import replay
 from vharness.agent.run_settings import ArcRunSettings
 from vharness.agent.usage_ledger import UsageLedger
@@ -281,6 +283,35 @@ def test_arc_model_sees_remaining_run_budgets(tmp_path, games, monkeypatch, used
     if warn:
         warnings.insert(0, "At least 80% of the run's token budget is used.")
     assert list(remaining["warnings"]) == warnings
+
+
+@pytest.mark.parametrize(
+    "spent, warn", [(Decimal("7.99"), False), (Decimal("8.00"), True)]
+)
+def test_arc_model_sees_remaining_cost(tmp_path, games, monkeypatch, spent, warn):
+    """COD-86: remaining dollars, and a warning once 80% is spent."""
+    run_dir = tmp_path / "run"
+    card = RateCard(Decimal("0.30"), Decimal("1.20"), Decimal("0.006"))
+    model = ScriptedModel((ActionChoice("step", "try", {"action": 4}),))
+    setattr(model, "rate_card", card)
+    settings = _settings(run_dir, max_cost=Decimal("10"), rate_card=card)
+    app = Application.create(
+        settings, run_dir, session_id="arc-cost", model=model, poll_seconds=0
+    )
+    try:
+        monkeypatch.setattr(UsageLedger, "known_cost", property(lambda _: spent))
+        app.tick()
+    finally:
+        app.close()
+
+    remaining = model.requests[0].remaining_budgets
+    assert remaining["cost"] == format(Decimal("10") - spent, "f")
+    if warn:
+        assert remaining["warnings"] == (
+            "At least 80% of the run's cost budget is used.",
+        )
+    else:
+        assert "warnings" not in remaining
 
 
 @pytest.mark.parametrize("stream", [False, True])

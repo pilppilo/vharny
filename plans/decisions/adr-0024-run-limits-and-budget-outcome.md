@@ -71,8 +71,10 @@ task budgets and the run identity, each only when set.
 The coordinator checks it on every tick. If the deadline passes while a
 decision is waiting for the model, the decision is recorded as failed and
 discarded, its reserved calls and tokens stay charged, and the run stops with
-`time`. The provider call itself is not cancelled: it may keep its worker busy
-until it returns, which delays shutdown by up to the provider timeout.
+`time`. In an ARC run the provider call is also cancelled at the deadline,
+including a streamed reply (`78ef989`). In other runs it is not cancelled: it
+may keep its worker busy until it returns, which delays shutdown by up to the
+provider timeout.
 
 Elapsed time is chosen over active time because a campaign limit bounds real
 time and spend, and elapsed time is simple to audit. The campaign manifest
@@ -142,11 +144,14 @@ rate is promotional; the dollar limit is only as good as the card.
 
 ## Not decided here
 
-- **Remaining tokens and time:** the model's remaining budgets don't show
-  them yet, so there is no warning at 80%.
-- **Cancelling an in-flight call** when the deadline passes.
-
-The two that remain stay open in COD-86; cost is decided in §5.
+- **Remaining budgets and warnings outside ARC runs.** An ARC decision shows
+  the remaining tokens, time and cost, with a warning once 80% of any of them
+  is used (`78ef989`, and §5 for cost). Other runs don't show them yet.
+- **Cancelling an in-flight call outside ARC runs** (see §2).
+- **Whether LongCat reports cache hits.** §5 prices cached prompt tokens from
+  `prompt_tokens_details.cached_tokens`. LongCat's docs don't name a usage
+  field for cache hits, and no recorded run kept one, so until a live call
+  shows it every prompt token may be priced as uncached.
 
 ## Dependents updated in the same change
 
@@ -154,6 +159,8 @@ The two that remain stay open in COD-86; cost is decided in §5.
 - ADR-0013 §6 gains a note pointing here.
 - The index row.
 - WORK-0001.
+- §5 (cost) added in a later change on the same day, with this section,
+  the index row and WORK-0001 updated.
 
 ## Alternatives considered
 
